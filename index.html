@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AI 해외여행 루트 추천</title>
+<title>AI 해외여행 패키지 추천</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; }
@@ -121,12 +121,30 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   .input-row, .routes-grid, .tips-grid, .mode-note { grid-template-columns:1fr; }
   .days-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+.traveler-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.traveler-box { display:flex; flex-direction:column; gap:4px; }
+.traveler-box label { font-size:13px; color:#666; }
+.package-grid { display:grid; grid-template-columns:1fr; gap:8px; margin-top:10px; }
+.pkg-box { background:#f9f9f7; border:0.5px solid #e8e8e2; border-radius:10px; padding:10px 11px; }
+.pkg-title { font-size:12px; font-weight:700; color:#1a1a18; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.pkg-main { font-size:13px; color:#2b2b28; line-height:1.55; }
+.pkg-sub { font-size:12px; color:#777; margin-top:4px; line-height:1.5; }
+.pkg-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.pkg-pill { font-size:11px; padding:4px 8px; border-radius:999px; background:#fff; border:0.5px solid #e1e1db; color:#555; }
+.pkg-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.inline-note { font-size:12px; color:#777; margin-top:8px; line-height:1.5; }
+@media (max-width: 720px) {
+  .traveler-grid { grid-template-columns:1fr; }
+  .pkg-row { grid-template-columns:1fr; }
+}
+
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
-    <h1>AI 해외여행 루트 추천</h1>
+    <h1>AI 해외여행 패키지 추천</h1>
     <p>API 없이 바로 작동하는 오프라인 추천 버전입니다.<br>목적지, 인원, 기간, 여행 날짜를 선택하면 4가지 예산 등급 루트와 상세 이동 정보를 자동으로 조합해 드립니다.</p>
   </div>
 
@@ -174,26 +192,43 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
       </div>
     </div>
 
-    <div class="input-row" style="margin-bottom:14px;">
-      <div class="input-group">
-        <label>여행 인원</label>
-        <select id="people-count">
-          <option value="1" selected>1명</option>
-          <option value="2">2명</option>
-          <option value="3">3명</option>
-          <option value="4">4명</option>
-          <option value="5">5명</option>
-          <option value="6">6명</option>
-          <option value="7">7명</option>
-          <option value="8">8명</option>
-          <option value="9">9명</option>
-          <option value="10">10명</option>
-        </select>
+    <div class="traveler-wrap" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <label style="font-size:13px;color:#666;">여행 인원 구성</label>
+        <span style="font-size:12px;color:#888;">항공·숙소 추천에 반영</span>
       </div>
-      <div class="input-group">
-        <label>예산 기준</label>
-        <div class="date-preview" id="people-preview">총 예상 경비는 선택한 인원 기준으로 계산됩니다.</div>
+      <div class="traveler-grid">
+        <div class="traveler-box">
+          <label>성인</label>
+          <select id="adult-count">
+            <option value="1" selected>1명</option>
+            <option value="2">2명</option>
+            <option value="3">3명</option>
+            <option value="4">4명</option>
+            <option value="5">5명</option>
+            <option value="6">6명</option>
+          </select>
+        </div>
+        <div class="traveler-box">
+          <label>어린이</label>
+          <select id="child-count">
+            <option value="0" selected>0명</option>
+            <option value="1">1명</option>
+            <option value="2">2명</option>
+            <option value="3">3명</option>
+            <option value="4">4명</option>
+          </select>
+        </div>
+        <div class="traveler-box">
+          <label>유아</label>
+          <select id="infant-count">
+            <option value="0" selected>0명</option>
+            <option value="1">1명</option>
+            <option value="2">2명</option>
+          </select>
+        </div>
       </div>
+      <div class="date-preview" id="people-preview" style="margin-top:10px;">성인 1명 기준으로 패키지 예산과 숙소 타입을 계산합니다.</div>
     </div>
 
     <div style="margin-bottom:10px;">
@@ -221,18 +256,18 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
 
     <div class="err-box" id="err-input">출발 도시, 목적지, 여행 스타일을 확인해 주세요.</div>
     <div class="err-box" id="err-api"></div>
-    <button class="generate-btn" id="gen-btn">4가지 등급 루트 모두 보기 ↗</button>
+    <button class="generate-btn" id="gen-btn">등급별 패키지 한 번에 보기 ↗</button>
   </div>
 
   <div class="loading" id="load-routes">
     <div style="font-size:15px;font-weight:600;" class="dot-anim">추천 루트를 조합하고 있어요</div>
-    <div style="margin-top:6px;font-size:13px;color:#666;">선택한 도시와 스타일을 바탕으로 4가지 예산 등급을 정리합니다</div>
+    <div style="margin-top:6px;font-size:13px;color:#666;">선택한 도시와 인원 구성으로 4가지 예산 패키지를 정리합니다</div>
   </div>
 
   <div id="sec-routes" class="hidden">
     <div style="font-size:15px;font-weight:600;margin-bottom:10px;" id="routes-title"></div>
     <div class="routes-grid" id="routes-grid"></div>
-    <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">원하는 등급을 선택하면 대중교통 동선 포함 상세 일정을 볼 수 있어요</p>
+    <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">원하는 등급을 선택하면 대중교통 동선까지 포함한 상세 일정이 열립니다</p>
   </div>
 
   <div class="loading" id="load-detail">
@@ -847,8 +882,34 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   function hideL(id){ $(id).classList.remove('visible'); }
   function getSelectedDays(){ var checked = document.querySelector('input[name="days"]:checked'); return checked ? checked.value : '5'; }
   function getSelectedStyles(){ return Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; }); }
-  function getPeopleCount(){ var el = $('people-count'); return Math.max(1, Number(el && el.value || 1)); }
-  function formatPeopleLabel(count){ return Math.max(1, Number(count||1)) + '명'; }
+  function getTravelerGroups(){
+    return {
+      adults: Math.max(1, Number($('adult-count') && $('adult-count').value || 1)),
+      children: Math.max(0, Number($('child-count') && $('child-count').value || 0)),
+      infants: Math.max(0, Number($('infant-count') && $('infant-count').value || 0))
+    };
+  }
+  function getTravelerTotal(groups){
+    groups = groups || getTravelerGroups();
+    return Math.max(1, Number(groups.adults||0) + Number(groups.children||0) + Number(groups.infants||0));
+  }
+  function getTravelerUnits(groups){
+    groups = groups || getTravelerGroups();
+    return Math.max(1, Number(groups.adults||0) + Number(groups.children||0) * 0.72 + Number(groups.infants||0) * 0.18);
+  }
+  function getRoomNeed(groups){
+    groups = groups || getTravelerGroups();
+    return Math.max(1, Math.ceil((Number(groups.adults||0) + Number(groups.children||0) * 0.8) / 2));
+  }
+  function formatPeopleLabel(input){
+    if (typeof input === 'number') return Math.max(1, Number(input||1)) + '명';
+    var groups = input || getTravelerGroups();
+    var parts = [];
+    if (Number(groups.adults||0) > 0) parts.push('성인 ' + groups.adults + '명');
+    if (Number(groups.children||0) > 0) parts.push('어린이 ' + groups.children + '명');
+    if (Number(groups.infants||0) > 0) parts.push('유아 ' + groups.infants + '명');
+    return parts.join(' · ');
+  }
   function parseLocalDate(value){
     if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
     var parts = value.split('-').map(Number);
@@ -882,8 +943,10 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   function updatePeoplePreview(){
     var el = $('people-preview');
     if (!el) return;
-    var count = getPeopleCount();
-    el.textContent = count === 1 ? '총 예상 경비는 1인 기준으로 계산됩니다.' : '총 예상 경비는 ' + formatPeopleLabel(count) + ' 전체 기준으로 계산됩니다.';
+    var groups = getTravelerGroups();
+    var total = getTravelerTotal(groups);
+    var roomHint = getRoomNeed(groups);
+    el.textContent = formatPeopleLabel(groups) + ' · 총 ' + total + '명 · 숙소는 대략 ' + roomHint + '실 기준으로 예산을 계산합니다.';
   }
   function escapeHtml(str){
     return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -976,26 +1039,157 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     return areas.join(' · ');
   }
 
-  function formatKrwRange(low, high, peopleCount){
+  function formatKrwRange(low, high, travelers){
+    var totalCount = typeof travelers === 'number' ? travelers : getTravelerTotal(travelers);
     var label = Math.round(low) + '만~' + Math.round(high) + '만원';
-    return peopleCount > 1 ? label + ' (총 ' + formatPeopleLabel(peopleCount) + ')' : label + ' (1인 기준)';
+    return totalCount > 1 ? label + ' (총 ' + formatPeopleLabel(travelers) + ')' : label + ' (1인 기준)';
   }
 
-  function getPeopleCostMultiplier(peopleCount){
-    var n = Math.max(1, Number(peopleCount||1));
-    if (n === 1) return 1;
-    var lodgingShared = 0.28 * (1 + 0.55 * (n - 1));
-    var personVariable = 0.72 * n;
-    return lodgingShared + personVariable;
+  function getPeopleCostMultiplier(travelers){
+    var groups = typeof travelers === 'number' ? { adults: Math.max(1, Number(travelers||1)), children:0, infants:0 } : (travelers || getTravelerGroups());
+    var units = getTravelerUnits(groups);
+    var rooms = getRoomNeed(groups);
+    return units * 0.78 + rooms * 0.42;
   }
 
-  function estimateCostRange(dest, days, gradeKey, peopleCount){
+  function estimateCostRange(dest, days, gradeKey, travelers){
     var grade = GRADE_META[gradeKey];
     var factor = dest.costFactor || 1;
-    var peopleFactor = getPeopleCostMultiplier(peopleCount);
+    var peopleFactor = getPeopleCostMultiplier(travelers);
     var low = grade.daily[0] * days * factor * peopleFactor;
     var high = grade.daily[1] * days * factor * peopleFactor;
-    return formatKrwRange(low, high, peopleCount);
+    return formatKrwRange(low, high, travelers);
+  }
+
+  function getFlightFactor(dest){
+    var map = { tokyo:1.0, osaka:1.0, kyoto:1.05, fukuoka:0.95, taipei:1.15, bangkok:1.45, singapore:1.6, paris:3.4, london:3.6, newyork:4.2 };
+    return map[dest.key] || (dest.costFactor > 1.5 ? 2.2 : 1.35);
+  }
+
+  function getStayFactor(dest){
+    var map = { tokyo:1.05, osaka:0.95, kyoto:1.1, fukuoka:0.85, taipei:0.9, bangkok:0.85, singapore:1.4, paris:1.6, london:1.7, newyork:1.9 };
+    return map[dest.key] || (dest.costFactor > 1.5 ? 1.5 : 1.0);
+  }
+
+  function chooseOriginAirport(origin){
+    var n = normalize(origin);
+    if (n.indexOf('김포') !== -1 || n.indexOf('gmp') !== -1) return '김포';
+    if (n.indexOf('부산') !== -1 || n.indexOf('pus') !== -1) return '부산';
+    if (n.indexOf('제주') !== -1 || n.indexOf('cju') !== -1) return '제주';
+    if (n.indexOf('대구') !== -1 || n.indexOf('tae') !== -1) return '대구';
+    if (n.indexOf('서울') !== -1 || n.indexOf('인천') !== -1 || n.indexOf('icn') !== -1 || n.indexOf('한국') !== -1 || n.indexOf('korea') !== -1) return '인천·김포';
+    return (origin || '출발 공항').split(/[\s(]/)[0] || '출발 공항';
+  }
+
+  function chooseDestinationAirport(dest){
+    var map = {
+      tokyo:'하네다·나리타', osaka:'간사이·이타미', kyoto:'오사카 간사이 경유', fukuoka:'후쿠오카',
+      bangkok:'수완나품·돈므앙', taipei:'타오위안·송산', singapore:'창이', paris:'샤를드골', london:'히드로', newyork:'JFK·뉴어크'
+    };
+    return map[dest.key] || (dest.city + ' 국제공항');
+  }
+
+  function getFlightNarrative(gradeKey){
+    return {
+      budget:'LCC 또는 특가 위주 · 수하물 최소 옵션',
+      value:'직항 우선 · 시간대와 가격 균형',
+      normal:'직항 + 수하물 포함 + 편한 출도착 시간',
+      luxury:'시간대 좋은 직항 + 좌석 업그레이드 고려'
+    }[gradeKey];
+  }
+
+  function getFlightRange(dest, gradeKey, travelers){
+    var base = { budget:[18,32], value:[24,42], normal:[33,58], luxury:[55,95] }[gradeKey] || [22,40];
+    var factor = getFlightFactor(dest);
+    var units = getTravelerUnits(travelers);
+    return [Math.round(base[0] * factor * units), Math.round(base[1] * factor * units)];
+  }
+
+  function getStayRange(dest, gradeKey, travelers, days){
+    var nightly = { budget:[7,12], value:[12,20], normal:[20,33], luxury:[35,60] }[gradeKey] || [10,18];
+    var rooms = getRoomNeed(travelers);
+    var factor = getStayFactor(dest);
+    return [Math.round(nightly[0] * factor * rooms * Math.max(1, days-1)), Math.round(nightly[1] * factor * rooms * Math.max(1, days-1))];
+  }
+
+  function getStayAreas(dest, travelers, styles, gradeKey){
+    var family = Number(travelers.children||0) > 0 || Number(travelers.infants||0) > 0;
+    var romantic = styles.indexOf('허니문·로맨틱') !== -1;
+    if (dest.key === 'tokyo') {
+      if (family && gradeKey === 'budget') return '우에노 · 아사쿠사';
+      if (family && (gradeKey === 'value' || gradeKey === 'normal')) return '우에노 · 도쿄역 · 오다이바';
+      if (family && gradeKey === 'luxury') return '긴자 · 도쿄역 · 오다이바';
+      if (romantic && gradeKey !== 'budget') return '긴자 · 시부야 · 오모테산도';
+      return { budget:'우에노 · 아사쿠사', value:'신주쿠 · 우에노', normal:'시부야 · 신주쿠 · 긴자', luxury:'긴자 · 도쿄역 · 롯폰기' }[gradeKey];
+    }
+    return (dest.areas || ['도심']).slice(0,3).join(' · ');
+  }
+
+  function getStayNarrative(travelers){
+    var family = Number(travelers.children||0) > 0 || Number(travelers.infants||0) > 0;
+    return family ? '패밀리룸 또는 더블+트윈 조합 우선' : '역 접근성과 저녁 귀가 편의성 우선';
+  }
+
+  function pickMany(pool, count, seed){
+    if (!pool || !pool.length) return [];
+    var out = [], used = {};
+    for (var i=0; i<pool.length && out.length<count; i++) {
+      var idx = (seed + i * 5) % pool.length;
+      var item = pool[idx];
+      if (item && !used[item.name]) { used[item.name] = true; out.push(deepClone(item)); }
+    }
+    for (var j=0; j<pool.length && out.length<count; j++) {
+      if (!used[pool[j].name]) { used[pool[j].name] = true; out.push(deepClone(pool[j])); }
+    }
+    return out.slice(0, count);
+  }
+
+  function mergePools(dest, names){
+    var seen = {}, out = [];
+    (names || []).forEach(function(name){
+      (dest.pools[name] || []).forEach(function(item){
+        if (!seen[item.name]) { seen[item.name] = true; out.push(item); }
+      });
+    });
+    return out;
+  }
+
+  function buildPackageBundle(params, dest, gradeKey){
+    var seed = hashSeed(params.dest + gradeKey + params.styleLabel + params.peopleLabel);
+    var flightRange = getFlightRange(dest, gradeKey, params.travelers);
+    var stayRange = getStayRange(dest, gradeKey, params.travelers, Number(params.days));
+    var travelPools = ['sight'];
+    if (params.styles.indexOf('역사·문화') !== -1) travelPools.push('culture');
+    if (params.styles.indexOf('자연·힐링') !== -1) travelPools.push('nature');
+    if (params.styles.indexOf('쇼핑·트렌디') !== -1) travelPools.push('shopping');
+    if (params.styles.indexOf('허니문·로맨틱') !== -1) travelPools.push('romantic');
+    if (params.styles.indexOf('관광 중심') !== -1) travelPools.push('sight');
+    var activityPools = ['activity'];
+    if (params.styles.indexOf('허니문·로맨틱') !== -1) activityPools.push('romantic');
+    if (params.styles.indexOf('쇼핑·트렌디') !== -1) activityPools.push('shopping');
+
+    var sights = pickMany(mergePools(dest, travelPools), 3, seed + 11);
+    var foods = pickMany(dest.pools.food || [], 3, seed + 17);
+    var acts = pickMany(mergePools(dest, activityPools), 2, seed + 23);
+    var airportFrom = chooseOriginAirport(params.origin);
+    var airportTo = chooseDestinationAirport(dest);
+    return {
+      flight: {
+        title: airportFrom + ' → ' + airportTo,
+        summary: getFlightNarrative(gradeKey),
+        budget: flightRange[0] + '만~' + flightRange[1] + '만원',
+        note: params.peopleLabel + ' 기준 총 항공 예상'
+      },
+      stay: {
+        area: getStayAreas(dest, params.travelers, params.styles, gradeKey),
+        summary: GRADE_META[gradeKey].accommodation,
+        budget: stayRange[0] + '만~' + stayRange[1] + '만원',
+        note: getStayNarrative(params.travelers)
+      },
+      sights: sights,
+      foods: foods,
+      activities: acts
+    };
   }
 
   function summarizeStyles(styles){
@@ -1007,21 +1201,23 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     return {
       routes: G.map(function(g){
         var meta = GRADE_META[g.key];
+        var bundle = buildPackageBundle(params, dest, g.key);
         var highlights = [
-          summarizeStyles(styles) + '을(를) 자연스럽게 섞은 동선',
-          meta.meal + ' + ' + meta.stay + ' 조합',
-          getAreaSnippet(dest) + ' 중심으로 이동 효율을 잡은 코스',
-          formatPeopleLabel(params.peopleCount) + ' 여행 기준으로 잡은 예산 감각'
+          summarizeStyles(styles) + '을(를) 자연스럽게 섞은 패키지',
+          bundle.flight.summary,
+          bundle.stay.area + ' 숙소권 기준 동선',
+          formatPeopleLabel(params.travelers) + ' 여행 기준으로 잡은 예산 감각'
         ];
-        if (g.key === 'budget') highlights[1] = '무료 스폿과 로컬 식당 위주로 경비를 아낀 구성';
-        if (g.key === 'luxury') highlights[1] = '분위기 좋은 숙소와 특별한 저녁 경험을 넣은 구성';
+        if (g.key === 'budget') highlights[1] = '항공·숙소를 최대한 가볍게 잡고 체험은 핵심만 넣은 구성';
+        if (g.key === 'luxury') highlights[1] = '이동 피로를 줄이고 저녁 경험을 강화한 구성';
         return {
           grade_en: g.key,
-          cost_range: estimateCostRange(dest, Number(params.days), g.key, params.peopleCount),
+          cost_range: estimateCostRange(dest, Number(params.days), g.key, params.travelers),
           accommodation: meta.accommodation,
           transport: meta.transport,
           highlights: highlights,
-          best_for: (styles.length > 1 ? styles.slice(0,2).join(' + ') + ' 취향을 함께 챙기고 싶은 여행자' : styles[0] + ' 취향이 뚜렷한 여행자') + ' · ' + formatPeopleLabel(params.peopleCount) + ' 추천'
+          bundle: bundle,
+          best_for: (styles.length > 1 ? styles.slice(0,2).join(' + ') + ' 취향을 함께 챙기고 싶은 여행자' : styles[0] + ' 취향이 뚜렷한 여행자') + ' · ' + formatPeopleLabel(params.travelers) + ' 추천'
         };
       })
     };
@@ -1212,7 +1408,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     return {
       summary:{
         total_spots: summarySpots,
-        estimated_total_cost: estimateCostRange(dest, days, gradeKey, params.peopleCount),
+        estimated_total_cost: estimateCostRange(dest, days, gradeKey, params.travelers),
         best_season: dest.bestSeason,
         currency: dest.currencyTip
       },
@@ -1222,13 +1418,17 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   }
 
   function renderRoutes(){
-    $('routes-title').textContent = params.dest + ' ' + params.dayLabel + ' · ' + params.peopleLabel + (params.dateLabel ? ' · ' + params.dateLabel : '') + ' — 등급별 추천 루트';
+    $('routes-title').textContent = params.dest + ' ' + params.dayLabel + ' · ' + params.peopleLabel + (params.dateLabel ? ' · ' + params.dateLabel : '') + ' — 등급별 패키지 추천';
     var html = '';
     (routesData.routes || []).forEach(function(r){
       var g = G.find(function(x){ return x.key === r.grade_en; }) || G[1];
       var hls = (r.highlights || []).map(function(h){
         return '<div class="hlrow"><div class="hldot '+g.dc+'"></div><span>'+escapeHtml(h)+'</span></div>';
       }).join('');
+      var bundle = r.bundle || {};
+      var sightPills = (bundle.sights || []).slice(0,3).map(function(item){ return '<span class="pkg-pill">'+escapeHtml(item.name)+'</span>'; }).join('');
+      var foodPills = (bundle.foods || []).slice(0,3).map(function(item){ return '<span class="pkg-pill">'+escapeHtml(item.name)+'</span>'; }).join('');
+      var actPills = (bundle.activities || []).slice(0,2).map(function(item){ return '<span class="pkg-pill">'+escapeHtml(item.name)+'</span>'; }).join('');
       html += '<div class="route-card" data-key="'+escapeHtml(r.grade_en)+'">' +
         '<div class="rch"><div class="grade-icon">'+g.icon+'</div><div style="flex:1">' +
         '<div style="display:flex;align-items:center;gap:7px;"><span class="grade-name">'+g.label+'</span><span class="gbadge '+g.gc+'">'+g.label+'</span></div>' +
@@ -1236,7 +1436,16 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
         '<div class="rhl">'+hls+
         '<div style="font-size:12px;color:#888;margin-top:6px;padding-top:6px;border-top:0.5px solid #e0e0dc">숙소: '+escapeHtml(r.accommodation||'')+' · 교통: '+escapeHtml(r.transport||'')+'</div>' +
         '<div style="font-size:12px;color:#888;margin-top:2px">추천: '+escapeHtml(r.best_for||'')+'</div></div>' +
-        '<div class="rfooter">이동 동선 포함 상세 일정 보기 →</div></div>';
+        '<div class="package-grid">' +
+          '<div class="pkg-row">' +
+            '<div class="pkg-box"><div class="pkg-title">✈️ 항공</div><div class="pkg-main">'+escapeHtml(bundle.flight ? bundle.flight.title : '')+'</div><div class="pkg-sub">'+escapeHtml(bundle.flight ? bundle.flight.summary : '')+' · '+escapeHtml(bundle.flight ? bundle.flight.budget : '')+'</div></div>' +
+            '<div class="pkg-box"><div class="pkg-title">🛏 숙소</div><div class="pkg-main">'+escapeHtml(bundle.stay ? bundle.stay.area : '')+'</div><div class="pkg-sub">'+escapeHtml(bundle.stay ? bundle.stay.summary : '')+' · '+escapeHtml(bundle.stay ? bundle.stay.budget : '')+'</div></div>' +
+          '</div>' +
+          '<div class="pkg-box"><div class="pkg-title">📍 여행지</div><div class="pkg-main">'+escapeHtml((bundle.sights||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+sightPills+'</div></div>' +
+          '<div class="pkg-box"><div class="pkg-title">🍽 맛집</div><div class="pkg-main">'+escapeHtml((bundle.foods||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+foodPills+'</div></div>' +
+          '<div class="pkg-box"><div class="pkg-title">🎟 액티비티</div><div class="pkg-main">'+escapeHtml((bundle.activities||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+actPills+'</div></div>' +
+        '</div>' +
+        '<div class="rfooter">상세 일정과 대중교통 동선 보기 →</div></div>';
     });
     $('routes-grid').innerHTML = html;
     document.querySelectorAll('.route-card').forEach(function(card){
@@ -1352,12 +1561,12 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     if (!origin || !dest || !selectedStyles.length) { $('err-input').style.display = 'block'; return; }
 
     var daysVal = getSelectedDays();
-    var peopleCount = getPeopleCount();
+    var travelers = getTravelerGroups();
     var dlabels = {'3':'2박 3일','4':'3박 4일','5':'4박 5일','7':'6박 7일','10':'9박 10일'};
     var startDateValue = $('start-date').value;
     var dateInfo = getDateRangeInfo(startDateValue, daysVal);
     params = { origin:origin, dest:dest, days:daysVal, styles:selectedStyles,
-               peopleCount: peopleCount, peopleLabel: formatPeopleLabel(peopleCount),
+               travelers: travelers, peopleCount: getTravelerTotal(travelers), peopleLabel: formatPeopleLabel(travelers),
                styleLabel:selectedStyles.join(', '), dayLabel:dlabels[daysVal],
                startDateValue:startDateValue, startDate: dateInfo ? dateInfo.start : null,
                dateLabel: dateInfo ? dateInfo.shortLabel : '',
@@ -1406,7 +1615,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   updateDatePreview();
   updatePeoplePreview();
   if ($('start-date')) $('start-date').addEventListener('change', updateDatePreview);
-  if ($('people-count')) $('people-count').addEventListener('change', updatePeoplePreview);
+  ['adult-count','child-count','infant-count'].forEach(function(id){ if ($(id)) $(id).addEventListener('change', updatePeoplePreview); });
   document.querySelectorAll('input[name="days"]').forEach(function(el){ el.addEventListener('change', updateDatePreview); });
 
   function checkStyle(label){
