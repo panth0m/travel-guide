@@ -173,6 +173,13 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   .detail-category-grid { grid-template-columns:1fr; }
 }
 
+
+.weather-fallback{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;}
+.weather-fallback-item{background:#F7F8FC;border:1px solid #E4E7F2;border-radius:14px;padding:12px;}
+.weather-fallback-item strong{display:block;font-size:13px;color:#2b3250;margin-bottom:5px;}
+.weather-fallback-item span{font-size:13px;color:#5f6780;line-height:1.45;display:block;}
+@media (max-width:720px){.weather-fallback{grid-template-columns:1fr;}}
+
 </style>
 </head>
 <body>
@@ -304,6 +311,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
         <div class="section-title">실시간 날씨</div>
         <div id="weather-status" class="muted-note">날씨 정보를 불러오는 중입니다.</div>
         <div class="weather-grid" id="weather-grid"></div>
+        <div class="weather-fallback" id="weather-fallback"></div>
         <div id="weather-note" class="inline-note"></div>
       </div>
       <div class="card">
@@ -1605,27 +1613,52 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
       return '<a class="action-link" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(link.href)+'"><strong>'+escapeHtml(link.title)+'</strong><span>'+escapeHtml(link.sub)+'</span></a>';
     }).join('');
   }
+  function buildSeasonGuide(dest, params){
+    var ref = params.startDate || new Date();
+    var month = ref.getMonth() + 1;
+    var lat = dest && dest.coords ? Number(dest.coords.lat) : null;
+    var north = lat === null ? true : lat >= 0;
+    var warmMonths = north ? [5,6,7,8,9] : [11,12,1,2,3];
+    var coolMonths = north ? [11,12,1,2] : [5,6,7,8];
+    var rainyMonths = north ? [6,7,8,9] : [12,1,2,3];
+    var seasonLabel = warmMonths.indexOf(month) !== -1 ? '따뜻한 시즌' : coolMonths.indexOf(month) !== -1 ? '선선한 시즌' : '중간 계절';
+    var tempGuide = warmMonths.indexOf(month) !== -1 ? '얇은 옷 위주로 준비하고, 실내 냉방 대비 겉옷 1벌을 챙기면 좋습니다.' : coolMonths.indexOf(month) !== -1 ? '가벼운 코트나 니트가 있는 편이 안전합니다.' : '낮밤 기온차를 고려해 얇은 겉옷을 함께 준비하는 편이 좋습니다.';
+    var rainGuide = rainyMonths.indexOf(month) !== -1 ? '비 가능성을 보고 작은 우산이나 방수 겉옷을 준비해 두면 편합니다.' : '강수 확률은 비교적 낮을 수 있지만 여행 직전 16일 예보가 열리면 다시 확인하는 것이 좋습니다.';
+    var outfitGuide = warmMonths.indexOf(month) !== -1 ? '편한 운동화, 얇은 상의, 선크림 위주 추천' : coolMonths.indexOf(month) !== -1 ? '얇은 니트, 긴 바지, 가벼운 아우터 추천' : '반팔+겉옷 조합이 무난합니다.';
+    return [
+      { title:'계절 느낌', text:(dest.city || params.dest) + ' 여행 시기는 대체로 ' + seasonLabel + '에 가깝습니다.' },
+      { title:'기온 준비', text:tempGuide },
+      { title:'비·옷차림', text:rainGuide + ' ' + outfitGuide }
+    ];
+  }
+
   function renderWeatherSection(){
     if (!weatherState || weatherState.status === 'idle') return;
     show('sec-live');
     var status = $('weather-status');
     var grid = $('weather-grid');
+    var fallback = $('weather-fallback');
     var note = $('weather-note');
-    if (status) status.textContent = weatherState.status === 'loading' ? '실시간 날씨를 불러오는 중입니다.' : weatherState.status === 'ready' ? '선택한 일정 기준 실시간 날씨 요약입니다.' : weatherState.status === 'range' ? '실시간 예보 범위를 벗어나 요약 링크만 제공합니다.' : '실시간 날씨를 불러오지 못해 현재 검색 링크만 제공합니다.';
+    if (status) status.textContent = weatherState.status === 'loading' ? '실시간 날씨를 불러오는 중입니다.' : weatherState.status === 'ready' ? '선택한 일정 기준 실시간 날씨 요약입니다.' : weatherState.status === 'range' ? '아직은 일별 예보 대신 계절형 날씨 가이드를 보여드립니다.' : '실시간 날씨를 불러오지 못해 현재 검색 링크를 먼저 제공합니다.';
     if (grid) {
       grid.innerHTML = (weatherState.days || []).map(function(day){
         return '<div class="weather-item"><div class="weather-top"><div class="weather-date">'+escapeHtml(day.date)+'</div><div class="weather-icon">'+escapeHtml(day.icon)+'</div></div><div class="weather-main">'+escapeHtml(day.label)+'</div><div class="weather-sub">최고 '+escapeHtml(day.max)+'° · 최저 '+escapeHtml(day.min)+'°<br>강수 '+escapeHtml(day.rain)+'%</div></div>';
       }).join('');
     }
+    if (fallback) {
+      fallback.innerHTML = (weatherState.fallback || []).map(function(item){
+        return '<div class="weather-fallback-item"><strong>'+escapeHtml(item.title)+'</strong><span>'+escapeHtml(item.text)+'</span></div>';
+      }).join('');
+    }
     if (note) note.textContent = weatherState.note || '';
   }
   async function fetchWeather(dest, params){
-    weatherState = { status:'loading', days:[], note:'출발일 기준 16일 이내면 실시간 일별 예보를 표시합니다.' };
+    weatherState = { status:'loading', days:[], fallback:[], note:'출발일 기준 16일 이내면 실시간 일별 예보를 표시합니다.' };
     renderWeatherSection();
     try {
       var start = params.startDate;
       if (!start) {
-        weatherState = { status:'error', days:[], note:'출발 날짜를 선택하면 실시간 날씨를 함께 보여드립니다.' };
+        weatherState = { status:'error', days:[], fallback:[], note:'출발 날짜를 선택하면 실시간 날씨를 함께 보여드립니다.' };
         renderWeatherSection();
         return;
       }
@@ -1633,7 +1666,13 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
       var todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       var diff = Math.round((start - todayMid) / 86400000);
       if (diff < 0 || diff > 15) {
-        weatherState = { status:'range', days:[], note:'Open-Meteo 예보 범위상 출발 16일 전부터 실시간 날씨를 표시할 수 있습니다. 지금은 현재 검색 링크를 먼저 활용해 주세요.' };
+        var waitDays = diff > 15 ? (diff - 15) : 0;
+        weatherState = {
+          status:'range',
+          days:[],
+          fallback: buildSeasonGuide(dest, params),
+          note: diff > 15 ? ('Open-Meteo 예보는 최대 16일까지 제공되어 약 ' + waitDays + '일 뒤부터 일별 예보를 보여드릴 수 있습니다. 그전에는 계절형 준비 팁과 현재 검색 링크를 먼저 확인해 주세요.') : '지난 날짜는 실시간 예보 대상이 아니어서 현재 검색 링크와 준비 팁을 먼저 보여드립니다.'
+        };
         renderWeatherSection();
         return;
       }
@@ -1662,9 +1701,9 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
           rain: Math.round(json.daily.precipitation_probability_max[i] || 0)
         });
       }
-      weatherState = { status:'ready', days:days, note:'날씨는 현지 기준 일별 예보입니다. 강풍·영업시간은 전날 한 번 더 확인해 주세요.' };
+      weatherState = { status:'ready', days:days, fallback:[], note:'날씨는 현지 기준 일별 예보입니다. 강풍·영업시간은 전날 한 번 더 확인해 주세요.' };
     } catch (e) {
-      weatherState = { status:'error', days:[], note:'실시간 날씨를 가져오지 못했습니다. 네트워크 상태를 확인하거나 검색 바로가기를 활용해 주세요.' };
+      weatherState = { status:'error', days:[], fallback:buildSeasonGuide(dest, params), note:'실시간 날씨를 가져오지 못했습니다. 네트워크 상태를 확인하거나 검색 바로가기를 활용해 주세요.' };
     }
     renderWeatherSection();
   }
