@@ -3,13 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AI 해외여행 패키지 추천</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#185FA5">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Travel Guide">
-<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#185FA5" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<title>AI 해외여행 패키지 추천 · 하이브리드</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; }
@@ -145,12 +142,20 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   .pkg-row { grid-template-columns:1fr; }
 }
 
-
-.install-bar { background:#fff; border:0.5px solid #e0e0dc; border-radius:12px; padding:12px 14px; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.install-copy { font-size:13px; color:#555; line-height:1.5; }
-.install-btn { border:none; background:#185FA5; color:#fff; padding:10px 14px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; flex-shrink:0; }
-.install-btn[hidden] { display:none !important; }
-.install-tip { font-size:12px; color:#666; margin-top:6px; }
+.weather-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; margin-top:10px; }
+.weather-item { background:#f9f9f7; border:0.5px solid #e0e0dc; border-radius:10px; padding:10px; }
+.weather-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.weather-date { font-size:12px; color:#666; font-weight:600; }
+.weather-icon { font-size:20px; }
+.weather-main { font-size:13px; color:#222; font-weight:600; margin-top:4px; }
+.weather-sub { font-size:12px; color:#666; margin-top:4px; line-height:1.5; }
+.action-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; }
+.action-link { display:block; text-decoration:none; background:#f9f9f7; border:0.5px solid #e0e0dc; border-radius:10px; padding:11px 12px; color:#1a1a18; }
+.action-link:hover { border-color:#185FA5; background:#F5FAFF; }
+.action-link strong { display:block; font-size:13px; margin-bottom:4px; }
+.action-link span { display:block; font-size:12px; color:#666; line-height:1.5; }
+.muted-note { font-size:12px; color:#777; line-height:1.6; }
+.family-note { background:#FFF8E7; color:#7A5200; border:0.5px solid #f5d28a; border-radius:8px; padding:8px 10px; font-size:12px; margin-top:8px; }
 
 </style>
 </head>
@@ -158,18 +163,18 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
 <div class="app">
   <div class="header">
     <h1>AI 해외여행 패키지 추천</h1>
-    <p>API 없이 바로 작동하는 오프라인 추천 버전입니다.<br>목적지, 인원, 기간, 여행 날짜를 선택하면 4가지 예산 등급 루트와 상세 이동 정보를 자동으로 조합해 드립니다.</p>
+    <p>추천형 패키지 + 실시간 날씨 + 현재 검색 바로가기를 함께 제공하는 하이브리드 버전입니다.<br>목적지, 인원, 기간, 날짜를 넣으면 4가지 예산 등급으로 항공·숙소·여행지·맛집·액티비티를 한 번에 정리합니다.</p>
   </div>
 
 
   <div class="mode-card">
     <div class="section-title">실행 방식</div>
-    <div class="mode-title">🧭 오프라인 단일 HTML 모드</div>
-    <div class="mode-badge">API 키 필요 없음 · 파일 하나로 바로 실행</div>
-    <div class="mode-help">도시별 추천 데이터와 규칙 기반 일정 생성 로직으로 작동합니다. 주요 도시에서는 더 자연스럽고, 등록되지 않은 도시도 일반 여행 패턴으로 자동 추천합니다.</div>
+    <div class="mode-title">🧭 추천형 일정 + 실시간 확인 하이브리드</div>
+    <div class="mode-badge">API 키 없이 작동 · 실시간 날씨와 현재 검색 링크 포함</div>
+    <div class="mode-help">추천 로직은 파일 안에서 바로 돌아가고, 날씨는 실시간으로 불러오며, 항공·숙소·맛집·액티비티는 현재 검색 바로가기로 이어집니다.</div>
     <div class="mode-note">
       <div class="mode-item"><strong>잘 맞는 경우</strong>도쿄·오사카·교토·후쿠오카·방콕·타이베이·싱가포르·파리·런던·뉴욕 같은 인기 도시</div>
-      <div class="mode-item"><strong>알아둘 점</strong>실시간 운영시간/가격 조회는 하지 않으므로 최종 예약 전에 한 번 더 확인해 주세요.</div>
+      <div class="mode-item"><strong>알아둘 점</strong>실시간 날씨는 앱 안에 표시되고, 항공·숙소·맛집·액티비티는 현재 검색 페이지로 바로 연결됩니다.</div>
     </div>
   </div>
 
@@ -241,6 +246,11 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
           </select>
         </div>
       </div>
+      <div id="child-age-wrap" class="hidden" style="margin-top:10px;">
+        <label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">어린이 나이</label>
+        <input type="text" id="child-ages" placeholder="예: 4, 8 (쉼표로 입력)" />
+        <div class="family-note">어린이 나이를 넣으면 디즈니·동물원·수족관·패밀리룸 추천 비중을 더 자연스럽게 조정합니다.</div>
+      </div>
       <div class="date-preview" id="people-preview" style="margin-top:10px;">성인 1명 기준으로 패키지 예산과 숙소 타입을 계산합니다.</div>
     </div>
 
@@ -279,6 +289,18 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
 
   <div id="sec-routes" class="hidden">
     <div style="font-size:15px;font-weight:600;margin-bottom:10px;" id="routes-title"></div>
+    <div id="sec-live" class="hidden">
+      <div class="card">
+        <div class="section-title">실시간 날씨</div>
+        <div id="weather-status" class="muted-note">날씨 정보를 불러오는 중입니다.</div>
+        <div class="weather-grid" id="weather-grid"></div>
+        <div id="weather-note" class="inline-note"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">현재 검색 바로가기</div>
+        <div class="action-grid" id="live-actions"></div>
+      </div>
+    </div>
     <div class="routes-grid" id="routes-grid"></div>
     <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">원하는 등급을 선택하면 대중교통 동선까지 포함한 상세 일정이 열립니다</p>
   </div>
@@ -293,6 +315,10 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     <div class="card">
       <div id="detail-badge" style="margin-bottom:10px;"></div>
       <div class="sbar" id="detail-summary"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">현재 검색 바로가기</div>
+      <div class="action-grid" id="detail-actions"></div>
     </div>
     <div id="detail-itinerary"></div>
     <div class="card"><div class="section-title">여행 꿀팁</div><div class="tips-grid" id="detail-tips"></div></div>
@@ -377,7 +403,8 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
       bestSeason:'3~5월 · 10~11월',
       currencyTip:'교통은 IC카드, 소규모 식당은 현금/교통카드 결제도 대비해 주세요.',
       transitHub:'JR·도쿄메트로',
-      areas:['시부야','아사쿠사','긴자','신주쿠','우에노'],
+      coords:{lat:35.6762, lon:139.6503},
+      areas:['시부야','아사쿠사','긴자','신주쿠','우에노','마이하마'],
       pools:{
         sight:[
           {name:'센소지', area:'아사쿠사', description:'도쿄의 대표 사찰과 전통 상점가를 함께 보기 좋습니다.'},
@@ -406,12 +433,19 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
           {name:'야네센 산책', area:'닛포리', description:'옛 도쿄의 낮은 주거 골목 감성을 느끼기 좋습니다.'}
         ],
         activity:[
-          {name:'도쿄 디즈니랜드', area:'마이하마', description:'아이 동반 가족 여행에서 만족도가 높고 하루를 온전히 쓰기 좋은 대표 테마파크입니다.'},
-          {name:'도쿄 디즈니씨', area:'마이하마', description:'어른끼리 가도 만족도가 높고 분위기 있는 어트랙션과 야경이 강점인 테마파크입니다.'},
+          {name:'도쿄 디즈니랜드', area:'마이하마', description:'아이 동반 가족과 첫 도쿄 여행자에게 만족도가 높은 대표 테마파크입니다.'},
+          {name:'도쿄 디즈니씨', area:'마이하마', description:'성인 커플·친구 여행에서도 인기 높은 몰입형 테마파크입니다.'},
           {name:'팀랩 플래닛츠', area:'도요스', description:'몰입형 미디어아트 체험으로 사진이 잘 나오는 인기 코스입니다.'},
           {name:'도쿄 베이 크루즈', area:'도쿄만', description:'도시 야경을 물 위에서 보는 색다른 체험입니다.'},
           {name:'아키하바라 게임·피규어 탐방', area:'아키하바라', description:'서브컬처와 체험형 상점을 함께 보기 좋습니다.'},
           {name:'카페·아케이드 체험', area:'이케부쿠로', description:'가벼운 실내 액티비티를 넣기 좋은 구역입니다.'}
+        ],
+        family:[
+          {name:'도쿄 디즈니랜드', area:'마이하마', description:'가족 여행의 만족도가 높은 대표 테마파크로 하루를 통째로 써도 좋습니다.'},
+          {name:'도쿄 디즈니씨', area:'마이하마', description:'초등 이상 동반 가족이나 성인 가족 여행에 특히 잘 맞습니다.'},
+          {name:'우에노 동물원', area:'우에노', description:'아이와 함께 가볍게 넣기 좋은 클래식한 가족 코스입니다.'},
+          {name:'스미다 수족관', area:'오시아게', description:'실내 위주 일정이나 비 오는 날 대안으로 좋습니다.'},
+          {name:'도쿄 장난감 미술관', area:'요츠야', description:'어린 아이와 함께 쉬어가기 좋은 실내 체험형 장소입니다.'}
         ],
         shopping:[
           {name:'긴자 백화점 거리', area:'긴자', description:'백화점·편집숍 위주로 깔끔하게 쇼핑하기 좋습니다.'},
@@ -888,7 +922,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     }
   ];
 
-  var routesData = null, params = {}, currentDestination = null;
+  var routesData = null, params = {}, currentDestination = null, weatherState = { status:'idle', days:[], note:'' }, currentRoute = null;
 
   function $(id){ return document.getElementById(id); }
   function show(id){ $(id).classList.remove('hidden'); }
@@ -897,12 +931,32 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   function hideL(id){ $(id).classList.remove('visible'); }
   function getSelectedDays(){ var checked = document.querySelector('input[name="days"]:checked'); return checked ? checked.value : '5'; }
   function getSelectedStyles(){ return Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; }); }
+  function getChildAgeList(){
+    var raw = $('child-ages') ? $('child-ages').value : '';
+    return String(raw||'').split(',').map(function(v){ return Number(String(v).trim()); }).filter(function(v){ return !isNaN(v) && v >= 0 && v <= 17; });
+  }
   function getTravelerGroups(){
     return {
       adults: Math.max(1, Number($('adult-count') && $('adult-count').value || 1)),
       children: Math.max(0, Number($('child-count') && $('child-count').value || 0)),
-      infants: Math.max(0, Number($('infant-count') && $('infant-count').value || 0))
+      infants: Math.max(0, Number($('infant-count') && $('infant-count').value || 0)),
+      childAges: getChildAgeList()
     };
+  }
+  function isFamilyTrip(groups){
+    groups = groups || getTravelerGroups();
+    return Number(groups.children||0) > 0 || Number(groups.infants||0) > 0;
+  }
+  function hasYoungChild(groups){
+    groups = groups || getTravelerGroups();
+    var ages = groups.childAges || [];
+    if (!ages.length) return Number(groups.children||0) > 0;
+    return ages.some(function(age){ return age <= 9; });
+  }
+  function toggleChildAgeInput(){
+    var wrap = $('child-age-wrap');
+    if (!wrap) return;
+    if (Number($('child-count') && $('child-count').value || 0) > 0) show('child-age-wrap'); else hide('child-age-wrap');
   }
   function getTravelerTotal(groups){
     groups = groups || getTravelerGroups();
@@ -923,6 +977,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     if (Number(groups.adults||0) > 0) parts.push('성인 ' + groups.adults + '명');
     if (Number(groups.children||0) > 0) parts.push('어린이 ' + groups.children + '명');
     if (Number(groups.infants||0) > 0) parts.push('유아 ' + groups.infants + '명');
+    if ((groups.childAges||[]).length) parts.push('어린이 나이 ' + groups.childAges.join(', ') + '세');
     return parts.join(' · ');
   }
   function parseLocalDate(value){
@@ -961,7 +1016,9 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     var groups = getTravelerGroups();
     var total = getTravelerTotal(groups);
     var roomHint = getRoomNeed(groups);
-    el.textContent = formatPeopleLabel(groups) + ' · 총 ' + total + '명 · 숙소는 대략 ' + roomHint + '실 기준으로 예산을 계산합니다.';
+    var note = isFamilyTrip(groups) ? ' · 가족 친화형 액티비티와 패밀리룸 추천을 우선합니다.' : ' · 성인 중심 일정 밀도를 기준으로 추천합니다.';
+    el.textContent = formatPeopleLabel(groups) + ' · 총 ' + total + '명 · 숙소는 대략 ' + roomHint + '실 기준으로 예산을 계산합니다.' + note;
+    toggleChildAgeInput();
   }
   function escapeHtml(str){
     return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -1128,12 +1185,13 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   }
 
   function getStayAreas(dest, travelers, styles, gradeKey){
-    var family = Number(travelers.children||0) > 0 || Number(travelers.infants||0) > 0;
+    var family = isFamilyTrip(travelers);
+    var youngChild = hasYoungChild(travelers);
     var romantic = styles.indexOf('허니문·로맨틱') !== -1;
     if (dest.key === 'tokyo') {
-      if (family && gradeKey === 'budget') return '우에노 · 아사쿠사';
-      if (family && (gradeKey === 'value' || gradeKey === 'normal')) return '도쿄역 · 오다이바 · 마이하마';
-      if (family && gradeKey === 'luxury') return '긴자 · 도쿄역 · 마이하마';
+      if (family && gradeKey === 'budget') return youngChild ? '우에노 · 아사쿠사' : '우에노 · 아사쿠사 · 이케부쿠로';
+      if (family && (gradeKey === 'value' || gradeKey === 'normal')) return youngChild ? '마이하마 · 도쿄역 · 오다이바' : '우에노 · 도쿄역 · 오다이바';
+      if (family && gradeKey === 'luxury') return youngChild ? '마이하마 · 긴자 · 오다이바' : '긴자 · 도쿄역 · 오다이바';
       if (romantic && gradeKey !== 'budget') return '긴자 · 시부야 · 오모테산도';
       return { budget:'우에노 · 아사쿠사', value:'신주쿠 · 우에노', normal:'시부야 · 신주쿠 · 긴자', luxury:'긴자 · 도쿄역 · 롯폰기' }[gradeKey];
     }
@@ -1141,8 +1199,8 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   }
 
   function getStayNarrative(travelers){
-    var family = Number(travelers.children||0) > 0 || Number(travelers.infants||0) > 0;
-    return family ? '패밀리룸 또는 더블+트윈 조합 우선' : '역 접근성과 저녁 귀가 편의성 우선';
+    var family = isFamilyTrip(travelers);
+    return family ? (hasYoungChild(travelers) ? '패밀리룸·욕조·역세권 우선' : '패밀리룸 또는 더블+트윈 조합 우선') : '역 접근성과 저녁 귀가 편의성 우선';
   }
 
   function pickMany(pool, count, seed){
@@ -1169,39 +1227,30 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     return out;
   }
 
-  function forceTokyoDisneyIfRelevant(acts, dest, params, gradeKey){
-    if (!dest || dest.key !== 'tokyo') return acts;
-    var family = Number(params.travelers.children||0) > 0 || Number(params.travelers.infants||0) > 0;
-    var activityTrip = params.styles.indexOf('액티비티') !== -1;
-    if (!family && !activityTrip) return acts;
-    var disneyName = family ? '도쿄 디즈니랜드' : '도쿄 디즈니씨';
-    var disneyItem = (dest.pools.activity || []).find(function(item){ return item.name === disneyName; });
-    if (!disneyItem) return acts;
-    var next = [deepClone(disneyItem)];
-    (acts || []).forEach(function(item){
-      if (item && item.name !== disneyName && next.length < 2) next.push(item);
-    });
-    return next.slice(0, 2);
-  }
-
   function buildPackageBundle(params, dest, gradeKey){
     var seed = hashSeed(params.dest + gradeKey + params.styleLabel + params.peopleLabel);
     var flightRange = getFlightRange(dest, gradeKey, params.travelers);
     var stayRange = getStayRange(dest, gradeKey, params.travelers, Number(params.days));
+    var family = isFamilyTrip(params.travelers);
     var travelPools = ['sight'];
     if (params.styles.indexOf('역사·문화') !== -1) travelPools.push('culture');
     if (params.styles.indexOf('자연·힐링') !== -1) travelPools.push('nature');
     if (params.styles.indexOf('쇼핑·트렌디') !== -1) travelPools.push('shopping');
     if (params.styles.indexOf('허니문·로맨틱') !== -1) travelPools.push('romantic');
     if (params.styles.indexOf('관광 중심') !== -1) travelPools.push('sight');
+    if (family) travelPools.push('family');
     var activityPools = ['activity'];
     if (params.styles.indexOf('허니문·로맨틱') !== -1) activityPools.push('romantic');
     if (params.styles.indexOf('쇼핑·트렌디') !== -1) activityPools.push('shopping');
+    if (family) activityPools.push('family');
 
     var sights = pickMany(mergePools(dest, travelPools), 3, seed + 11);
     var foods = pickMany(dest.pools.food || [], 3, seed + 17);
     var acts = pickMany(mergePools(dest, activityPools), 2, seed + 23);
-    acts = forceTokyoDisneyIfRelevant(acts, dest, params, gradeKey);
+    if (family && dest.key === 'tokyo' && acts.length && acts[0].name.indexOf('도쿄 디즈니') === -1) {
+      acts.unshift({name: hasYoungChild(params.travelers) ? '도쿄 디즈니랜드' : '도쿄 디즈니씨', area:'마이하마', description:'가족 여행에서 우선 검토할 대표 테마파크입니다.'});
+      acts = acts.slice(0,2);
+    }
     var airportFrom = chooseOriginAirport(params.origin);
     var airportTo = chooseDestinationAirport(dest);
     return {
@@ -1237,7 +1286,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
           summarizeStyles(styles) + '을(를) 자연스럽게 섞은 패키지',
           bundle.flight.summary,
           bundle.stay.area + ' 숙소권 기준 동선',
-          formatPeopleLabel(params.travelers) + ' 여행 기준으로 잡은 예산 감각'
+          formatPeopleLabel(params.travelers) + ' 여행 기준으로 잡은 예산 감각' + (isFamilyTrip(params.travelers) ? ' · 가족형 추천 강화' : '')
         ];
         if (g.key === 'budget') highlights[1] = '항공·숙소를 최대한 가볍게 잡고 체험은 핵심만 넣은 구성';
         if (g.key === 'luxury') highlights[1] = '이동 피로를 줄이고 저녁 경험을 강화한 구성';
@@ -1397,6 +1446,10 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     var dayPlans = [];
     for (var day=0; day<days; day++){
       var pattern = getBasePattern(styles, day);
+      if (isFamilyTrip(params.travelers)) {
+        if (day === 0) pattern[2] = 'family';
+        if (day % 2 === 0) pattern[3] = 'family';
+      }
       var stops = [];
       var prevStop = null;
       for (var slot=0; slot<4; slot++){
@@ -1448,6 +1501,122 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     };
   }
 
+  function plusDaysIso(date, days){
+    var d = addDays(date, days);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function weatherEmoji(code){
+    if (code === 0) return '☀️';
+    if ([1,2].indexOf(code) !== -1) return '🌤';
+    if (code === 3) return '☁️';
+    if ([45,48].indexOf(code) !== -1) return '🌫';
+    if ([51,53,55,56,57].indexOf(code) !== -1) return '🌦';
+    if ([61,63,65,66,67,80,81,82].indexOf(code) !== -1) return '🌧';
+    if ([71,73,75,77,85,86].indexOf(code) !== -1) return '❄️';
+    if ([95,96,99].indexOf(code) !== -1) return '⛈';
+    return '🌡';
+  }
+  function weatherLabel(code){
+    var map = {0:'맑음',1:'대체로 맑음',2:'구름 조금',3:'흐림',45:'안개',48:'짙은 안개',51:'약한 이슬비',53:'이슬비',55:'강한 이슬비',61:'약한 비',63:'비',65:'강한 비',71:'약한 눈',73:'눈',75:'강한 눈',80:'소나기',81:'강한 소나기',82:'폭우성 소나기',95:'뇌우'};
+    return map[code] || '날씨';
+  }
+  function makeGoogleSearchUrl(query){
+    return 'https://www.google.com/search?q=' + encodeURIComponent(query);
+  }
+  function makeMapSearchUrl(query){
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+  }
+  function makeHotelSearchUrl(city, params, stayArea){
+    var checkin = params.startDate ? plusDaysIso(params.startDate, 0) : '';
+    var checkout = params.startDate ? plusDaysIso(params.startDate, Number(params.days)-1) : '';
+    var url = 'https://www.booking.com/searchresults.html?ss=' + encodeURIComponent((stayArea || city) + ' ' + city) + '&group_adults=' + encodeURIComponent(params.travelers.adults || 1) + '&group_children=' + encodeURIComponent(params.travelers.children || 0) + '&no_rooms=' + encodeURIComponent(getRoomNeed(params.travelers));
+    if (checkin) url += '&checkin=' + encodeURIComponent(checkin);
+    if (checkout) url += '&checkout=' + encodeURIComponent(checkout);
+    return url;
+  }
+  function getLiveActionLinks(params, dest, route){
+    var stayArea = route && route.bundle && route.bundle.stay ? route.bundle.stay.area.split(' · ')[0] : (dest.areas && dest.areas[0] || dest.city);
+    var actName = route && route.bundle && route.bundle.activities && route.bundle.activities[0] ? route.bundle.activities[0].name : (dest.city + ' 액티비티');
+    var foodArea = route && route.bundle && route.bundle.foods && route.bundle.foods[0] ? route.bundle.foods[0].area : (dest.areas && dest.areas[0] || dest.city);
+    return [
+      { title:'✈️ 항공권 현재 검색', sub:(params.origin || '출발지') + ' → ' + params.dest + ' 현재 항공권 결과 보기', href: makeGoogleSearchUrl((params.origin || '') + ' ' + params.dest + ' 항공권 ' + (params.dateLabel || '') + ' ' + formatPeopleLabel(params.travelers)) },
+      { title:'🛏 숙소 현재 검색', sub:stayArea + ' 기준 현재 호텔/객실 검색', href: makeHotelSearchUrl(dest.city, params, stayArea) },
+      { title:'📍 여행지 지도 보기', sub:params.dest + ' 대표 관광지 지도로 열기', href: makeMapSearchUrl(dest.city + ' 관광지') },
+      { title:'🍽 맛집 더 찾기', sub:foodArea + ' 기준 현재 맛집 검색', href: makeMapSearchUrl(dest.city + ' ' + foodArea + ' 맛집') },
+      { title:'🎟 액티비티 검색', sub:(actName || params.dest + ' 액티비티') + ' 관련 현재 검색 결과', href: makeGoogleSearchUrl(dest.city + ' ' + actName + ' 예약') }
+    ];
+  }
+  function renderActionLinks(targetId, links){
+    var el = $(targetId);
+    if (!el) return;
+    el.innerHTML = (links || []).map(function(link){
+      return '<a class="action-link" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(link.href)+'"><strong>'+escapeHtml(link.title)+'</strong><span>'+escapeHtml(link.sub)+'</span></a>';
+    }).join('');
+  }
+  function renderWeatherSection(){
+    if (!weatherState || weatherState.status === 'idle') return;
+    show('sec-live');
+    var status = $('weather-status');
+    var grid = $('weather-grid');
+    var note = $('weather-note');
+    if (status) status.textContent = weatherState.status === 'loading' ? '실시간 날씨를 불러오는 중입니다.' : weatherState.status === 'ready' ? '선택한 일정 기준 실시간 날씨 요약입니다.' : weatherState.status === 'range' ? '실시간 예보 범위를 벗어나 요약 링크만 제공합니다.' : '실시간 날씨를 불러오지 못해 현재 검색 링크만 제공합니다.';
+    if (grid) {
+      grid.innerHTML = (weatherState.days || []).map(function(day){
+        return '<div class="weather-item"><div class="weather-top"><div class="weather-date">'+escapeHtml(day.date)+'</div><div class="weather-icon">'+escapeHtml(day.icon)+'</div></div><div class="weather-main">'+escapeHtml(day.label)+'</div><div class="weather-sub">최고 '+escapeHtml(day.max)+'° · 최저 '+escapeHtml(day.min)+'°<br>강수 '+escapeHtml(day.rain)+'%</div></div>';
+      }).join('');
+    }
+    if (note) note.textContent = weatherState.note || '';
+  }
+  async function fetchWeather(dest, params){
+    weatherState = { status:'loading', days:[], note:'출발일 기준 16일 이내면 실시간 일별 예보를 표시합니다.' };
+    renderWeatherSection();
+    try {
+      var start = params.startDate;
+      if (!start) {
+        weatherState = { status:'error', days:[], note:'출발 날짜를 선택하면 실시간 날씨를 함께 보여드립니다.' };
+        renderWeatherSection();
+        return;
+      }
+      var today = new Date();
+      var todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      var diff = Math.round((start - todayMid) / 86400000);
+      if (diff < 0 || diff > 15) {
+        weatherState = { status:'range', days:[], note:'Open-Meteo 예보 범위상 출발 16일 전부터 실시간 날씨를 표시할 수 있습니다. 지금은 현재 검색 링크를 먼저 활용해 주세요.' };
+        renderWeatherSection();
+        return;
+      }
+      var coords = dest.coords;
+      if (!coords) {
+        var geo = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(dest.city || params.dest) + '&count=1&language=ko&format=json');
+        var geoJson = await geo.json();
+        if (!geoJson || !geoJson.results || !geoJson.results.length) throw new Error('geocode');
+        coords = { lat: geoJson.results[0].latitude, lon: geoJson.results[0].longitude };
+      }
+      var endIso = plusDaysIso(start, Math.max(0, Number(params.days)-1));
+      var startIso = plusDaysIso(start, 0);
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + encodeURIComponent(coords.lat) + '&longitude=' + encodeURIComponent(coords.lon) + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&start_date=' + startIso + '&end_date=' + endIso;
+      var resp = await fetch(url);
+      var json = await resp.json();
+      if (!json || !json.daily || !json.daily.time) throw new Error('forecast');
+      var days = [];
+      for (var i=0; i<json.daily.time.length; i++) {
+        var d = parseLocalDate(json.daily.time[i]);
+        days.push({
+          date: d ? ((d.getMonth()+1) + '/' + d.getDate()) : json.daily.time[i],
+          icon: weatherEmoji(json.daily.weather_code[i]),
+          label: weatherLabel(json.daily.weather_code[i]),
+          max: Math.round(json.daily.temperature_2m_max[i]),
+          min: Math.round(json.daily.temperature_2m_min[i]),
+          rain: Math.round(json.daily.precipitation_probability_max[i] || 0)
+        });
+      }
+      weatherState = { status:'ready', days:days, note:'날씨는 현지 기준 일별 예보입니다. 강풍·영업시간은 전날 한 번 더 확인해 주세요.' };
+    } catch (e) {
+      weatherState = { status:'error', days:[], note:'실시간 날씨를 가져오지 못했습니다. 네트워크 상태를 확인하거나 검색 바로가기를 활용해 주세요.' };
+    }
+    renderWeatherSection();
+  }
+
   function renderRoutes(){
     $('routes-title').textContent = params.dest + ' ' + params.dayLabel + ' · ' + params.peopleLabel + (params.dateLabel ? ' · ' + params.dateLabel : '') + ' — 등급별 패키지 추천';
     var html = '';
@@ -1479,6 +1648,9 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
         '<div class="rfooter">상세 일정과 대중교통 동선 보기 →</div></div>';
     });
     $('routes-grid').innerHTML = html;
+    renderActionLinks('live-actions', getLiveActionLinks(params, currentDestination, null));
+    renderWeatherSection();
+    show('sec-live');
     document.querySelectorAll('.route-card').forEach(function(card){
       card.addEventListener('click', function(){
         document.querySelectorAll('.route-card').forEach(function(c){ c.classList.remove('selected'); });
@@ -1492,6 +1664,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   function loadDetail(key){
     var g = G.find(function(x){ return x.key === key; }) || G[1];
     var r = (routesData.routes || []).find(function(x){ return x.grade_en === key; }) || {};
+    currentRoute = r;
     showL('load-detail'); hide('sec-detail');
     $('load-detail').scrollIntoView({behavior:'smooth', block:'start'});
     setTimeout(function(){
@@ -1521,6 +1694,8 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
       '<div class="schip">예산 <span>'+escapeHtml(s.estimated_total_cost||'')+'</span></div>' +
       '<div class="schip">추천 시기 <span>'+escapeHtml(s.best_season||'')+'</span></div>' +
       '<div class="schip">'+escapeHtml(s.currency||'')+'</div>';
+
+    renderActionLinks('detail-actions', getLiveActionLinks(params, currentDestination, currentRoute));
 
     var tb = {sight:'b-sight',food:'b-food',hotel:'b-hotel',transport:'b-transport',activity:'b-activity'};
     var tl = {sight:'관광',food:'맛집',hotel:'숙소',transport:'이동',activity:'액티비티'};
@@ -1605,12 +1780,14 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     currentDestination = resolveDestination(dest);
 
     $('gen-btn').disabled = true;
-    showL('load-routes'); hide('sec-routes'); hide('sec-detail');
+    weatherState = { status:'idle', days:[], note:'' };
+    showL('load-routes'); hide('sec-routes'); hide('sec-detail'); hide('sec-live');
 
     setTimeout(function(){
       try{
         routesData = buildRoutes(params, currentDestination);
         renderRoutes();
+        fetchWeather(currentDestination, params);
       } catch(e){
         $('err-api').textContent = '오류: ' + e.message;
         $('err-api').style.display = 'block';
@@ -1644,52 +1821,24 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   var dd = String(today.getDate()).padStart(2, '0');
   if ($('start-date')) $('start-date').value = yyyy + '-' + mm + '-' + dd;
   updateDatePreview();
+  toggleChildAgeInput();
   updatePeoplePreview();
   if ($('start-date')) $('start-date').addEventListener('change', updateDatePreview);
   ['adult-count','child-count','infant-count'].forEach(function(id){ if ($(id)) $(id).addEventListener('change', updatePeoplePreview); });
+  if ($('child-ages')) $('child-ages').addEventListener('input', updatePeoplePreview);
   document.querySelectorAll('input[name="days"]').forEach(function(el){ el.addEventListener('change', updateDatePreview); });
 
   function checkStyle(label){
     var el = document.querySelector('input[name="style"][value="'+label+'"]');
     if (el) el.checked = true;
   }
-  
   (function setupPwa(){
-    var deferredPrompt = null;
-    var installBtn = $('install-btn');
-    var installTip = $('install-tip');
-
-    window.addEventListener('beforeinstallprompt', function(e){
-      e.preventDefault();
-      deferredPrompt = e;
-      if (installBtn) installBtn.hidden = false;
-      if (installTip) installTip.textContent = '설치 버튼이 보이면 눌러서 바로 추가할 수 있어요.';
-    });
-
-    if (installBtn) {
-      installBtn.addEventListener('click', async function(){
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        try { await deferredPrompt.userChoice; } catch(e) {}
-        deferredPrompt = null;
-        installBtn.hidden = true;
-      });
-    }
-
-    window.addEventListener('appinstalled', function(){
-      if (installBtn) installBtn.hidden = true;
-      if (installTip) installTip.textContent = '설치가 완료되었어요. 홈 화면에서 앱처럼 실행할 수 있습니다.';
-    });
-
     if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
       window.addEventListener('load', function(){
         navigator.serviceWorker.register('./sw.js').catch(function(){});
       });
-    } else if (installTip) {
-      installTip.textContent = '파일을 직접 여는 방식(file://)에서는 설치가 안 됩니다. GitHub Pages 같은 HTTPS 주소에서 열어야 해요.';
     }
   })();
-
 })();
 </script>
 </body>
