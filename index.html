@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>AI 여행 플래너</title>
+
+<!-- PWA 필수 -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#185FA5" />
+
+<!-- iOS 홈 화면 지원 -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="여행 플래너" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+
+<!-- Android / 브라우저 -->
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="description" content="AI가 4가지 예산 등급 해외여행 루트와 대중교통 동선을 추천해 드립니다" />
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
+</script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18;
+  padding-bottom: env(safe-area-inset-bottom); }
+.app { max-width: 860px; margin: 0 auto; padding: 1rem; padding-top: calc(1rem + env(safe-area-inset-top)); }
+.header { text-align: center; padding: 1.5rem 0 1rem; }
+.header h1 { font-size: 22px; font-weight: 500; }
+.header p { font-size: 14px; color: #666; margin-top: 4px; }
+.card { background: #fff; border: 0.5px solid #e0e0dc; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.section-title { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.input-group { display: flex; flex-direction: column; gap: 4px; }
+.input-group label { font-size: 13px; color: #666; }
+input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; border-radius: 8px; font-size: 14px; background: #f9f9f7; color: #1a1a18; font-family: inherit; }
+
+/* 날짜 체크박스 그리드 */
+.days-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 4px; }
+.day-option { position: relative; }
+.day-option input { position: absolute; opacity: 0; pointer-events: none; }
+.day-chip { display: flex; flex-direction: column; align-items: center; padding: 10px 6px 8px; border: 0.5px solid #ccc; border-radius: 10px; font-size: 13px; color: #666; background: #f9f9f7; cursor: pointer; user-select: none; transition: all .15s; text-align: center; }
+.day-chip .dc-nights { font-size: 18px; font-weight: 600; color: #1a1a18; line-height: 1; }
+.day-chip .dc-label { font-size: 11px; color: #999; margin-top: 3px; }
+.day-chip .dc-sub { font-size: 10px; color: #bbb; margin-top: 1px; }
+.day-option input:checked + .day-chip { border-color: #185FA5; background: #E6F1FB; }
+.day-option input:checked + .day-chip .dc-nights { color: #185FA5; }
+.day-option input:checked + .day-chip .dc-label { color: #185FA5; }
+.day-option input:checked + .day-chip .dc-sub { color: #5b96cc; }
+
+/* 스타일 칩 */
+.style-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.style-option { position: relative; }
+.style-option input { position: absolute; opacity: 0; pointer-events: none; }
+.style-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 0.5px solid #ccc; border-radius: 999px; font-size: 13px; color: #666; background: #f5f5f3; cursor: pointer; user-select: none; transition: all .15s; }
+.style-option input:checked + .style-chip { border-color: #185FA5; background: #E6F1FB; color: #185FA5; font-weight: 500; }
+
+.generate-btn { width: 100%; padding: 11px; background: #185FA5; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 8px; }
+.generate-btn:hover { opacity: 0.88; }
+.generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.err-box { background: #FCEBEB; color: #501313; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 8px; display: none; white-space: pre-wrap; }
+.loading { display: none; text-align: center; padding: 2rem; }
+.loading.visible { display: block; }
+.dot-anim::after { content: ''; animation: dots 1.2s steps(4,end) infinite; }
+@keyframes dots { 0%,20%{content:''} 40%{content:'.'} 60%{content:'..'} 80%,100%{content:'...'} }
+.hidden { display: none !important; }
+
+/* 루트 카드 */
+.routes-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 1rem; }
+.route-card { border: 1.5px solid #e0e0dc; border-radius: 12px; overflow: hidden; cursor: pointer; background: #fff; transition: border-color 0.15s; }
+.route-card:hover { border-color: #185FA5; }
+.route-card.selected { border-color: #185FA5; }
+.rch { padding: 12px 14px 8px; display: flex; align-items: center; gap: 10px; }
+.grade-icon { font-size: 22px; }
+.grade-name { font-size: 15px; font-weight: 500; }
+.grade-cost { font-size: 12px; margin-top: 2px; }
+.gbadge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.g-budget{background:#D3D1C7;color:#2C2C2A;} .g-value{background:#9FE1CB;color:#04342C;}
+.g-normal{background:#B5D4F4;color:#042C53;} .g-luxury{background:#CECBF6;color:#26215C;}
+.c-budget{color:#5F5E5A;} .c-value{color:#0F6E56;} .c-normal{color:#185FA5;} .c-luxury{color:#534AB7;}
+.rhl { padding: 0 14px 10px; display: flex; flex-direction: column; gap: 5px; }
+.hlrow { display: flex; gap: 7px; font-size: 13px; color: #666; line-height: 1.4; }
+.hldot { width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+.d-budget{background:#888780;} .d-value{background:#1D9E75;} .d-normal{background:#378ADD;} .d-luxury{background:#7F77DD;}
+.rfooter { padding: 8px 14px; border-top: 0.5px solid #e0e0dc; font-size: 13px; font-weight: 500; color: #185FA5; }
+
+/* 상세 일정 */
+.day-card { border: 0.5px solid #e0e0dc; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.day-header { background: #f9f9f7; padding: 10px 14px; font-weight: 500; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+.day-body { padding: 12px 14px; }
+
+/* 장소 스톱 */
+.stop { display: flex; gap: 12px; align-items: flex-start; }
+.snum { width:26px; height:26px; border-radius:50%; background:#E6F1FB; color:#185FA5; font-size:12px; font-weight:500; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+.sname { font-size:14px; font-weight:500; }
+.sdesc { font-size:13px; color:#666; margin-top:2px; line-height:1.5; }
+.srow2 { display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap; }
+.sbadge { font-size:11px; padding:2px 7px; border-radius:10px; }
+.b-food{background:#FAEEDA;color:#633806;} .b-sight{background:#E1F5EE;color:#085041;}
+.b-hotel{background:#EEEDFE;color:#3C3489;} .b-transport{background:#F1EFE8;color:#444441;} .b-activity{background:#FAECE7;color:#4A1B0C;}
+.scost { font-size:12px; font-weight:500; color:#0F6E56; }
+
+/* 이동 수단 표시 */
+.transit-row { display: flex; align-items: center; gap: 0; margin: 8px 0 8px 13px; }
+.transit-line { width: 1px; background: #d0d0cc; flex-shrink: 0; align-self: stretch; min-height: 8px; }
+.transit-bubble { display: flex; align-items: center; gap: 6px; margin-left: 12px; background: #f3f3f0; border: 0.5px solid #e0e0dc; border-radius: 20px; padding: 4px 10px 4px 7px; font-size: 12px; color: #555; }
+.transit-icon { font-size: 14px; }
+.transit-time { font-size: 11px; color: #999; margin-left: 2px; }
+
+/* 이동수단 뱃지 색상 */
+.tr-subway { background: #E6F1FB; border-color: #b5d4f4; color: #185FA5; }
+.tr-bus { background: #E8F5E9; border-color: #a5d6a7; color: #2E7D32; }
+.tr-walk { background: #FFF8E1; border-color: #ffe082; color: #8a6300; }
+.tr-taxi { background: #FCE4EC; border-color: #f48fb1; color: #880E4F; }
+.tr-train { background: #EDE7F6; border-color: #ce93d8; color: #4A148C; }
+.tr-tram { background: #E0F2F1; border-color: #80cbc4; color: #00695C; }
+.tr-ferry { background: #E3F2FD; border-color: #90caf9; color: #0D47A1; }
+
+.tips-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.tip-item { background:#f9f9f7; border-radius:8px; padding:10px 12px; font-size:13px; color:#666; line-height:1.5; }
+.tip-label { font-size:12px; font-weight:500; color:#1a1a18; margin-bottom:3px; }
+.sbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.schip { background:#f9f9f7; border:0.5px solid #e0e0dc; border-radius:8px; padding:5px 11px; font-size:13px; color:#666; }
+.schip span { font-weight:500; color:#1a1a18; }
+.back-btn { background:none; border:0.5px solid #ccc; border-radius:8px; padding:7px 14px; font-size:13px; color:#666; cursor:pointer; margin-bottom:12px; }
+
+/* API Key 카드 */
+.apikey-card { background:#fff; border:0.5px solid #e0e0dc; border-radius:12px; padding:1rem 1.25rem; margin-bottom:1rem; }
+.apikey-row { display:flex; gap:8px; align-items:center; }
+.apikey-input-wrap { position:relative; flex:1; }
+.apikey-input-wrap input { width:100%; padding:8px 36px 8px 10px; border:0.5px solid #ccc; border-radius:8px; font-size:14px; background:#f9f9f7; color:#1a1a18; font-family:inherit; }
+.apikey-toggle { position:absolute; right:9px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:15px; color:#999; padding:0; line-height:1; }
+.apikey-save-btn { padding:8px 14px; background:#f0f0ed; border:0.5px solid #d8d8d4; border-radius:8px; font-size:13px; color:#444; cursor:pointer; white-space:nowrap; font-family:inherit; transition:background .15s; }
+.apikey-save-btn:hover { background:#e4e4e0; }
+.apikey-status { font-size:12px; margin-top:6px; min-height:16px; }
+.apikey-help { font-size:12px; color:#999; margin-top:8px; line-height:1.55; }
+.apikey-help a { color:#185FA5; text-decoration:none; }
+.apikey-help a:hover { text-decoration:underline; }
+@media (max-width:600px){
+  .input-row, .routes-grid, .tips-grid { grid-template-columns:1fr; }
+  .days-grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>AI 해외여행 루트 추천</h1>
+    <p>목적지와 기간을 선택하면 4가지 예산 등급 루트와 상세 이동 정보를 알려드립니다</p>
+  </div>
+
+  <!-- API Key 입력 -->
+  <div class="apikey-card">
+    <div class="section-title">Anthropic API Key</div>
+    <div class="apikey-row">
+      <div class="apikey-input-wrap">
+        <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off" />
+        <button class="apikey-toggle" id="key-toggle" title="보기/숨기기">👁</button>
+      </div>
+      <button class="apikey-save-btn" id="key-save-btn">저장</button>
+    </div>
+    <div class="apikey-status" id="apikey-status"></div>
+    <div class="apikey-help">
+      API Key는 이 기기의 브라우저에만 저장되며 외부로 전송되지 않습니다.<br>
+      키 발급 → <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com/settings/keys</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">여행 정보 입력</div>
+    <div class="input-row">
+      <div class="input-group"><label>출발 도시</label><input type="text" id="origin" placeholder="예: 서울 (인천공항)" /></div>
+      <div class="input-group"><label>목적지 (해외)</label><input type="text" id="dest" placeholder="예: 도쿄, 파리, 방콕" /></div>
+    </div>
+
+    <!-- 날짜 체크박스 -->
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <label style="font-size:13px;color:#666;">여행 기간 선택</label>
+        <span style="font-size:12px;color:#888;">하나만 선택</span>
+      </div>
+      <div class="days-grid" id="days-grid">
+        <label class="day-option"><input type="radio" name="days" value="3" /><span class="day-chip"><span class="dc-nights">2</span><span class="dc-label">박 3일</span><span class="dc-sub">짧은 여행</span></span></label>
+        <label class="day-option"><input type="radio" name="days" value="4" /><span class="day-chip"><span class="dc-nights">3</span><span class="dc-label">박 4일</span><span class="dc-sub">주말+</span></span></label>
+        <label class="day-option"><input type="radio" name="days" value="5" checked /><span class="day-chip"><span class="dc-nights">4</span><span class="dc-label">박 5일</span><span class="dc-sub">인기 일정</span></span></label>
+        <label class="day-option"><input type="radio" name="days" value="7" /><span class="day-chip"><span class="dc-nights">6</span><span class="dc-label">박 7일</span><span class="dc-sub">여유롭게</span></span></label>
+        <label class="day-option"><input type="radio" name="days" value="10" /><span class="day-chip"><span class="dc-nights">9</span><span class="dc-label">박 10일</span><span class="dc-sub">장기 여행</span></span></label>
+      </div>
+    </div>
+
+    <!-- 여행 스타일 -->
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <label style="font-size:13px;color:#666;">여행 스타일</label>
+        <span style="font-size:12px;color:#888;">복수 선택 가능</span>
+      </div>
+      <div class="style-options">
+        <label class="style-option"><input type="checkbox" name="style" value="관광 중심" checked /><span class="style-chip">🏛 관광 중심</span></label>
+        <label class="style-option"><input type="checkbox" name="style" value="맛집 탐방" /><span class="style-chip">🍜 맛집 탐방</span></label>
+        <label class="style-option"><input type="checkbox" name="style" value="자연·힐링" /><span class="style-chip">🌿 자연·힐링</span></label>
+        <label class="style-option"><input type="checkbox" name="style" value="역사·문화" /><span class="style-chip">🏯 역사·문화</span></label>
+        <label class="style-option"><input type="checkbox" name="style" value="액티비티" /><span class="style-chip">🎯 액티비티</span></label>
+        <label class="style-option"><input type="checkbox" name="style" value="쇼핑·트렌디" /><span class="style-chip">🛍 쇼핑·트렌디</span></label>
+        <label class="style-option"><input type="checkbox" name="style" value="허니문·로맨틱" /><span class="style-chip">💑 허니문·로맨틱</span></label>
+      </div>
+    </div>
+
+    <div class="err-box" id="err-input">출발 도시, 목적지, 여행 스타일을 확인해 주세요.</div>
+    <div class="err-box" id="err-api"></div>
+    <button class="generate-btn" id="gen-btn">4가지 등급 루트 모두 보기 ↗</button>
+  </div>
+
+  <div class="loading" id="load-routes">
+    <div style="font-size:15px;font-weight:500;" class="dot-anim">4가지 등급 루트를 분석하고 있어요</div>
+    <div style="margin-top:6px;font-size:13px;color:#666;">최저가부터 럭셔리까지 AI가 최적 루트를 짜고 있습니다</div>
+  </div>
+
+  <div id="sec-routes" class="hidden">
+    <div style="font-size:15px;font-weight:500;margin-bottom:10px;" id="routes-title"></div>
+    <div class="routes-grid" id="routes-grid"></div>
+    <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">원하는 등급을 선택하면 대중교통 동선 포함 상세 일정을 볼 수 있어요</p>
+  </div>
+
+  <div class="loading" id="load-detail">
+    <div style="font-size:15px;font-weight:500;" class="dot-anim">대중교통 동선 포함 상세 일정 생성 중</div>
+    <div style="margin-top:6px;font-size:13px;color:#666;">장소간 이동 수단과 소요 시간도 함께 정리합니다</div>
+  </div>
+
+  <div id="sec-detail" class="hidden">
+    <button class="back-btn" id="back-btn">← 루트 선택으로 돌아가기</button>
+    <div class="card">
+      <div id="detail-badge" style="margin-bottom:10px;"></div>
+      <div class="sbar" id="detail-summary"></div>
+    </div>
+    <div id="detail-itinerary"></div>
+    <div class="card"><div class="section-title">여행 꿀팁</div><div class="tips-grid" id="detail-tips"></div></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var G = [
+    {key:'budget', label:'최저가', icon:'🎒', gc:'g-budget', cc:'c-budget', dc:'d-budget', desc:'호스텔·게스트하우스, 길거리음식, 대중교통, 무료 관광지 최대 활용'},
+    {key:'value',  label:'가성비', icon:'👍', gc:'g-value',  cc:'c-value',  dc:'d-value',  desc:'저가~중가 호텔, 현지 맛집 위주, 유료 명소 선별, 가끔 택시'},
+    {key:'normal', label:'보통',   icon:'🏨', gc:'g-normal', cc:'c-normal', dc:'d-normal', desc:'비즈니스~3성 호텔, 일반 레스토랑, 편의 교통'},
+    {key:'luxury', label:'럭셔리', icon:'✨', gc:'g-luxury', cc:'c-luxury', dc:'d-luxury', desc:'5성 호텔·리조트, 파인다이닝, 전용 차량, 프리미엄 투어'}
+  ];
+
+  // 이동수단 → 이모지·스타일 매핑
+  var TR_MAP = {
+    '지하철':  { icon:'🚇', cls:'tr-subway' },
+    '전철':    { icon:'🚇', cls:'tr-subway' },
+    'MRT':     { icon:'🚇', cls:'tr-subway' },
+    'MTR':     { icon:'🚇', cls:'tr-subway' },
+    '버스':    { icon:'🚌', cls:'tr-bus'    },
+    '도보':    { icon:'🚶', cls:'tr-walk'   },
+    '걷기':    { icon:'🚶', cls:'tr-walk'   },
+    '택시':    { icon:'🚕', cls:'tr-taxi'   },
+    '그랩':    { icon:'🚕', cls:'tr-taxi'   },
+    '기차':    { icon:'🚆', cls:'tr-train'  },
+    '신칸센':  { icon:'🚅', cls:'tr-train'  },
+    '트램':    { icon:'🚊', cls:'tr-tram'   },
+    '페리':    { icon:'⛴',  cls:'tr-ferry'  },
+    '보트':    { icon:'⛴',  cls:'tr-ferry'  },
+  };
+
+  function getTransitStyle(mode) {
+    if (!mode) return { icon:'🚌', cls:'tr-bus' };
+    for (var key in TR_MAP) {
+      if (mode.indexOf(key) !== -1) return TR_MAP[key];
+    }
+    return { icon:'🚌', cls:'tr-bus' };
+  }
+
+  var routesData = null, params = {};
+
+  // ─── API Key 관리 ───
+  function getApiKey(){ return (localStorage.getItem('anthropic_api_key') || '').trim(); }
+
+  (function initKeyUI(){
+    var keyInput = $('api-key');
+    var status   = $('apikey-status');
+
+    // 저장된 키 불러오기
+    var saved = getApiKey();
+    if (saved) {
+      keyInput.value = saved;
+      status.style.color = '#0F6E56';
+      status.textContent = '✓ 저장된 키가 있습니다';
+    }
+
+    // 보기/숨기기 토글
+    $('key-toggle').addEventListener('click', function(){
+      if (keyInput.type === 'password') { keyInput.type = 'text'; this.textContent = '🙈'; }
+      else { keyInput.type = 'password'; this.textContent = '👁'; }
+    });
+
+    // 저장 버튼
+    $('key-save-btn').addEventListener('click', function(){
+      var val = keyInput.value.trim();
+      if (!val) {
+        status.style.color = '#8B1E1E'; status.textContent = 'API Key를 입력해 주세요.'; return;
+      }
+      if (!val.startsWith('sk-ant-')) {
+        status.style.color = '#8B1E1E'; status.textContent = '올바른 Anthropic API Key 형식이 아닙니다 (sk-ant- 로 시작해야 합니다).'; return;
+      }
+      localStorage.setItem('anthropic_api_key', val);
+      status.style.color = '#0F6E56'; status.textContent = '✓ 저장되었습니다';
+      setTimeout(function(){ status.textContent = ''; }, 2500);
+    });
+
+    // 입력 중 상태 초기화
+    keyInput.addEventListener('input', function(){
+      status.textContent = '';
+    });
+  })();
+
+  function $(id){ return document.getElementById(id); }
+  function show(id){ $(id).classList.remove('hidden'); }
+  function hide(id){ $(id).classList.add('hidden'); }
+  function showL(id){ $(id).classList.add('visible'); }
+  function hideL(id){ $(id).classList.remove('visible'); }
+
+  function getSelectedDays(){
+    var checked = document.querySelector('input[name="days"]:checked');
+    return checked ? checked.value : '5';
+  }
+  function getSelectedStyles(){
+    return Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; });
+  }
+  function escapeHtml(str){
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  async function callAI(prompt, maxTokens) {
+    var apiKey = getApiKey();
+    if (!apiKey) throw new Error('API Key가 없습니다. 상단에서 Anthropic API Key를 입력하고 저장해 주세요.');
+    var response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: maxTokens || 1400,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    if (!response.ok) {
+      var t = await response.text();
+      var msg = t.slice(0, 200);
+      try { var j = JSON.parse(t); msg = (j.error && j.error.message) || msg; } catch(e){}
+      if (response.status === 401) msg = 'API Key가 올바르지 않습니다. 다시 확인해 주세요.';
+      if (response.status === 402) msg = '크레딧이 부족합니다. Anthropic Console에서 결제를 확인해 주세요.';
+      if (response.status === 429) msg = '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+      throw new Error(msg);
+    }
+    var d = await response.json();
+    var txt = (d.content || []).map(function(c){ return c.text || ''; }).join('');
+    var m = txt.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('JSON 응답을 찾지 못했습니다: ' + txt.slice(0, 150));
+    return JSON.parse(m[0]);
+  }
+
+  // ─── 생성 버튼 ───
+  $('gen-btn').addEventListener('click', function(){
+    var origin = $('origin').value.trim();
+    var dest = $('dest').value.trim();
+    var selectedStyles = getSelectedStyles();
+    $('err-input').style.display = 'none';
+    $('err-api').style.display = 'none';
+    if (!origin || !dest || !selectedStyles.length) { $('err-input').style.display = 'block'; return; }
+
+    var daysVal = getSelectedDays();
+    var dlabels = {'3':'2박 3일','4':'3박 4일','5':'4박 5일','7':'6박 7일','10':'9박 10일'};
+    params = { origin:origin, dest:dest, days:daysVal, styles:selectedStyles,
+               styleLabel:selectedStyles.join(', '), dayLabel:dlabels[daysVal] };
+
+    $('gen-btn').disabled = true;
+    showL('load-routes'); hide('sec-routes'); hide('sec-detail');
+
+    var p = '해외여행 전문 플래너입니다. '+origin+'에서 '+dest+' '+params.dayLabel+' 여행을 계획합니다. 여행 스타일은 '+params.styleLabel+' 입니다. 선택한 스타일을 자연스럽게 섞은 4가지 예산 등급 루트 개요를 JSON으로만 반환하세요. 마크다운 없이 순수 JSON만 반환하세요. 가격은 현지에서 무난하게 참고할 수 있게 대략적으로 쓰세요.\n{"routes":[{"grade_en":"budget","cost_range":"30만~50만원","accommodation":"호스텔","transport":"지하철","highlights":["특징1","특징2","특징3"],"best_for":"추천 대상"},{"grade_en":"value","cost_range":"50만~90만원","accommodation":"저가~중가 호텔","transport":"대중교통+가끔 택시","highlights":["특징1","특징2","특징3"],"best_for":"추천 대상"},{"grade_en":"normal","cost_range":"90만~140만원","accommodation":"3성급 호텔","transport":"편의 교통","highlights":["특징1","특징2","특징3"],"best_for":"추천 대상"},{"grade_en":"luxury","cost_range":"140만원 이상","accommodation":"5성 호텔","transport":"프라이빗 이동 포함","highlights":["특징1","특징2","특징3"],"best_for":"추천 대상"}]}';
+
+    callAI(p, 1400).then(function(d){
+      routesData = d; renderRoutes();
+    }).catch(function(e){
+      $('err-api').textContent = '오류: ' + e.message;
+      $('err-api').style.display = 'block';
+    }).finally(function(){
+      hideL('load-routes'); $('gen-btn').disabled = false;
+    });
+  });
+
+  // ─── 루트 카드 렌더 ───
+  function renderRoutes(){
+    $('routes-title').textContent = params.dest + ' ' + params.dayLabel + ' — 등급별 추천 루트';
+    var html = '';
+    (routesData.routes || []).forEach(function(r){
+      var g = G.find(function(x){ return x.key === r.grade_en; }) || G[1];
+      var hls = (r.highlights || []).map(function(h){
+        return '<div class="hlrow"><div class="hldot '+g.dc+'"></div><span>'+escapeHtml(h)+'</span></div>';
+      }).join('');
+      html += '<div class="route-card" data-key="'+escapeHtml(r.grade_en)+'">' +
+        '<div class="rch"><div class="grade-icon">'+g.icon+'</div><div style="flex:1">' +
+        '<div style="display:flex;align-items:center;gap:7px;"><span class="grade-name">'+g.label+'</span><span class="gbadge '+g.gc+'">'+g.label+'</span></div>' +
+        '<div class="grade-cost '+g.cc+'">'+escapeHtml(r.cost_range||'')+'</div></div></div>' +
+        '<div class="rhl">'+hls+
+        '<div style="font-size:12px;color:#888;margin-top:6px;padding-top:6px;border-top:0.5px solid #e0e0dc">숙소: '+escapeHtml(r.accommodation||'')+' · 교통: '+escapeHtml(r.transport||'')+'</div>' +
+        '<div style="font-size:12px;color:#888;margin-top:2px">추천: '+escapeHtml(r.best_for||'')+'</div></div>' +
+        '<div class="rfooter">이동 동선 포함 상세 일정 보기 →</div></div>';
+    });
+    $('routes-grid').innerHTML = html;
+    document.querySelectorAll('.route-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        document.querySelectorAll('.route-card').forEach(function(c){ c.classList.remove('selected'); });
+        card.classList.add('selected');
+        loadDetail(card.dataset.key);
+      });
+    });
+    show('sec-routes');
+  }
+
+  // ─── 상세 일정 로드 ───
+  function loadDetail(key){
+    var g = G.find(function(x){ return x.key === key; }) || G[1];
+    var r = (routesData.routes || []).find(function(x){ return x.grade_en === key; }) || {};
+    showL('load-detail'); hide('sec-detail');
+    $('load-detail').scrollIntoView({behavior:'smooth', block:'start'});
+
+    var p = '해외여행 전문 플래너입니다. 아래 조건으로 상세 여행 일정을 JSON으로만 반환하세요. 마크다운 없이 순수 JSON만 반환하세요.\n' +
+      '목적지:'+params.dest+'\n기간:'+params.dayLabel+'('+params.days+'일)\n스타일:'+params.styleLabel+'\n' +
+      '예산등급:'+g.label+' - '+g.desc+'\n숙소:'+(r.accommodation||'')+'\n교통:'+(r.transport||'')+'\n\n' +
+      '요청사항:\n' +
+      '1. 선택한 여러 스타일을 하루 일정 안에서 자연스럽게 섞어 주세요.\n' +
+      '2. 각 장소 사이에 transit 필드로 이동 정보를 반드시 포함하세요. transit은 첫 번째 stop에는 넣지 않고 2번째 stop부터 포함합니다.\n' +
+      '   transit 예시: {"mode":"지하철 JR야마노테선","line":"야마노테선 시부야→하라주쿠","duration":"3분","fare":"170엔","tip":"IC카드 사용 추천"}\n' +
+      '   mode는 실제 노선명/수단을 구체적으로 적어주세요 (예: "지하철 2호선", "JR중앙선", "BTS 수쿰빗선", "MRT 블루라인", "도보", "택시").\n\n' +
+      '{"summary":{"total_spots":12,"estimated_total_cost":"50만원","best_season":"봄·가을","currency":"환전/결제 팁 한 줄"},' +
+      '"days":[{"day":1,"title":"첫째 날","stops":[' +
+      '{"order":1,"name":"장소명","description":"한 줄 설명","type":"sight","time":"09:00","cost":"무료","transit":null},' +
+      '{"order":2,"name":"장소명","description":"한 줄 설명","type":"food","time":"12:00","cost":"1인 2000엔","transit":{"mode":"지하철 노선명","line":"A역→B역","duration":"10분","fare":"200엔","tip":"이동 팁"}}' +
+      ']}],' +
+      '"tips":[{"label":"항공","content":"팁"},{"label":"숙소","content":"팁"},{"label":"현지 교통","content":"팁"},{"label":"예산 관리","content":"팁"},{"label":"주의사항","content":"팁"},{"label":"환전·결제","content":"팁"}]}';
+
+    callAI(p, 2800).then(function(plan){
+      renderDetail(plan, g);
+    }).catch(function(e){
+      $('err-api').textContent = '상세 일정 오류: ' + e.message;
+      $('err-api').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }).finally(function(){
+      hideL('load-detail');
+    });
+  }
+
+  // ─── 상세 일정 렌더 ───
+  function renderDetail(plan, g){
+    $('detail-badge').innerHTML = '<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;" class="'+g.gc+'">'+g.icon+' '+g.label+' 등급 상세 일정</div>';
+    var s = plan.summary || {};
+    $('detail-summary').innerHTML =
+      '<div class="schip">목적지 <span>'+escapeHtml(params.dest)+'</span></div>' +
+      '<div class="schip">기간 <span>'+escapeHtml(params.dayLabel)+'</span></div>' +
+      '<div class="schip">스타일 <span>'+escapeHtml(params.styleLabel)+'</span></div>' +
+      '<div class="schip">총 '+escapeHtml(s.total_spots||0)+'개 장소</div>' +
+      '<div class="schip">예산 <span>'+escapeHtml(s.estimated_total_cost||'')+'</span></div>' +
+      '<div class="schip">추천 시기 <span>'+escapeHtml(s.best_season||'')+'</span></div>' +
+      '<div class="schip">'+escapeHtml(s.currency||'')+'</div>';
+
+    var tb = {sight:'b-sight',food:'b-food',hotel:'b-hotel',transport:'b-transport',activity:'b-activity'};
+    var tl = {sight:'관광',food:'맛집',hotel:'숙소',transport:'이동',activity:'액티비티'};
+    var html = '';
+
+    (plan.days || []).forEach(function(day){
+      var stops = '';
+      (day.stops || []).forEach(function(st, i){
+        // 이동 수단 버블 (2번째 stop부터)
+        var transitHtml = '';
+        if (i > 0 && st.transit && st.transit.mode) {
+          var tr = st.transit;
+          var ts = getTransitStyle(tr.mode);
+          transitHtml =
+            '<div class="transit-row">' +
+              '<div class="transit-line"></div>' +
+              '<div class="transit-bubble '+ts.cls+'">' +
+                '<span class="transit-icon">'+ts.icon+'</span>' +
+                '<span>'+escapeHtml(tr.mode)+(tr.line ? ' · '+escapeHtml(tr.line) : '')+'</span>' +
+                (tr.duration ? '<span class="transit-time">⏱ '+escapeHtml(tr.duration)+'</span>' : '') +
+                (tr.fare ? '<span class="transit-time">· '+escapeHtml(tr.fare)+'</span>' : '') +
+              '</div>' +
+            '</div>';
+          // 팁이 있으면 작은 글씨로 추가
+          if (tr.tip) {
+            transitHtml +=
+              '<div style="font-size:11px;color:#aaa;margin:-4px 0 6px 38px;">💡 '+escapeHtml(tr.tip)+'</div>';
+          }
+        } else if (i > 0) {
+          // transit 정보 없을 때 최소 구분선
+          transitHtml = '<div style="width:1px;height:12px;background:#e0e0dc;margin:6px 0 6px 13px;"></div>';
+        }
+
+        stops += transitHtml +
+          '<div class="stop">' +
+            '<div class="snum">'+escapeHtml(st.order)+'</div>' +
+            '<div style="flex:1">' +
+              '<div class="sname">'+escapeHtml(st.name)+
+                (st.time ? ' <span style="font-size:12px;font-weight:400;color:#888">'+escapeHtml(st.time)+'</span>' : '')+
+              '</div>' +
+              '<div class="sdesc">'+escapeHtml(st.description)+'</div>' +
+              '<div class="srow2">' +
+                '<span class="sbadge '+(tb[st.type]||'b-sight')+'">'+(tl[st.type]||'관광')+'</span>' +
+                (st.cost ? '<span class="scost">'+escapeHtml(st.cost)+'</span>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      });
+
+      html +=
+        '<div class="day-card">' +
+          '<div class="day-header">' +
+            '<span>Day '+escapeHtml(day.day)+' — '+escapeHtml(day.title)+'</span>' +
+            '<span style="font-size:12px;color:#888;">'+escapeHtml((day.stops||[]).length)+'개 장소</span>' +
+          '</div>' +
+          '<div class="day-body">'+stops+'</div>' +
+        '</div>';
+    });
+
+    $('detail-itinerary').innerHTML = html;
+    $('detail-tips').innerHTML = (plan.tips || []).map(function(t){
+      return '<div class="tip-item"><div class="tip-label">'+escapeHtml(t.label)+'</div>'+escapeHtml(t.content)+'</div>';
+    }).join('');
+    show('sec-detail');
+    $('sec-detail').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  $('back-btn').addEventListener('click', function(){
+    hide('sec-detail');
+    $('sec-routes').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+})();
+</script>
+</body>
+</html>
