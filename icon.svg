@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#185FA5"/>
-  <text x="256" y="310" font-size="260" text-anchor="middle" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">✈️</text>
-  <rect x="60" y="370" width="392" height="52" rx="26" fill="white" opacity="0.92"/>
-  <text x="256" y="408" font-size="34" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="600" fill="#185FA5">여행 플래너</text>
+<rect width="512" height="512" rx="96" fill="#185FA5"/>
+<circle cx="256" cy="256" r="215" fill="#E6F1FB"/>
+<circle cx="256" cy="256" r="165" fill="#185FA5"/>
+<path d="M128 320c48-78 132-124 226-124" fill="none" stroke="#9FE1CB" stroke-width="20" stroke-linecap="round"/>
+<path d="M266 118 344 270 287 255 248 367 228 255 171 270Z" fill="#fff"/>
 </svg>

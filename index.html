@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AI 해외여행 패키지 추천</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#185FA5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Travel Guide">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; }
@@ -138,6 +144,13 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   .traveler-grid { grid-template-columns:1fr; }
   .pkg-row { grid-template-columns:1fr; }
 }
+
+
+.install-bar { background:#fff; border:0.5px solid #e0e0dc; border-radius:12px; padding:12px 14px; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.install-copy { font-size:13px; color:#555; line-height:1.5; }
+.install-btn { border:none; background:#185FA5; color:#fff; padding:10px 14px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; flex-shrink:0; }
+.install-btn[hidden] { display:none !important; }
+.install-tip { font-size:12px; color:#666; margin-top:6px; }
 
 </style>
 </head>
@@ -1640,19 +1653,43 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     var el = document.querySelector('input[name="style"][value="'+label+'"]');
     if (el) el.checked = true;
   }
-  (function resetOldPwaCache(){
-    if (!('serviceWorker' in navigator)) return;
-    window.addEventListener('load', function(){
-      navigator.serviceWorker.getRegistrations().then(function(regs){
-        return Promise.all(regs.map(function(reg){ return reg.unregister(); }));
-      }).catch(function(){});
-      if (window.caches && caches.keys) {
-        caches.keys().then(function(keys){
-          return Promise.all(keys.map(function(key){ return caches.delete(key); }));
-        }).catch(function(){});
-      }
+  
+  (function setupPwa(){
+    var deferredPrompt = null;
+    var installBtn = $('install-btn');
+    var installTip = $('install-tip');
+
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) installBtn.hidden = false;
+      if (installTip) installTip.textContent = '설치 버튼이 보이면 눌러서 바로 추가할 수 있어요.';
     });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async function(){
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch(e) {}
+        deferredPrompt = null;
+        installBtn.hidden = true;
+      });
+    }
+
+    window.addEventListener('appinstalled', function(){
+      if (installBtn) installBtn.hidden = true;
+      if (installTip) installTip.textContent = '설치가 완료되었어요. 홈 화면에서 앱처럼 실행할 수 있습니다.';
+    });
+
+    if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('./sw.js').catch(function(){});
+      });
+    } else if (installTip) {
+      installTip.textContent = '파일을 직접 여는 방식(file://)에서는 설치가 안 됩니다. GitHub Pages 같은 HTTPS 주소에서 열어야 해요.';
+    }
   })();
+
 })();
 </script>
 </body>

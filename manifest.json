@@ -1,13 +1,13 @@
 {
-  "name": "AI 해외여행 플래너",
-  "short_name": "여행 플래너",
-  "description": "API 없이 작동하는 오프라인 해외여행 루트 추천 PWA",
-  "start_url": "./index.html",
+  "name": "AI 해외여행 패키지 추천",
+  "short_name": "Travel Guide",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#f5f5f3",
   "theme_color": "#185FA5",
   "lang": "ko",
+  "description": "등급별 항공·숙소·여행지·맛집·액티비티를 한 번에 정리해주는 여행 추천 앱",
   "icons": [
     {
       "src": "icon-192.png",
