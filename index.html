@@ -393,6 +393,8 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
           {name:'야네센 산책', area:'닛포리', description:'옛 도쿄의 낮은 주거 골목 감성을 느끼기 좋습니다.'}
         ],
         activity:[
+          {name:'도쿄 디즈니랜드', area:'마이하마', description:'아이 동반 가족 여행에서 만족도가 높고 하루를 온전히 쓰기 좋은 대표 테마파크입니다.'},
+          {name:'도쿄 디즈니씨', area:'마이하마', description:'어른끼리 가도 만족도가 높고 분위기 있는 어트랙션과 야경이 강점인 테마파크입니다.'},
           {name:'팀랩 플래닛츠', area:'도요스', description:'몰입형 미디어아트 체험으로 사진이 잘 나오는 인기 코스입니다.'},
           {name:'도쿄 베이 크루즈', area:'도쿄만', description:'도시 야경을 물 위에서 보는 색다른 체험입니다.'},
           {name:'아키하바라 게임·피규어 탐방', area:'아키하바라', description:'서브컬처와 체험형 상점을 함께 보기 좋습니다.'},
@@ -1117,8 +1119,8 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     var romantic = styles.indexOf('허니문·로맨틱') !== -1;
     if (dest.key === 'tokyo') {
       if (family && gradeKey === 'budget') return '우에노 · 아사쿠사';
-      if (family && (gradeKey === 'value' || gradeKey === 'normal')) return '우에노 · 도쿄역 · 오다이바';
-      if (family && gradeKey === 'luxury') return '긴자 · 도쿄역 · 오다이바';
+      if (family && (gradeKey === 'value' || gradeKey === 'normal')) return '도쿄역 · 오다이바 · 마이하마';
+      if (family && gradeKey === 'luxury') return '긴자 · 도쿄역 · 마이하마';
       if (romantic && gradeKey !== 'budget') return '긴자 · 시부야 · 오모테산도';
       return { budget:'우에노 · 아사쿠사', value:'신주쿠 · 우에노', normal:'시부야 · 신주쿠 · 긴자', luxury:'긴자 · 도쿄역 · 롯폰기' }[gradeKey];
     }
@@ -1154,6 +1156,21 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     return out;
   }
 
+  function forceTokyoDisneyIfRelevant(acts, dest, params, gradeKey){
+    if (!dest || dest.key !== 'tokyo') return acts;
+    var family = Number(params.travelers.children||0) > 0 || Number(params.travelers.infants||0) > 0;
+    var activityTrip = params.styles.indexOf('액티비티') !== -1;
+    if (!family && !activityTrip) return acts;
+    var disneyName = family ? '도쿄 디즈니랜드' : '도쿄 디즈니씨';
+    var disneyItem = (dest.pools.activity || []).find(function(item){ return item.name === disneyName; });
+    if (!disneyItem) return acts;
+    var next = [deepClone(disneyItem)];
+    (acts || []).forEach(function(item){
+      if (item && item.name !== disneyName && next.length < 2) next.push(item);
+    });
+    return next.slice(0, 2);
+  }
+
   function buildPackageBundle(params, dest, gradeKey){
     var seed = hashSeed(params.dest + gradeKey + params.styleLabel + params.peopleLabel);
     var flightRange = getFlightRange(dest, gradeKey, params.travelers);
@@ -1171,6 +1188,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     var sights = pickMany(mergePools(dest, travelPools), 3, seed + 11);
     var foods = pickMany(dest.pools.food || [], 3, seed + 17);
     var acts = pickMany(mergePools(dest, activityPools), 2, seed + 23);
+    acts = forceTokyoDisneyIfRelevant(acts, dest, params, gradeKey);
     var airportFrom = chooseOriginAirport(params.origin);
     var airportTo = chooseDestinationAirport(dest);
     return {
