@@ -157,13 +157,29 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
 .muted-note { font-size:12px; color:#777; line-height:1.6; }
 .family-note { background:#FFF8E7; color:#7A5200; border:0.5px solid #f5d28a; border-radius:8px; padding:8px 10px; font-size:12px; margin-top:8px; }
 
+
+.category-bar { display:flex; gap:8px; flex-wrap:wrap; margin: 0 0 12px; }
+.cat-btn { border:0.5px solid #d8d8d4; background:#f3f3f0; color:#444; border-radius:999px; padding:7px 12px; font-size:12px; cursor:pointer; font-weight:600; }
+.cat-btn.active { background:#E6F1FB; border-color:#185FA5; color:#185FA5; }
+.detail-category-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.detail-cat-card { background:#f9f9f7; border:0.5px solid #e0e0dc; border-radius:10px; padding:12px; }
+.detail-cat-title { font-size:12px; font-weight:700; margin-bottom:6px; color:#1a1a18; display:flex; align-items:center; gap:6px; }
+.detail-cat-main { font-size:13px; color:#2b2b28; line-height:1.6; }
+.detail-cat-sub { font-size:12px; color:#777; margin-top:5px; line-height:1.5; }
+.detail-cat-pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+.detail-cat-pill { font-size:11px; padding:4px 8px; border-radius:999px; background:#fff; border:0.5px solid #e1e1db; color:#555; }
+.date-hint { font-size:12px; color:#888; margin-top:6px; line-height:1.5; }
+@media (max-width:600px){
+  .detail-category-grid { grid-template-columns:1fr; }
+}
+
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
     <h1>AI 해외여행 패키지 추천</h1>
-    <p>추천형 패키지 + 실시간 날씨 + 현재 검색 바로가기를 함께 제공하는 하이브리드 버전입니다.<br>목적지, 인원, 기간, 날짜를 넣으면 4가지 예산 등급으로 항공·숙소·여행지·맛집·액티비티를 한 번에 정리합니다.</p>
+    <p>추천형 패키지 + 실시간 날씨 + 현재 검색 바로가기를 함께 제공하는 하이브리드 버전입니다.<br>목적지, 인원, 출발일·귀국일을 넣으면 4가지 예산 등급으로 항공·숙소·여행지·맛집·액티비티를 한 번에 정리합니다.</p>
   </div>
 
 
@@ -187,27 +203,21 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
 
     <div style="margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <label style="font-size:13px;color:#666;">여행 기간 선택</label>
-        <span style="font-size:12px;color:#888;">하나만 선택</span>
+        <label style="font-size:13px;color:#666;">여행 날짜 선택</label>
+        <span style="font-size:12px;color:#888;">출발일·귀국일 직접 선택</span>
       </div>
-      <div class="days-grid" id="days-grid">
-        <label class="day-option"><input type="radio" name="days" value="3" /><span class="day-chip"><span class="dc-nights">2</span><span class="dc-label">박 3일</span><span class="dc-sub">짧은 여행</span></span></label>
-        <label class="day-option"><input type="radio" name="days" value="4" /><span class="day-chip"><span class="dc-nights">3</span><span class="dc-label">박 4일</span><span class="dc-sub">주말+</span></span></label>
-        <label class="day-option"><input type="radio" name="days" value="5" checked /><span class="day-chip"><span class="dc-nights">4</span><span class="dc-label">박 5일</span><span class="dc-sub">인기 일정</span></span></label>
-        <label class="day-option"><input type="radio" name="days" value="7" /><span class="day-chip"><span class="dc-nights">6</span><span class="dc-label">박 7일</span><span class="dc-sub">여유롭게</span></span></label>
-        <label class="day-option"><input type="radio" name="days" value="10" /><span class="day-chip"><span class="dc-nights">9</span><span class="dc-label">박 10일</span><span class="dc-sub">장기 여행</span></span></label>
+      <div class="input-row" style="margin-bottom:8px;">
+        <div class="input-group">
+          <label>출발 날짜</label>
+          <input type="date" id="start-date" />
+        </div>
+        <div class="input-group">
+          <label>귀국 날짜</label>
+          <input type="date" id="end-date" />
+        </div>
       </div>
-    </div>
-
-    <div class="input-row" style="margin-bottom:14px;">
-      <div class="input-group">
-        <label>출발 날짜</label>
-        <input type="date" id="start-date" />
-      </div>
-      <div class="input-group">
-        <label>일정 날짜 미리보기</label>
-        <div class="date-preview" id="date-preview">날짜를 선택하면 귀국일이 자동 계산됩니다.</div>
-      </div>
+      <div class="date-preview" id="date-preview">출발 날짜와 귀국 날짜를 고르면 여행 기간이 자동 계산됩니다.</div>
+      <div class="date-hint">예: 2026-04-10 출발 / 2026-04-14 귀국 → 4박 5일로 계산</div>
     </div>
 
     <div class="traveler-wrap" style="margin-bottom:14px;">
@@ -277,7 +287,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
       </div>
     </div>
 
-    <div class="err-box" id="err-input">출발 도시, 목적지, 여행 스타일을 확인해 주세요.</div>
+    <div class="err-box" id="err-input">출발 도시, 목적지, 날짜, 여행 스타일을 확인해 주세요.</div>
     <div class="err-box" id="err-api"></div>
     <button class="generate-btn" id="gen-btn">등급별 패키지 한 번에 보기 ↗</button>
   </div>
@@ -301,6 +311,14 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
         <div class="action-grid" id="live-actions"></div>
       </div>
     </div>
+    <div class="category-bar" id="category-bar">
+      <button type="button" class="cat-btn active" data-category="all">통합 보기</button>
+      <button type="button" class="cat-btn" data-category="flight">항공만</button>
+      <button type="button" class="cat-btn" data-category="stay">숙소만</button>
+      <button type="button" class="cat-btn" data-category="sight">여행지만</button>
+      <button type="button" class="cat-btn" data-category="food">맛집만</button>
+      <button type="button" class="cat-btn" data-category="activity">액티비티만</button>
+    </div>
     <div class="routes-grid" id="routes-grid"></div>
     <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">원하는 등급을 선택하면 대중교통 동선까지 포함한 상세 일정이 열립니다</p>
   </div>
@@ -319,6 +337,10 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     <div class="card">
       <div class="section-title">현재 검색 바로가기</div>
       <div class="action-grid" id="detail-actions"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">카테고리별 추천</div>
+      <div class="detail-category-grid" id="detail-categories"></div>
     </div>
     <div id="detail-itinerary"></div>
     <div class="card"><div class="section-title">여행 꿀팁</div><div class="tips-grid" id="detail-tips"></div></div>
@@ -922,15 +944,37 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     }
   ];
 
-  var routesData = null, params = {}, currentDestination = null, weatherState = { status:'idle', days:[], note:'' }, currentRoute = null;
+  var routesData = null, params = {}, currentDestination = null, weatherState = { status:'idle', days:[], note:'' }, currentRoute = null, currentCategory = 'all';
 
   function $(id){ return document.getElementById(id); }
   function show(id){ $(id).classList.remove('hidden'); }
   function hide(id){ $(id).classList.add('hidden'); }
   function showL(id){ $(id).classList.add('visible'); }
   function hideL(id){ $(id).classList.remove('visible'); }
-  function getSelectedDays(){ var checked = document.querySelector('input[name="days"]:checked'); return checked ? checked.value : '5'; }
   function getSelectedStyles(){ return Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; }); }
+  function getTripInfo(){
+    var startValue = $('start-date') ? $('start-date').value : '';
+    var endValue = $('end-date') ? $('end-date').value : '';
+    var start = parseLocalDate(startValue);
+    var end = parseLocalDate(endValue);
+    if (!start || !end) return null;
+    var diffMs = end.getTime() - start.getTime();
+    var diffDays = Math.floor(diffMs / 86400000);
+    if (diffDays < 0) return { invalid:true, start:start, end:end };
+    var days = diffDays + 1;
+    var nights = Math.max(0, days - 1);
+    return {
+      startValue:startValue,
+      endValue:endValue,
+      start:start,
+      end:end,
+      days:days,
+      nights:nights,
+      dayLabel:nights + '박 ' + days + '일',
+      shortLabel: formatDateShort(start) + ' ~ ' + formatDateShort(end),
+      fullLabel: formatDateLong(start) + ' → ' + formatDateLong(end)
+    };
+  }
   function getChildAgeList(){
     var raw = $('child-ages') ? $('child-ages').value : '';
     return String(raw||'').split(',').map(function(v){ return Number(String(v).trim()); }).filter(function(v){ return !isNaN(v) && v >= 0 && v <= 17; });
@@ -1005,10 +1049,18 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     };
   }
   function updateDatePreview(){
-    var info = getDateRangeInfo($('start-date') ? $('start-date').value : '', getSelectedDays());
+    var info = getTripInfo();
     var el = $('date-preview');
     if (!el) return;
-    el.textContent = info ? info.fullLabel : '날짜를 선택하면 귀국일이 자동 계산됩니다.';
+    if (!($('start-date') && $('start-date').value) || !($('end-date') && $('end-date').value)) {
+      el.textContent = '출발 날짜와 귀국 날짜를 고르면 여행 기간이 자동 계산됩니다.';
+      return;
+    }
+    if (info && info.invalid) {
+      el.textContent = '귀국 날짜는 출발 날짜보다 빠를 수 없습니다.';
+      return;
+    }
+    el.textContent = info ? info.fullLabel + ' · ' + info.dayLabel : '출발 날짜와 귀국 날짜를 고르면 여행 기간이 자동 계산됩니다.';
   }
   function updatePeoplePreview(){
     var el = $('people-preview');
@@ -1528,7 +1580,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   }
   function makeHotelSearchUrl(city, params, stayArea){
     var checkin = params.startDate ? plusDaysIso(params.startDate, 0) : '';
-    var checkout = params.startDate ? plusDaysIso(params.startDate, Number(params.days)-1) : '';
+    var checkout = params.endDate ? plusDaysIso(params.endDate, 0) : (params.startDate ? plusDaysIso(params.startDate, Math.max(0, Number(params.days)-1)) : '');
     var url = 'https://www.booking.com/searchresults.html?ss=' + encodeURIComponent((stayArea || city) + ' ' + city) + '&group_adults=' + encodeURIComponent(params.travelers.adults || 1) + '&group_children=' + encodeURIComponent(params.travelers.children || 0) + '&no_rooms=' + encodeURIComponent(getRoomNeed(params.travelers));
     if (checkin) url += '&checkin=' + encodeURIComponent(checkin);
     if (checkout) url += '&checkout=' + encodeURIComponent(checkout);
@@ -1617,33 +1669,66 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     renderWeatherSection();
   }
 
+
+  function renderBundleCategoryBox(title, main, sub, pills){
+    return '<div class="detail-cat-card">' +
+      '<div class="detail-cat-title">' + title + '</div>' +
+      '<div class="detail-cat-main">' + escapeHtml(main || '') + '</div>' +
+      (sub ? '<div class="detail-cat-sub">' + escapeHtml(sub) + '</div>' : '') +
+      ((pills || []).length ? '<div class="detail-cat-pills">' + pills.map(function(item){ return '<span class="detail-cat-pill">' + escapeHtml(item) + '</span>'; }).join('') + '</div>' : '') +
+    '</div>';
+  }
+
+  function renderDetailCategories(bundle){
+    var el = $('detail-categories');
+    if (!el) return;
+    bundle = bundle || {};
+    var flightMain = bundle.flight ? (bundle.flight.title + ' · ' + bundle.flight.budget) : '';
+    var stayMain = bundle.stay ? (bundle.stay.area + ' · ' + bundle.stay.budget) : '';
+    var sightMain = (bundle.sights || []).slice(0,2).map(function(x){ return x.name; }).join(', ');
+    var foodMain = (bundle.foods || []).slice(0,2).map(function(x){ return x.name; }).join(', ');
+    var actMain = (bundle.activities || []).slice(0,2).map(function(x){ return x.name; }).join(', ');
+    el.innerHTML =
+      renderBundleCategoryBox('✈️ 항공', flightMain, bundle.flight ? bundle.flight.summary + ' · ' + bundle.flight.note : '', [bundle.flight && bundle.flight.title].filter(Boolean)) +
+      renderBundleCategoryBox('🛏 숙소', stayMain, bundle.stay ? bundle.stay.summary + ' · ' + bundle.stay.note : '', [bundle.stay && bundle.stay.area].filter(Boolean)) +
+      renderBundleCategoryBox('📍 여행지', sightMain, '관광 동선에 우선 넣을 만한 스폿', (bundle.sights || []).map(function(x){ return x.name; })) +
+      renderBundleCategoryBox('🍽 맛집', foodMain, '일정 중간에 넣기 좋은 식사 후보', (bundle.foods || []).map(function(x){ return x.name; })) +
+      renderBundleCategoryBox('🎟 액티비티', actMain, '하루를 채우는 대표 체험 후보', (bundle.activities || []).map(function(x){ return x.name; }));
+  }
+
+  function applyCategoryFilter(category){
+    currentCategory = category || 'all';
+    document.querySelectorAll('.cat-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.category === currentCategory);
+    });
+    document.querySelectorAll('.route-card .pkg-box').forEach(function(box){
+      box.style.display = (currentCategory === 'all' || box.getAttribute('data-cat') === currentCategory) ? '' : 'none';
+    });
+  }
+
   function renderRoutes(){
-    $('routes-title').textContent = params.dest + ' ' + params.dayLabel + ' · ' + params.peopleLabel + (params.dateLabel ? ' · ' + params.dateLabel : '') + ' — 등급별 패키지 추천';
+    $('routes-title').textContent = params.dest + ' ' + params.dayLabel + (params.dateLabel ? ' · ' + params.dateLabel : '') + ' — 등급별 패키지';
     var html = '';
     (routesData.routes || []).forEach(function(r){
       var g = G.find(function(x){ return x.key === r.grade_en; }) || G[1];
-      var hls = (r.highlights || []).map(function(h){
-        return '<div class="hlrow"><div class="hldot '+g.dc+'"></div><span>'+escapeHtml(h)+'</span></div>';
-      }).join('');
       var bundle = r.bundle || {};
       var sightPills = (bundle.sights || []).slice(0,3).map(function(item){ return '<span class="pkg-pill">'+escapeHtml(item.name)+'</span>'; }).join('');
       var foodPills = (bundle.foods || []).slice(0,3).map(function(item){ return '<span class="pkg-pill">'+escapeHtml(item.name)+'</span>'; }).join('');
-      var actPills = (bundle.activities || []).slice(0,2).map(function(item){ return '<span class="pkg-pill">'+escapeHtml(item.name)+'</span>'; }).join('');
+      var actPills = (bundle.activities || []).slice(0,3).map(function(item){ return '<span class="pkg-pill">'+escapeHtml(item.name)+'</span>'; }).join('');
+      var hls = (r.highlights || []).slice(0,4).map(function(h){ return '<div class="hlrow"><div class="hldot '+g.dc+'"></div><span>'+escapeHtml(h)+'</span></div>'; }).join('');
       html += '<div class="route-card" data-key="'+escapeHtml(r.grade_en)+'">' +
         '<div class="rch"><div class="grade-icon">'+g.icon+'</div><div style="flex:1">' +
         '<div style="display:flex;align-items:center;gap:7px;"><span class="grade-name">'+g.label+'</span><span class="gbadge '+g.gc+'">'+g.label+'</span></div>' +
-        '<div class="grade-cost '+g.cc+'">'+escapeHtml(r.cost_range||'')+'</div></div></div>' +
+        '<div class="grade-cost '+g.cc+'">'+escapeHtml(r.cost_range || '')+'</div></div></div>' +
         '<div class="rhl">'+hls+
-        '<div style="font-size:12px;color:#888;margin-top:6px;padding-top:6px;border-top:0.5px solid #e0e0dc">숙소: '+escapeHtml(r.accommodation||'')+' · 교통: '+escapeHtml(r.transport||'')+'</div>' +
-        '<div style="font-size:12px;color:#888;margin-top:2px">추천: '+escapeHtml(r.best_for||'')+'</div></div>' +
+        '<div style="font-size:12px;color:#666;margin-top:6px;padding-top:6px;border-top:0.5px solid #e0e0dc">숙소: '+escapeHtml(r.accommodation||'')+' · 교통: '+escapeHtml(r.transport||'')+'</div>'+
+        '<div style="font-size:12px;color:#666;margin-top:2px">추천: '+escapeHtml(r.best_for||'')+'</div></div>'+
         '<div class="package-grid">' +
-          '<div class="pkg-row">' +
-            '<div class="pkg-box"><div class="pkg-title">✈️ 항공</div><div class="pkg-main">'+escapeHtml(bundle.flight ? bundle.flight.title : '')+'</div><div class="pkg-sub">'+escapeHtml(bundle.flight ? bundle.flight.summary : '')+' · '+escapeHtml(bundle.flight ? bundle.flight.budget : '')+'</div></div>' +
-            '<div class="pkg-box"><div class="pkg-title">🛏 숙소</div><div class="pkg-main">'+escapeHtml(bundle.stay ? bundle.stay.area : '')+'</div><div class="pkg-sub">'+escapeHtml(bundle.stay ? bundle.stay.summary : '')+' · '+escapeHtml(bundle.stay ? bundle.stay.budget : '')+'</div></div>' +
-          '</div>' +
-          '<div class="pkg-box"><div class="pkg-title">📍 여행지</div><div class="pkg-main">'+escapeHtml((bundle.sights||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+sightPills+'</div></div>' +
-          '<div class="pkg-box"><div class="pkg-title">🍽 맛집</div><div class="pkg-main">'+escapeHtml((bundle.foods||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+foodPills+'</div></div>' +
-          '<div class="pkg-box"><div class="pkg-title">🎟 액티비티</div><div class="pkg-main">'+escapeHtml((bundle.activities||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+actPills+'</div></div>' +
+          '<div class="pkg-box" data-cat="flight"><div class="pkg-title">✈️ 항공</div><div class="pkg-main">'+escapeHtml(bundle.flight ? bundle.flight.title : '')+'</div><div class="pkg-sub">'+escapeHtml(bundle.flight ? bundle.flight.summary : '')+' · '+escapeHtml(bundle.flight ? bundle.flight.budget : '')+'</div></div>' +
+          '<div class="pkg-box" data-cat="stay"><div class="pkg-title">🛏 숙소</div><div class="pkg-main">'+escapeHtml(bundle.stay ? bundle.stay.area : '')+'</div><div class="pkg-sub">'+escapeHtml(bundle.stay ? bundle.stay.summary : '')+' · '+escapeHtml(bundle.stay ? bundle.stay.budget : '')+'</div></div>' +
+          '<div class="pkg-box" data-cat="sight"><div class="pkg-title">📍 여행지</div><div class="pkg-main">'+escapeHtml((bundle.sights||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+sightPills+'</div></div>' +
+          '<div class="pkg-box" data-cat="food"><div class="pkg-title">🍽 맛집</div><div class="pkg-main">'+escapeHtml((bundle.foods||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+foodPills+'</div></div>' +
+          '<div class="pkg-box" data-cat="activity"><div class="pkg-title">🎟 액티비티</div><div class="pkg-main">'+escapeHtml((bundle.activities||[]).slice(0,1).map(function(x){return x.name;}).join(', '))+'</div><div class="pkg-list">'+actPills+'</div></div>' +
         '</div>' +
         '<div class="rfooter">상세 일정과 대중교통 동선 보기 →</div></div>';
     });
@@ -1658,6 +1743,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
         loadDetail(card.dataset.key);
       });
     });
+    applyCategoryFilter(currentCategory);
     show('sec-routes');
   }
 
@@ -1696,6 +1782,7 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
       '<div class="schip">'+escapeHtml(s.currency||'')+'</div>';
 
     renderActionLinks('detail-actions', getLiveActionLinks(params, currentDestination, currentRoute));
+    renderDetailCategories(currentRoute && currentRoute.bundle ? currentRoute.bundle : {});
 
     var tb = {sight:'b-sight',food:'b-food',hotel:'b-hotel',transport:'b-transport',activity:'b-activity'};
     var tl = {sight:'관광',food:'맛집',hotel:'숙소',transport:'이동',activity:'액티비티'};
@@ -1762,21 +1849,29 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
     var origin = $('origin').value.trim();
     var dest = $('dest').value.trim();
     var selectedStyles = getSelectedStyles();
+    var tripInfo = getTripInfo();
     $('err-input').style.display = 'none';
     $('err-api').style.display = 'none';
     if (!origin || !dest || !selectedStyles.length) { $('err-input').style.display = 'block'; return; }
+    if (!tripInfo || tripInfo.invalid) {
+      $('err-input').textContent = '출발 날짜와 귀국 날짜를 올바르게 선택해 주세요.';
+      $('err-input').style.display = 'block';
+      return;
+    }
+    if (tripInfo.days < 2) {
+      $('err-input').textContent = '최소 1박 2일 이상으로 선택해 주세요.';
+      $('err-input').style.display = 'block';
+      return;
+    }
 
-    var daysVal = getSelectedDays();
     var travelers = getTravelerGroups();
-    var dlabels = {'3':'2박 3일','4':'3박 4일','5':'4박 5일','7':'6박 7일','10':'9박 10일'};
-    var startDateValue = $('start-date').value;
-    var dateInfo = getDateRangeInfo(startDateValue, daysVal);
-    params = { origin:origin, dest:dest, days:daysVal, styles:selectedStyles,
+    params = { origin:origin, dest:dest, days:String(tripInfo.days), styles:selectedStyles,
                travelers: travelers, peopleCount: getTravelerTotal(travelers), peopleLabel: formatPeopleLabel(travelers),
-               styleLabel:selectedStyles.join(', '), dayLabel:dlabels[daysVal],
-               startDateValue:startDateValue, startDate: dateInfo ? dateInfo.start : null,
-               dateLabel: dateInfo ? dateInfo.shortLabel : '',
-               dateFullLabel: dateInfo ? dateInfo.fullLabel : '' };
+               styleLabel:selectedStyles.join(', '), dayLabel:tripInfo.dayLabel,
+               startDateValue:tripInfo.startValue, endDateValue:tripInfo.endValue,
+               startDate: tripInfo.start, endDate: tripInfo.end,
+               dateLabel: tripInfo.shortLabel,
+               dateFullLabel: tripInfo.fullLabel };
     currentDestination = resolveDestination(dest);
 
     $('gen-btn').disabled = true;
@@ -1820,13 +1915,20 @@ input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; bor
   var mm = String(today.getMonth()+1).padStart(2, '0');
   var dd = String(today.getDate()).padStart(2, '0');
   if ($('start-date')) $('start-date').value = yyyy + '-' + mm + '-' + dd;
+  var defaultEnd = addDays(today, 4);
+  if ($('end-date')) $('end-date').value = defaultEnd.getFullYear() + '-' + String(defaultEnd.getMonth()+1).padStart(2, '0') + '-' + String(defaultEnd.getDate()).padStart(2, '0');
   updateDatePreview();
   toggleChildAgeInput();
   updatePeoplePreview();
   if ($('start-date')) $('start-date').addEventListener('change', updateDatePreview);
+  if ($('end-date')) $('end-date').addEventListener('change', updateDatePreview);
   ['adult-count','child-count','infant-count'].forEach(function(id){ if ($(id)) $(id).addEventListener('change', updatePeoplePreview); });
   if ($('child-ages')) $('child-ages').addEventListener('input', updatePeoplePreview);
-  document.querySelectorAll('input[name="days"]').forEach(function(el){ el.addEventListener('change', updateDatePreview); });
+  document.querySelectorAll('.cat-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      applyCategoryFilter(btn.dataset.category || 'all');
+    });
+  });
 
   function checkStyle(label){
     var el = document.querySelector('input[name="style"][value="'+label+'"]');
