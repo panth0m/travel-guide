@@ -27,12 +27,6 @@ input[type=text],input[type=date],select{width:100%;padding:9px 11px;border:0.5p
 input:focus,select:focus{outline:none;border-color:#185FA5;}
 .date-preview{background:#f0f4fa;border-radius:9px;padding:9px 12px;font-size:13px;color:#444;margin-top:6px;line-height:1.5;}
 
-/* API 키 */
-.apikey-wrap{display:flex;align-items:center;gap:8px;}
-.apikey-wrap input{flex:1;}
-.apikey-toggle{background:none;border:0.5px solid #ccc;border-radius:8px;padding:8px 12px;font-size:13px;color:#666;cursor:pointer;white-space:nowrap;}
-.apikey-note{font-size:12px;color:#888;margin-top:6px;line-height:1.5;}
-
 /* 인원 */
 .traveler-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;}
 .traveler-box{display:flex;flex-direction:column;gap:4px;}
@@ -176,15 +170,7 @@ input:focus,select:focus{outline:none;border-color:#185FA5;}
 
   <!-- 설정 카드 -->
   <div class="card" id="form-card">
-    <div class="section-title">Groq API 키 <span style="font-size:10px;background:#E1F5EE;color:#085041;padding:2px 8px;border-radius:999px;font-weight:700;margin-left:4px;">무료</span></div>
-    <div class="apikey-wrap">
-      <input type="password" id="api-key" placeholder="gsk_..." autocomplete="off"/>
-      <button class="apikey-toggle" id="key-toggle">보기</button>
-    </div>
-    <div class="apikey-note">
-      완전 무료 · 카드 등록 불필요 · 빠른 응답 속도<br>
-      <a href="https://console.groq.com/keys" target="_blank" style="color:#185FA5;font-weight:600;">① console.groq.com 접속 → ② 구글 로그인 → ③ API Keys → Create API Key → 복사 →</a>
-    </div>
+
 
     <div class="section-title" style="margin-top:18px;">여행 날짜</div>
     <div class="input-row">
@@ -302,10 +288,14 @@ input:focus,select:focus{outline:none;border-color:#185FA5;}
 'use strict';
 
 var GRADES = [
-  {key:'budget', label:'최저가', icon:'🎒', gc:'g-budget', cc:'c-budget', costDesc:'1인 30만~55만원', tagline:'알뜰하게 알차게'},
-  {key:'value',  label:'가성비', icon:'👍', gc:'g-value',  cc:'c-value',  costDesc:'1인 55만~90만원', tagline:'합리적 비용 최대 만족'},
-  {key:'normal', label:'보통',   icon:'🏨', gc:'g-normal', cc:'c-normal', costDesc:'1인 90만~150만원', tagline:'편안하고 여유 있게'},
-  {key:'luxury', label:'럭셔리', icon:'✨', gc:'g-luxury', cc:'c-luxury', costDesc:'1인 150만원+', tagline:'프리미엄 도쿄 경험'}
+  {key:'budget', label:'최저가', icon:'🎒', gc:'g-budget', cc:'c-budget',
+   costDesc:'1인 30만~55만원', tagline:'알뜰하게 알차게'},
+  {key:'value',  label:'가성비', icon:'👍', gc:'g-value',  cc:'c-value',
+   costDesc:'1인 55만~90만원', tagline:'합리적 비용 최대 만족'},
+  {key:'normal', label:'보통',   icon:'🏨', gc:'g-normal', cc:'c-normal',
+   costDesc:'1인 90만~150만원', tagline:'편안하고 여유 있게'},
+  {key:'luxury', label:'럭셔리', icon:'✨', gc:'g-luxury', cc:'c-luxury',
+   costDesc:'1인 150만원+', tagline:'프리미엄 도쿄 경험'}
 ];
 
 var PLAN_VARIANTS = [
@@ -316,75 +306,53 @@ var PLAN_VARIANTS = [
   {id:'E', theme:'하이라이트 압축형', focus:'반드시 봐야 할 핵심 명소만 집중 공략'}
 ];
 
+/* ─── 상태 ─── */
 var state = {
-  apiKey: '',
   params: {},
   allPlans: {},
   activeGrade: 'budget',
+  activePlan: null,
   weather: []
 };
 
+/* ─── 유틸 ─── */
 function $(id){ return document.getElementById(id); }
 function show(id){ $(id).classList.remove('hidden'); }
 function hide(id){ $(id).classList.add('hidden'); }
 function showL(id){ $(id).classList.add('visible'); }
 function hideL(id){ $(id).classList.remove('visible'); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function pad(n){ return String(n).padStart(2,'0'); }
-
-function sanitizeDateString(raw){
-  raw = String(raw||'').trim().replace(/[^\d-]/g,'');
-  if (/^\d{4}-\d{2}-\d{2}\d+$/.test(raw)) raw = raw.slice(0,10);
-  if (/^\d{4}-\d{2}-\d{3,}$/.test(raw)) raw = raw.slice(0,10);
-  if (/^\d{8}$/.test(raw)) raw = raw.slice(0,4)+'-'+raw.slice(4,6)+'-'+raw.slice(6,8);
-  var m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  if (m) raw = m[1]+'-'+pad(m[2])+'-'+pad(m[3]);
-  return raw;
-}
 
 function parseDate(v){
-  v = sanitizeDateString(v);
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+  if(!v||!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
   var p=v.split('-').map(Number);
-  var d=new Date(p[0],p[1]-1,p[2]);
-  if(d.getFullYear()!==p[0] || d.getMonth()!==p[1]-1 || d.getDate()!==p[2]) return null;
-  return d;
-}
-function toDateInputValue(d){
-  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-}
-function normalizeDateField(id){
-  var el=$(id);
-  if(!el) return '';
-  var cleaned=sanitizeDateString(el.value);
-  var d=parseDate(cleaned);
-  if(d){ el.value=toDateInputValue(d); return el.value; }
-  if(cleaned.length>=10) el.value=cleaned.slice(0,10);
-  return el.value;
+  return new Date(p[0],p[1]-1,p[2]);
 }
 function addDays(d,n){
   var r=new Date(d.getFullYear(),d.getMonth(),d.getDate());
-  r.setDate(r.getDate()+n);
-  return r;
+  r.setDate(r.getDate()+n); return r;
 }
-function fmtShort(d){ return (d.getMonth()+1)+'/'+d.getDate(); }
+function fmtShort(d){ return (d.getMonth()+1)+'/'+(d.getDate()); }
 function fmtLong(d){
   var days=['일','월','화','수','목','금','토'];
   return d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate()+' ('+days[d.getDay()]+')';
 }
 
+/* ─── 초기화 ─── */
 (function init(){
-  var today=new Date();
-  var s=$('start-date'), e=$('end-date');
-  if(s) s.value=toDateInputValue(today);
-  if(e) e.value=toDateInputValue(addDays(today,4));
+  var today = new Date();
+  var s = $('start-date'), e = $('end-date');
+  if(s) s.value = today.getFullYear()+'-'+pad(today.getMonth()+1)+'-'+pad(today.getDate());
+  var def = addDays(today, 4);
+  if(e) e.value = def.getFullYear()+'-'+pad(def.getMonth()+1)+'-'+pad(def.getDate());
   updateDatePreview();
   updatePeoplePreview();
 })();
 
+function pad(n){ return String(n).padStart(2,'0'); }
+
+/* ─── 날짜 미리보기 ─── */
 function updateDatePreview(){
-  normalizeDateField('start-date');
-  normalizeDateField('end-date');
   var s=parseDate($('start-date')&&$('start-date').value);
   var e=parseDate($('end-date')&&$('end-date').value);
   var el=$('date-preview');
@@ -395,40 +363,31 @@ function updateDatePreview(){
   el.textContent=fmtLong(s)+' → '+fmtLong(e)+' · '+diff+'박 '+(diff+1)+'일';
 }
 
+/* ─── 인원 미리보기 ─── */
 function updatePeoplePreview(){
   var a=Number($('adult-count').value||2);
   var c=Number($('child-count').value||0);
   var i=Number($('infant-count').value||0);
+  var el=$('people-preview');
   var parts=['성인 '+a+'명'];
   if(c>0) parts.push('어린이 '+c+'명');
   if(i>0) parts.push('유아 '+i+'명');
-  $('people-preview').textContent=parts.join(' · ')+' · 총 '+(a+c+i)+'명';
+  if(el) el.textContent=parts.join(' · ')+' · 총 '+(a+c+i)+'명';
   if(c>0) show('child-age-wrap'); else hide('child-age-wrap');
 }
 
-$('key-toggle').addEventListener('click', function(){
-  var inp=$('api-key');
-  if(inp.type==='password'){ inp.type='text'; this.textContent='숨기기'; }
-  else{ inp.type='password'; this.textContent='보기'; }
-});
-
-['start-date','end-date'].forEach(function(id){
-  var el=$(id);
-  if(!el) return;
-  ['change','blur'].forEach(function(evt){
-    el.addEventListener(evt, function(){
-      normalizeDateField(id);
-      updateDatePreview();
-    });
-  });
-});
+/* ─── 이벤트 ─── */
+if($('start-date')) $('start-date').addEventListener('change', updateDatePreview);
+if($('end-date')) $('end-date').addEventListener('change', updateDatePreview);
 ['adult-count','child-count','infant-count'].forEach(function(id){
   if($(id)) $(id).addEventListener('change', updatePeoplePreview);
 });
 
+/* 퀵 프리셋 */
 document.querySelectorAll('.quick-btn').forEach(function(btn){
   btn.addEventListener('click',function(){
-    document.querySelectorAll('input[name="style"]').forEach(function(el){ el.checked=false; });
+    var all=document.querySelectorAll('input[name="style"]');
+    all.forEach(function(el){ el.checked=false; });
     var p=btn.dataset.preset;
     if(p==='family') check('관광 중심','액티비티');
     if(p==='couple') check('관광 중심','허니문·로맨틱','맛집 탐방');
@@ -444,237 +403,183 @@ function check(){
   });
 }
 
+/* ─── 메인 생성 ─── */
 $('gen-btn').addEventListener('click', async function(){
+  var startVal = $('start-date').value;
+  var endVal = $('end-date').value;
+  var styles = Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; });
+
   $('err-box').style.display='none';
-  normalizeDateField('start-date');
-  normalizeDateField('end-date');
 
-  var apiKey=($('api-key').value||'').trim();
-  var startVal=normalizeDateField('start-date');
-  var endVal=normalizeDateField('end-date');
-  var styles=Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; });
-
-  if(!apiKey){ showErr('Groq API 키를 입력해 주세요.'); return; }
-  if(!startVal || !endVal){ showErr('출발·귀국 날짜를 선택해 주세요.'); return; }
+  if(!startVal||!endVal){ showErr('출발·귀국 날짜를 선택해 주세요.'); return; }
   if(!styles.length){ showErr('여행 스타일을 하나 이상 선택해 주세요.'); return; }
 
   var startD=parseDate(startVal), endD=parseDate(endVal);
-  if(!startD || !endD || endD<startD){ showErr('날짜를 다시 확인해 주세요.'); return; }
+  if(!startD||!endD||endD<startD){ showErr('날짜를 다시 확인해 주세요.'); return; }
   var nights=Math.floor((endD-startD)/86400000);
   var days=nights+1;
   if(days<2){ showErr('최소 1박 2일 이상으로 선택해 주세요.'); return; }
 
-  state.apiKey=apiKey;
-  state.params={
+  var a=Number($('adult-count').value||2);
+  var c=Number($('child-count').value||0);
+  var inf=Number($('infant-count').value||0);
+  var childAges=($('child-ages').value||'').trim();
+  var isFamily=c>0||inf>0;
+
+  state.params = {
     startVal:startVal, endVal:endVal, startD:startD, endD:endD,
     nights:nights, days:days, dayLabel:nights+'박 '+days+'일',
-    adults:Number($('adult-count').value||2),
-    children:Number($('child-count').value||0),
-    infants:Number($('infant-count').value||0),
-    childAges:($('child-ages').value||'').trim(),
-    styles:styles,
-    styleLabel:styles.join(' · ')
+    adults:a, children:c, infants:inf, childAges:childAges, isFamily:isFamily,
+    styles:styles, styleLabel:styles.join(' · '),
+    dateLabel:fmtShort(startD)+' ~ '+fmtShort(endD)
   };
-  state.params.isFamily = state.params.children>0 || state.params.infants>0;
-  state.params.dateLabel = fmtShort(startD)+' ~ '+fmtShort(endD);
 
   $('gen-btn').disabled=true;
-  hide('sec-detail');
-  hide('sec-result');
   showL('loading');
-  setLoadingText('AI가 플랜 요약을 만들고 있어요', '등급별 5가지 플랜 요약을 순서대로 생성 중입니다');
+  hide('sec-result');
+  hide('sec-detail');
 
+  /* 날씨 병렬 로드 */
   fetchWeather(startVal, days);
-  state.allPlans={};
-  var steps=['최저가 요약 생성 중','가성비 요약 생성 중','보통 요약 생성 중','럭셔리 요약 생성 중'];
-  setProgress(0, steps);
 
-  try{
+  /* 4개 등급 × 5가지 플랜 순차 생성 */
+  state.allPlans = {};
+  var STEPS = ['최저가 플랜 생성 중', '가성비 플랜 생성 중', '보통 플랜 생성 중', '럭셔리 플랜 생성 중'];
+  setProgress(0, STEPS);
+
+  try {
     for(var gi=0; gi<GRADES.length; gi++){
-      setProgress(gi, steps);
-      var grade=GRADES[gi];
-      state.allPlans[grade.key]=await generateGradePlans(grade, state.params);
-      setProgress(gi+1, steps);
+      var grade = GRADES[gi];
+      setProgress(gi, STEPS);
+      state.allPlans[grade.key] = await generateGradePlans(grade, state.params);
+      setProgress(gi+1, STEPS);
     }
     renderResult();
-  }catch(err){
+  } catch(err){
     showErr('생성 오류: '+err.message);
-  }finally{
+  } finally {
     hideL('loading');
     $('gen-btn').disabled=false;
   }
 });
 
-function setLoadingText(title, sub){
-  $('loading-title').textContent=title;
-  $('loading-sub').textContent=sub;
-}
+/* ─── 진행 표시 ─── */
 function setProgress(done, steps){
-  var pct=Math.round(done/steps.length*100);
-  $('progress-fill').style.width=pct+'%';
-  $('progress-steps').innerHTML=steps.map(function(s,i){
-    var cls=i<done?'done':i===done?'active':'';
-    return '<div class="progress-step '+cls+'">'+(i<done?'✓ ':'')+s+'</div>';
-  }).join('');
-  if(done<steps.length) $('loading-sub').textContent=steps[done];
+  var pct = Math.round(done/steps.length*100);
+  var fill=$('progress-fill');
+  if(fill) fill.style.width=pct+'%';
+  var stepsEl=$('progress-steps');
+  if(stepsEl){
+    stepsEl.innerHTML=steps.map(function(s,i){
+      var cls=i<done?'done':i===done?'active':'';
+      return '<div class="progress-step '+cls+'">'+(i<done?'✓ ':'')+s+'</div>';
+    }).join('');
+  }
+  var sub=$('loading-sub');
+  if(sub&&done<steps.length) sub.textContent=steps[done];
 }
 
-async function callGroqJSON(prompt, maxTokens){
-  var res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'Authorization':'Bearer '+state.apiKey
+/* ─── Groq 직접 호출 ─── */
+var GROQ_KEY = 'YOUR_GROQ_API_KEY_HERE'; // ← 여기에 Groq 키 붙여넣기
+
+async function callClaude(prompt){
+  var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + GROQ_KEY
     },
-    body:JSON.stringify({
-      model:'llama-3.3-70b-versatile',
-      max_tokens:maxTokens||2500,
-      temperature:0.2,
-      response_format:{type:'json_object'},
-      messages:[
-        {role:'system', content:'당신은 도쿄 전문 여행 플래너입니다. 반드시 유효한 JSON 객체만 반환하세요. 마크다운, 코드블록, 설명문 금지. 모든 문자열 안의 따옴표는 JSON 규칙을 지키세요.'},
-        {role:'user', content:prompt}
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 4000,
+      temperature: 0.7,
+      messages: [
+        { role: 'system', content: '당신은 도쿄 전문 여행 플래너입니다. 요청받은 JSON 형식을 정확히 지켜 순수 JSON만 반환하세요. { 로 시작하는 순수 JSON만 반환하고 마크다운 코드블록은 절대 사용하지 마세요.' },
+        { role: 'user', content: prompt }
       ]
     })
   });
-
   if(!res.ok){
-    var t=await res.text();
-    var errData;
-    try{ errData=JSON.parse(t); }catch(e){ errData=null; }
-    var msg=errData&&errData.error&&errData.error.message ? errData.error.message : t.slice(0,300);
-    if(res.status===401) throw new Error('API 키가 올바르지 않습니다. Groq 콘솔에서 새 키를 확인해 주세요.');
-    if(res.status===429) throw new Error('요청이 많습니다. 잠시 후 다시 시도해 주세요.');
+    var t = await res.text();
+    var errData; try{ errData=JSON.parse(t); }catch(e){ errData=null; }
+    var msg = errData&&errData.error&&errData.error.message ? errData.error.message : t.slice(0,200);
+    if(res.status===401) throw new Error('Groq API 키를 확인해 주세요.');
+    if(res.status===429) throw new Error('요청 한도 초과입니다. 잠시 후 다시 시도해 주세요.');
     throw new Error('API '+res.status+': '+msg);
   }
-
-  var data=await res.json();
-  var txt=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'';
-  return parseJsonLoosely(txt);
+  var d = await res.json();
+  var txt = (d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'';
+  var m = txt.match(/```json\s*([\s\S]*?)```/); if(m) txt=m[1].trim();
+  var m2 = txt.match(/\{[\s\S]*\}/);
+  if(!m2) throw new Error('JSON 파싱 실패. 다시 시도해 주세요.');
+  try{ return JSON.parse(m2[0]); }
+  catch(e){ throw new Error('JSON 파싱 오류: '+e.message); }
 }
 
-function parseJsonLoosely(txt){
-  txt=String(txt||'').trim();
-  var fence=txt.match(/```json\s*([\s\S]*?)```/i);
-  if(fence) txt=fence[1].trim();
-  var direct=tryParseJson(txt);
-  if(direct) return direct;
-
-  var start=txt.indexOf('{');
-  var end=txt.lastIndexOf('}');
-  if(start!==-1 && end!==-1 && end>start){
-    var sliced=txt.slice(start,end+1);
-    direct=tryParseJson(sliced);
-    if(direct) return direct;
-  }
-
-  var repaired=txt
-    .replace(/,\s*([}\]])/g, '$1')
-    .replace(/[“”]/g,'"')
-    .replace(/[‘’]/g,"'");
-  direct=tryParseJson(repaired);
-  if(direct) return direct;
-
-  if(start!==-1 && end!==-1 && end>start){
-    var repairedSlice=repaired.slice(repaired.indexOf('{'), repaired.lastIndexOf('}')+1);
-    direct=tryParseJson(repairedSlice);
-    if(direct) return direct;
-  }
-
-  throw new Error('AI 응답을 JSON으로 읽지 못했습니다. 다시 시도해 주세요.');
-}
-function tryParseJson(s){
-  try{ return JSON.parse(s); }catch(e){ return null; }
-}
-
+/* ─── 등급별 5가지 플랜 생성 ─── */
 async function generateGradePlans(grade, p){
   var gradeDesc = {
-    budget:'호스텔·캡슐호텔, 저가 맛집, 대중교통 중심, 무료 명소 우선',
-    value:'2~3성급 비즈니스호텔, 검증된 현지 맛집, 대중교통+가끔 택시',
-    normal:'3~4성급 호텔, 예약 가능한 레스토랑, 편한 교통, 대표 유료 명소 포함',
-    luxury:'4~5성급 호텔, 고급 레스토랑, 프리미엄 체험, 여유 있는 일정'
+    budget:'호스텔·캡슐호텔, 편의점·길거리음식·저가 라멘집, IC카드 대중교통 위주, 무료 명소 최대 활용',
+    value:'2~3성급 비즈니스호텔, 검증된 현지 맛집 위주, 대중교통+가끔 택시, 유료 명소 선별',
+    normal:'3~4성급 호텔, 예약 레스토랑 포함, 편의 교통 이용, 주요 유료 명소 포함',
+    luxury:'4~5성 호텔·리조트, 미슐랭·오마카세·파인다이닝, 프라이빗 이동·투어, 프리미엄 체험'
   }[grade.key];
 
-  var familyRule = p.isFamily
-    ? '아이 동반 가족 여행이므로 최소 1개 플랜은 디즈니/수족관/테마형, 나머지도 이동 거리와 식당 친화성을 고려하세요.'
-    : '성인 중심 여행으로 가정하고 분위기와 동선을 고려하세요.';
+  var familyNote = p.isFamily
+    ? '아이 동반 여행이므로 각 플랜마다 어린이 친화 식당·체험·테마파크·수족관을 반드시 포함하고, 이동 거리를 짧게 유지해 주세요. 아이 동반 가능 여부를 각 스폿에 명시해 주세요.'
+    : '';
 
   var variantDesc = PLAN_VARIANTS.map(function(v,i){
-    return (i+1)+'. 플랜 '+v.id+' / '+v.theme+' / '+v.focus;
+    return (i+1)+'. 플랜 '+v.id+' - '+v.theme+': '+v.focus;
   }).join('\n');
 
-  var prompt =
-    '도쿄 여행 플랜 요약 5개를 JSON으로만 반환하세요.\n' +
-    '여행자: 성인 '+p.adults+'명' + (p.children? ', 어린이 '+p.children+'명':'') + (p.infants? ', 유아 '+p.infants+'명':'') + (p.childAges? ' / 어린이 나이 '+p.childAges:'') + '\n' +
-    '기간: '+p.dayLabel+' ('+p.startVal+' ~ '+p.endVal+')\n' +
-    '스타일: '+p.styleLabel+'\n' +
-    '등급: '+grade.label+' / '+grade.costDesc+' / '+gradeDesc+'\n' +
-    familyRule+'\n' +
-    '다음 5개 테마를 각각 하나씩 사용하세요:\n'+variantDesc+'\n' +
-    '각 플랜은 요약만 주세요. 아직 day별 상세일정은 만들지 마세요.\n' +
-    'JSON 스키마:\n' +
-    '{"plans":[{"id":"A","title":"플랜 제목","subtitle":"한 줄 설명","theme":"테마명","tags":["태그1","태그2","태그3"],"cost_per_person":"1인 예상 비용","highlights":["핵심1","핵심2","핵심3"],"flight_hint":"추천 항공 스타일 한 줄","hotel_hint":"추천 숙소 지역/타입 한 줄","best_for":"추천 대상 한 줄"}]}\n' +
-    '규칙:\n' +
-    '- plans는 정확히 5개\n' +
-    '- tags는 각 플랜당 3개\n' +
-    '- highlights는 각 플랜당 3개\n' +
-    '- 짧고 깔끔하게 작성';
+  var prompt = '당신은 도쿄 전문 여행 플래너입니다. 아래 조건으로 5가지 서로 다른 테마의 완성 여행 플랜을 JSON으로만 반환하세요. 마크다운 없이 순수 JSON만 반환하세요.\n\n'
+    +'여행 조건:\n'
+    +'- 출발: 인천국제공항 → 도쿄 (나리타/하네다)\n'
+    +'- 여행 기간: '+p.dayLabel+' ('+p.startVal+' ~ '+p.endVal+')\n'
+    +'- 인원: 성인 '+p.adults+'명'+(p.children>0?', 어린이 '+p.children+'명':'')+(p.infants>0?', 유아 '+p.infants+'명':'')+(p.childAges?' (어린이 나이: '+p.childAges+'세)':'')+'\n'
+    +'- 예산 등급: '+grade.label+' ('+grade.costDesc+')\n'
+    +'- 등급 기준: '+gradeDesc+'\n'
+    +'- 여행 스타일: '+p.styleLabel+'\n'
+    +(familyNote?'- '+familyNote+'\n':'')
+    +'\n5가지 플랜 테마:\n'+variantDesc+'\n'
+    +'\n각 플랜마다 1일차 아침 인천공항 출발부터 마지막 날 귀국까지 전체 일정을 포함해 주세요.\n'
+    +'항공편은 실제 운항하는 인천-도쿄 노선 정보를 참고해 주세요 (예: 대한항공 KE703, 아시아나 OZ101 등).\n'
+    +'\n{"plans":['
+    +'\n  {"id":"A","title":"플랜 A - 테마명","subtitle":"한 줄 설명","theme":"동선 효율 중심",'
+    +'"tags":["태그1","태그2","태그3"],"cost_per_person":"1인 예상 비용",'
+    +'"highlights":["핵심 특징1","핵심 특징2","핵심 특징3"],'
+    +'"days":['
+    +'\n    {"day":1,"title":"인천 출발 · 도쿄 도착","date_label":"'+p.startVal+'",'
+    +'"stops":['
+    +'\n      {"order":1,"name":"인천국제공항","description":"탑승 수속 및 출국","type":"transport","time":"07:00","cost":"항공권 별도","kids_ok":true},'
+    +'\n      {"order":2,"name":"도쿄 나리타/하네다 공항 도착","description":"입국 수속 후 숙소로 이동","type":"transport","time":"11:00","cost":"이동비 포함","transit":"N\'EX 또는 리무진버스","kids_ok":true}'
+    +'\n    ]}'
+    +'\n  ],'
+    +'"tips":['
+    +'\n    {"label":"항공","content":"인천-도쿄 노선 팁"},'
+    +'\n    {"label":"숙소","content":"'+grade.label+' 등급 추천 숙소"},'
+    +'\n    {"label":"교통","content":"도쿄 내 교통 팁"},'
+    +'\n    {"label":"예산","content":"예산 절감 팁"},'
+    +'\n    {"label":"주의","content":"도쿄 여행 주의사항"},'
+    +'\n    {"label":"앱·준비","content":"필수 앱과 준비물"}'
+    +'\n  ]'
+    +'}'
+    +'\n]}\n'
+    +'\n중요:\n'
+    +'- 5가지 플랜은 서로 다른 테마와 동선을 가져야 합니다.\n'
+    +'- 각 day의 stops는 최소 4~6개 이상 포함해 주세요.\n'
+    +'- stops의 type은 sight/food/hotel/transport/activity/kids 중 하나\n'
+    +'- transit 필드에 스폿 간 이동 수단을 명시해 주세요 (예: "지하철 5분", "도보 10분", "택시 15분")\n'
+    +'- cost 필드에 예상 비용을 명시해 주세요 (예: "무료", "¥1,600", "1인 약 ¥3,000")\n'
+    +'- kids_ok 필드에 true/false로 아이 동반 가능 여부를 명시해 주세요\n'
+    +'- 마지막 날은 귀국 일정 포함\n'
+    +'- JSON 형식을 정확하게 지켜 주세요';
 
-  var data = await callGroqJSON(prompt, 1800);
-  if(!data || !Array.isArray(data.plans) || !data.plans.length){
-    throw new Error('플랜 요약이 비어 있습니다.');
-  }
-  data.plans = data.plans.slice(0,5).map(function(plan, idx){
-    return {
-      id: plan.id || PLAN_VARIANTS[idx].id,
-      title: plan.title || ('플랜 '+PLAN_VARIANTS[idx].id),
-      subtitle: plan.subtitle || '',
-      theme: plan.theme || PLAN_VARIANTS[idx].theme,
-      tags: Array.isArray(plan.tags) ? plan.tags.slice(0,3) : [],
-      cost_per_person: plan.cost_per_person || grade.costDesc,
-      highlights: Array.isArray(plan.highlights) ? plan.highlights.slice(0,3) : [],
-      flight_hint: plan.flight_hint || '',
-      hotel_hint: plan.hotel_hint || '',
-      best_for: plan.best_for || ''
-    };
-  });
-  return data;
+  return await callClaude(prompt);
 }
 
-async function generatePlanDetail(gradeKey, summaryPlan, p){
-  var grade = GRADES.find(function(x){ return x.key===gradeKey; });
-  var prompt =
-    '도쿄 여행 상세일정을 JSON으로만 반환하세요.\n' +
-    '여행자: 성인 '+p.adults+'명' + (p.children? ', 어린이 '+p.children+'명':'') + (p.infants? ', 유아 '+p.infants+'명':'') + (p.childAges? ' / 어린이 나이 '+p.childAges:'') + '\n' +
-    '기간: '+p.dayLabel+' ('+p.startVal+' ~ '+p.endVal+')\n' +
-    '스타일: '+p.styleLabel+'\n' +
-    '등급: '+grade.label+' / '+grade.costDesc+'\n' +
-    '선택된 플랜 요약:\n' +
-    '- 제목: '+summaryPlan.title+'\n' +
-    '- 설명: '+summaryPlan.subtitle+'\n' +
-    '- 테마: '+summaryPlan.theme+'\n' +
-    '- 태그: '+(summaryPlan.tags||[]).join(', ')+'\n' +
-    '- 핵심: '+(summaryPlan.highlights||[]).join(' / ')+'\n' +
-    '- 항공 힌트: '+(summaryPlan.flight_hint||'')+'\n' +
-    '- 숙소 힌트: '+(summaryPlan.hotel_hint||'')+'\n' +
-    '이 요약에 맞는 day별 상세일정을 만드세요.\n' +
-    'JSON 스키마:\n' +
-    '{"days":[{"day":1,"title":"하루 제목","date_label":"YYYY-MM-DD","stops":[{"order":1,"name":"장소명","description":"짧은 설명","type":"sight","time":"09:00","cost":"¥1,500","transit":"지하철 10분","kids_ok":true}]}],"tips":[{"label":"항공","content":"한 줄 팁"},{"label":"숙소","content":"한 줄 팁"},{"label":"교통","content":"한 줄 팁"},{"label":"예산","content":"한 줄 팁"},{"label":"주의","content":"한 줄 팁"},{"label":"앱·준비","content":"한 줄 팁"}]}\n' +
-    '규칙:\n' +
-    '- days는 정확히 '+p.days+'개\n' +
-    '- 각 day.stops는 4~5개\n' +
-    '- type은 sight/food/hotel/transport/activity/kids 중 하나\n' +
-    '- transit는 첫 stop을 제외하고 가급적 포함\n' +
-    '- 마지막 날은 귀국 일정 포함\n' +
-    '- 설명은 짧게 작성';
-
-  var data = await callGroqJSON(prompt, 2600);
-  if(!data || !Array.isArray(data.days) || !data.days.length){
-    throw new Error('상세 일정 데이터가 비어 있습니다.');
-  }
-  return data;
-}
-
+/* ─── 날씨 로드 ─── */
 async function fetchWeather(startVal, days){
   try{
     var url='https://api.open-meteo.com/v1/forecast?latitude=35.6762&longitude=139.6503'
@@ -682,47 +587,47 @@ async function fetchWeather(startVal, days){
       +'&timezone=Asia%2FTokyo&start_date='+startVal+'&forecast_days='+Math.min(days,14);
     var r=await fetch(url);
     var d=await r.json();
-    var WMO={0:'맑음',1:'대체로 맑음',2:'흐릿함',3:'흐림',45:'안개',48:'안개',51:'이슬비',53:'이슬비',55:'이슬비',61:'비',63:'비',65:'강한 비',71:'눈',73:'눈',75:'강한 눈',80:'소나기',81:'소나기',95:'뇌우'};
+    var WMO={0:'맑음',1:'대체로 맑음',2:'흐릿함',3:'흐림',45:'안개',48:'안개',
+      51:'이슬비',53:'이슬비',55:'이슬비',61:'비',63:'비',65:'강한 비',
+      71:'눈',73:'눈',75:'강한 눈',80:'소나기',81:'소나기',95:'뇌우'};
     var ICON={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌦',61:'🌧',71:'🌨',80:'🌦',95:'⛈'};
-    state.weather=(d.daily && d.daily.time || []).map(function(t,i){
-      var code=(d.daily.weathercode||[])[i] || 0;
-      var ckey=Object.keys(ICON).map(Number).filter(function(k){ return k<=code; }).pop() || 0;
+    state.weather=(d.daily.time||[]).map(function(t,i){
+      var code=d.daily.weathercode[i]||0;
+      var ckey=Object.keys(ICON).map(Number).filter(function(k){ return k<=code; }).pop()||0;
       return {
-        date:t,
-        max:Math.round((d.daily.temperature_2m_max||[])[i]),
-        min:Math.round((d.daily.temperature_2m_min||[])[i]),
-        desc:WMO[code] || '흐림',
-        icon:ICON[ckey] || '🌤',
-        rain:(d.daily.precipitation_sum||[])[i] || 0
+        date:t, max:Math.round(d.daily.temperature_2m_max[i]),
+        min:Math.round(d.daily.temperature_2m_min[i]),
+        desc:WMO[code]||'흐림', icon:ICON[ckey]||'🌤',
+        rain:d.daily.precipitation_sum[i]||0
       };
     });
-  }catch(err){
-    state.weather=[];
-  }
+  }catch(err){ state.weather=[]; }
 }
 
+/* ─── 결과 렌더링 ─── */
 function renderResult(){
   renderGradeTabs();
   state.activeGrade='budget';
   renderPlans('budget');
   show('sec-result');
-  $('sec-result').scrollIntoView({behavior:'smooth', block:'start'});
+  $('sec-result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function renderGradeTabs(){
-  $('grade-tabs').innerHTML = GRADES.map(function(g){
+  var html='';
+  GRADES.forEach(function(g){
     var plans=state.allPlans[g.key];
-    var cnt=(plans && plans.plans ? plans.plans.length : 0);
-    return '<div class="grade-tab" data-key="'+g.key+'">'
+    var cnt=(plans&&plans.plans)?plans.plans.length:0;
+    html+='<div class="grade-tab" data-key="'+g.key+'">'
       +'<span class="grade-tab-icon">'+g.icon+'</span>'
       +'<span class="grade-tab-name">'+g.label+'</span>'
       +'<span class="grade-tab-cost">'+g.costDesc+'</span>'
       +'<span class="grade-tab-cost">'+cnt+'가지 플랜</span>'
       +'</div>';
-  }).join('');
-
+  });
+  $('grade-tabs').innerHTML=html;
   document.querySelectorAll('.grade-tab').forEach(function(tab){
-    tab.addEventListener('click', function(){
+    tab.addEventListener('click',function(){
       document.querySelectorAll('.grade-tab').forEach(function(t){ t.classList.remove('active'); });
       tab.classList.add('active');
       state.activeGrade=tab.dataset.key;
@@ -736,84 +641,81 @@ function renderGradeTabs(){
 
 function renderPlans(gradeKey){
   var g=GRADES.find(function(x){ return x.key===gradeKey; });
-  var plans=((state.allPlans[gradeKey]||{}).plans)||[];
-  $('plans-grade-title').textContent=g.icon+' '+g.label+' 등급 — '+g.tagline;
-  $('plans-grade-sub').textContent=g.costDesc+' · 5가지 플랜 중 하나를 고르면 상세 일정이 생성됩니다';
+  var data=state.allPlans[gradeKey];
+  var plans=(data&&data.plans)||[];
 
-  $('plans-grid').innerHTML = plans.map(function(plan, idx){
+  $('plans-grade-title').textContent=g.icon+' '+g.label+' 등급 — '+g.tagline;
+  $('plans-grade-sub').textContent=g.costDesc+' · 5가지 플랜 중 마음에 드는 것을 선택하세요';
+
+  var html='';
+  plans.forEach(function(plan,idx){
     var tags=(plan.tags||[]).map(function(t){ return '<span class="plan-tag">'+esc(t)+'</span>'; }).join('');
     var hls=(plan.highlights||[]).map(function(h){ return '<div style="font-size:13px;color:#555;margin-bottom:3px;">· '+esc(h)+'</div>'; }).join('');
-    return '<div class="plan-card" data-idx="'+idx+'">'
+    html+='<div class="plan-card" data-idx="'+idx+'">'
       +'<div class="plan-card-header">'
         +'<div class="plan-num">'+(idx+1)+'</div>'
         +'<div class="plan-title-wrap">'
-          +'<div class="plan-title">'+esc(plan.title||('플랜 '+(idx+1)))+'</div>'
+          +'<div class="plan-title">'+esc(plan.title||'플랜 '+(idx+1))+'</div>'
           +'<div class="plan-subtitle">'+esc(plan.subtitle||plan.theme||'')+'</div>'
         +'</div>'
       +'</div>'
       +'<div class="plan-tags">'+tags+'</div>'
       +'<div style="padding:0 15px 10px;">'+hls+'</div>'
-      +'<div style="padding:0 15px 10px;font-size:12px;color:#666;">✈️ '+esc(plan.flight_hint||'')+'<br>🏨 '+esc(plan.hotel_hint||'')+'</div>'
       +'<div class="plan-footer">'
         +'<span class="plan-cost '+g.cc+'">'+esc(plan.cost_per_person||g.costDesc)+'</span>'
-        +'<span class="plan-arrow">'+(plan._detail ? '상세 다시 보기 →' : '상세 일정 만들기 →')+'</span>'
+        +'<span class="plan-arrow">이 플랜으로 보기 →</span>'
       +'</div>'
     +'</div>';
-  }).join('') || '<div style="padding:1rem;color:#888;font-size:14px;">플랜 데이터를 불러오지 못했습니다.</div>';
+  });
+  $('plans-grid').innerHTML=html||'<div style="padding:1rem;color:#888;font-size:14px;">플랜 데이터를 불러오지 못했습니다.</div>';
 
   document.querySelectorAll('.plan-card').forEach(function(card){
-    card.addEventListener('click', async function(){
+    card.addEventListener('click',function(){
       var idx=Number(card.dataset.idx);
-      var plan=(((state.allPlans[state.activeGrade]||{}).plans)||[])[idx];
-      if(!plan) return;
-      if(!plan._detail){
-        showL('loading');
-        setLoadingText('선택한 플랜의 상세 일정을 만들고 있어요', plan.title+' 상세 일정을 생성 중입니다');
-        $('progress-fill').style.width='100%';
-        $('progress-steps').innerHTML='<div class="progress-step active">상세 일정 생성 중</div>';
-        try{
-          plan._detail = await generatePlanDetail(state.activeGrade, plan, state.params);
-        }catch(err){
-          showErr('상세 일정 생성 오류: '+err.message);
-          hideL('loading');
-          return;
-        }
-        hideL('loading');
-      }
-      renderDetail(plan, state.activeGrade);
+      var plan=(state.allPlans[state.activeGrade].plans||[])[idx];
+      if(plan) renderDetail(plan, state.activeGrade);
     });
   });
-
   show('sec-plans');
 }
 
-function renderDetail(summaryPlan, gradeKey){
+/* ─── 상세 렌더링 ─── */
+function renderDetail(plan, gradeKey){
   var g=GRADES.find(function(x){ return x.key===gradeKey; });
   var p=state.params;
-  var detail=summaryPlan._detail || {days:[], tips:[]};
 
+  /* 배지 */
   $('detail-badge-wrap').innerHTML='<div class="detail-badge '+g.gc+'">'+g.icon+' '+g.label+' 등급</div>';
+
+  /* 요약 칩 */
   $('detail-summary').innerHTML=[
     '<div class="schip">📅 <span>'+esc(p.dayLabel)+'</span></div>',
-    '<div class="schip">'+esc(p.dateLabel)+'</div>',
+    '<div class="schip">'+p.dateLabel+'</div>',
     '<div class="schip">👥 <span>'+esc(formatPeople(p))+'</span></div>',
-    '<div class="schip">💴 <span>'+esc(summaryPlan.cost_per_person||g.costDesc)+'</span></div>',
-    '<div class="schip">🎨 <span>'+esc(summaryPlan.theme||'')+'</span></div>'
+    '<div class="schip">💴 <span>'+esc(plan.cost_per_person||g.costDesc)+'</span></div>',
+    '<div class="schip">🎨 <span>'+esc(plan.theme||'')+'</span></div>'
   ].join('');
 
+  /* 날씨 */
   renderWeather();
+
+  /* 예약 링크 */
   renderBooking(gradeKey, p);
 
-  $('detail-itinerary').innerHTML = (detail.days||[]).map(function(day){
-    var stops=(day.stops||[]).map(function(st, i){
+  /* 일정 */
+  var html='';
+  (plan.days||[]).forEach(function(day){
+    var stops='';
+    (day.stops||[]).forEach(function(st,i){
       var transit='';
-      if(i>0 && st.transit){
-        transit='<div class="transit-row"><div class="transit-line"></div><div class="transit-bubble">🚇 '+esc(st.transit)+'</div></div>';
+      if(i>0&&st.transit){
+        transit='<div class="transit-row"><div class="transit-line"></div>'
+          +'<div class="transit-bubble">🚇 '+esc(st.transit)+'</div></div>';
       }
       var typeBadge={sight:'b-sight',food:'b-food',hotel:'b-hotel',transport:'b-transport',activity:'b-activity',kids:'b-kids'};
       var typeLabel={sight:'관광',food:'맛집',hotel:'숙소',transport:'이동',activity:'액티비티',kids:'아이 동반'};
-      var kidsTag=st.kids_ok ? '<span class="skids">👶 아이 OK</span>' : '';
-      return transit
+      var kidsTag=st.kids_ok?'<span class="skids">👶 아이 OK</span>':'';
+      stops+=transit
         +'<div class="stop">'
           +'<div class="snum">'+esc(st.order)+'</div>'
           +'<div class="sinfo">'
@@ -821,48 +723,56 @@ function renderDetail(summaryPlan, gradeKey){
             +'<div class="sdesc">'+esc(st.description)+'</div>'
             +'<div class="stags">'
               +'<span class="sbadge '+(typeBadge[st.type]||'b-sight')+'">'+(typeLabel[st.type]||'관광')+'</span>'
-              +(st.cost ? '<span class="scost">'+esc(st.cost)+'</span>' : '')
+              +(st.cost?'<span class="scost">'+esc(st.cost)+'</span>':'')
               +kidsTag
             +'</div>'
           +'</div>'
         +'</div>';
-    }).join('');
-    return '<div class="day-card">'
-      +'<div class="day-header"><span>Day '+esc(day.day)+' — '+esc(day.title)+'</span><span class="day-date">'+esc(day.date_label||'')+'</span></div>'
+    });
+    html+='<div class="day-card">'
+      +'<div class="day-header"><span>Day '+esc(day.day)+' — '+esc(day.title)+'</span>'
+      +'<span class="day-date">'+esc(day.date_label||'')+'</span></div>'
       +'<div class="day-body">'+stops+'</div>'
     +'</div>';
-  }).join('');
+  });
+  $('detail-itinerary').innerHTML=html;
 
-  $('detail-tips').innerHTML=(detail.tips||[]).map(function(t){
+  /* 꿀팁 */
+  $('detail-tips').innerHTML=(plan.tips||[]).map(function(t){
     return '<div class="tip-item"><div class="tip-label">'+esc(t.label)+'</div><div class="tip-body">'+esc(t.content)+'</div></div>';
   }).join('');
 
   hide('sec-plans');
   show('sec-detail');
-  $('sec-detail').scrollIntoView({behavior:'smooth', block:'start'});
+  $('sec-detail').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+/* ─── 날씨 렌더링 ─── */
 function renderWeather(){
   var wc=$('weather-card');
   if(!state.weather.length){ wc.style.display='none'; return; }
   wc.style.display='block';
-  $('weather-content').innerHTML='<div class="weather-grid">'+state.weather.map(function(w){
-    var d=new Date(w.date+'T00:00:00');
-    var days=['일','월','화','수','목','금','토'];
-    return '<div class="weather-item">'
-      +'<div class="weather-icon">'+w.icon+'</div>'
-      +'<div class="weather-date">'+(d.getMonth()+1)+'/'+d.getDate()+' ('+days[d.getDay()]+')</div>'
-      +'<div class="weather-temp">'+w.max+'° / '+w.min+'°</div>'
-      +'<div class="weather-desc">'+w.desc+(w.rain>0 ? ' · 강수 '+w.rain+'mm' : '')+'</div>'
-    +'</div>';
-  }).join('')+'</div>';
+  $('weather-content').innerHTML='<div class="weather-grid">'
+    +state.weather.map(function(w){
+      var d=new Date(w.date+'T00:00:00');
+      var days=['일','월','화','수','목','금','토'];
+      return '<div class="weather-item">'
+        +'<div class="weather-icon">'+w.icon+'</div>'
+        +'<div class="weather-date">'+(d.getMonth()+1)+'/'+(d.getDate())+' ('+days[d.getDay()]+')</div>'
+        +'<div class="weather-temp">'+w.max+'° / '+w.min+'°</div>'
+        +'<div class="weather-desc">'+w.desc+(w.rain>0?' · 강수 '+w.rain+'mm':'')+'</div>'
+        +'</div>';
+    }).join('')+'</div>';
 }
 
+/* ─── 예약 링크 ─── */
 function renderBooking(gradeKey, p){
   var s=p.startVal, e=p.endVal;
   var adults=p.adults, children=p.children||0;
-  var sy=s.slice(0,4), sm=s.slice(5,7), sd=s.slice(8,10);
+  var sy=s.slice(0,4),sm=s.slice(5,7),sd=s.slice(8,10);
+  var ey=e.slice(0,4),em=e.slice(5,7),ed=e.slice(8,10);
 
+  /* 항공 링크 */
   var airLinks={
     budget:[
       {name:'스카이스캐너',icon:'✈️',badge:'최저가 비교',url:'https://www.skyscanner.co.kr/transport/flights/ICN/TYO/'+sy+sm+sd+'/',desc:'인천→도쿄 최저가 항공권 실시간 비교'},
@@ -909,18 +819,24 @@ function renderBooking(gradeKey, p){
   var links=(airLinks[gradeKey]||airLinks.value).concat(hotelLinks[gradeKey]||hotelLinks.value).concat(extraLinks);
   $('booking-grid').innerHTML=links.map(function(l){
     return '<a class="booking-link" href="'+l.url+'" target="_blank" rel="noopener">'
-      +'<div class="booking-link-top"><span class="booking-icon">'+l.icon+'</span><span class="booking-name">'+esc(l.name)+'</span><span class="booking-badge">'+esc(l.badge)+'</span></div>'
+      +'<div class="booking-link-top">'
+        +'<span class="booking-icon">'+l.icon+'</span>'
+        +'<span class="booking-name">'+esc(l.name)+'</span>'
+        +'<span class="booking-badge">'+esc(l.badge)+'</span>'
+      +'</div>'
       +'<div class="booking-desc">'+esc(l.desc)+'</div>'
     +'</a>';
   }).join('');
 }
 
-$('detail-back').addEventListener('click', function(){
+/* ─── 뒤로 가기 ─── */
+$('detail-back').addEventListener('click',function(){
   hide('sec-detail');
   show('sec-plans');
-  $('sec-plans').scrollIntoView({behavior:'smooth', block:'start'});
+  $('sec-plans').scrollIntoView({behavior:'smooth',block:'start'});
 });
 
+/* ─── 헬퍼 ─── */
 function formatPeople(p){
   var parts=['성인 '+p.adults+'명'];
   if(p.children>0) parts.push('어린이 '+p.children+'명');
@@ -929,8 +845,7 @@ function formatPeople(p){
 }
 function showErr(msg){
   var el=$('err-box');
-  el.textContent=msg;
-  el.style.display='block';
+  el.textContent=msg; el.style.display='block';
 }
 
 })();
