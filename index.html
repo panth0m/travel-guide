@@ -16,7 +16,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 .input-group { display: flex; flex-direction: column; gap: 4px; }
 .input-group label { font-size: 13px; color: #666; }
-input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; border-radius: 8px; font-size: 14px; background: #f9f9f7; color: #1a1a18; font-family: inherit; }
+input[type=text], input[type=date], select { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; border-radius: 8px; font-size: 14px; background: #f9f9f7; color: #1a1a18; font-family: inherit; }
+.date-preview { min-height: 39px; display:flex; align-items:center; padding: 8px 10px; border:0.5px solid #e0e0dc; border-radius:8px; background:#f9f9f7; font-size:13px; color:#555; line-height:1.5; }
 
 /* 안내 카드 */
 .mode-card { background:#fff; border:0.5px solid #e0e0dc; border-radius:12px; padding:1rem 1.25rem; margin-bottom:1rem; }
@@ -126,17 +127,14 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 <div class="app">
   <div class="header">
     <h1>AI 해외여행 루트 추천</h1>
-    <p>API 없이 바로 작동하는 오프라인 추천 버전입니다.<br>목적지와 기간을 선택하면 4가지 예산 등급 루트와 상세 이동 정보를 자동으로 조합해 드립니다.</p>
+    <p>API 없이 바로 작동하는 오프라인 추천 버전입니다.<br>목적지, 인원, 기간, 여행 날짜를 선택하면 4가지 예산 등급 루트와 상세 이동 정보를 자동으로 조합해 드립니다.</p>
   </div>
 
-  <div class="card" style="background:#FFF8E1;border-color:#FFE082;">
-    <div style="font-size:13px;color:#6b5600;line-height:1.6;">이 버전은 오래된 PWA 캐시를 자동 정리하도록 수정했습니다. 예전 API 화면이 보이면 새 파일을 연 뒤 2~3초 기다리거나 한 번 새로고침해 주세요.</div>
-  </div>
 
   <div class="mode-card">
     <div class="section-title">실행 방식</div>
-    <div class="mode-title">🧭 오프라인 추천 모드</div>
-    <div class="mode-badge">API 키 필요 없음 · 브라우저에서 바로 생성</div>
+    <div class="mode-title">🧭 오프라인 단일 HTML 모드</div>
+    <div class="mode-badge">API 키 필요 없음 · 파일 하나로 바로 실행</div>
     <div class="mode-help">도시별 추천 데이터와 규칙 기반 일정 생성 로직으로 작동합니다. 주요 도시에서는 더 자연스럽고, 등록되지 않은 도시도 일반 여행 패턴으로 자동 추천합니다.</div>
     <div class="mode-note">
       <div class="mode-item"><strong>잘 맞는 경우</strong>도쿄·오사카·교토·후쿠오카·방콕·타이베이·싱가포르·파리·런던·뉴욕 같은 인기 도시</div>
@@ -162,6 +160,39 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
         <label class="day-option"><input type="radio" name="days" value="5" checked /><span class="day-chip"><span class="dc-nights">4</span><span class="dc-label">박 5일</span><span class="dc-sub">인기 일정</span></span></label>
         <label class="day-option"><input type="radio" name="days" value="7" /><span class="day-chip"><span class="dc-nights">6</span><span class="dc-label">박 7일</span><span class="dc-sub">여유롭게</span></span></label>
         <label class="day-option"><input type="radio" name="days" value="10" /><span class="day-chip"><span class="dc-nights">9</span><span class="dc-label">박 10일</span><span class="dc-sub">장기 여행</span></span></label>
+      </div>
+    </div>
+
+    <div class="input-row" style="margin-bottom:14px;">
+      <div class="input-group">
+        <label>출발 날짜</label>
+        <input type="date" id="start-date" />
+      </div>
+      <div class="input-group">
+        <label>일정 날짜 미리보기</label>
+        <div class="date-preview" id="date-preview">날짜를 선택하면 귀국일이 자동 계산됩니다.</div>
+      </div>
+    </div>
+
+    <div class="input-row" style="margin-bottom:14px;">
+      <div class="input-group">
+        <label>여행 인원</label>
+        <select id="people-count">
+          <option value="1" selected>1명</option>
+          <option value="2">2명</option>
+          <option value="3">3명</option>
+          <option value="4">4명</option>
+          <option value="5">5명</option>
+          <option value="6">6명</option>
+          <option value="7">7명</option>
+          <option value="8">8명</option>
+          <option value="9">9명</option>
+          <option value="10">10명</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>예산 기준</label>
+        <div class="date-preview" id="people-preview">총 예상 경비는 선택한 인원 기준으로 계산됩니다.</div>
       </div>
     </div>
 
@@ -816,6 +847,44 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
   function hideL(id){ $(id).classList.remove('visible'); }
   function getSelectedDays(){ var checked = document.querySelector('input[name="days"]:checked'); return checked ? checked.value : '5'; }
   function getSelectedStyles(){ return Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; }); }
+  function getPeopleCount(){ var el = $('people-count'); return Math.max(1, Number(el && el.value || 1)); }
+  function formatPeopleLabel(count){ return Math.max(1, Number(count||1)) + '명'; }
+  function parseLocalDate(value){
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    var parts = value.split('-').map(Number);
+    return new Date(parts[0], parts[1]-1, parts[2]);
+  }
+  function addDays(date, days){
+    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+  function weekdayKo(date){ return ['일','월','화','수','목','금','토'][date.getDay()]; }
+  function formatDateShort(date){ return (date.getMonth()+1) + '/' + date.getDate(); }
+  function formatDateLong(date){ return date.getFullYear() + '.' + (date.getMonth()+1) + '.' + date.getDate() + ' (' + weekdayKo(date) + ')'; }
+  function getDateRangeInfo(startValue, totalDays){
+    var start = parseLocalDate(startValue);
+    if (!start) return null;
+    var end = addDays(start, Math.max(0, Number(totalDays||1)-1));
+    return {
+      start: start,
+      end: end,
+      shortLabel: formatDateShort(start) + ' ~ ' + formatDateShort(end),
+      fullLabel: formatDateLong(start) + ' ~ ' + formatDateLong(end)
+    };
+  }
+  function updateDatePreview(){
+    var info = getDateRangeInfo($('start-date') ? $('start-date').value : '', getSelectedDays());
+    var el = $('date-preview');
+    if (!el) return;
+    el.textContent = info ? info.fullLabel : '날짜를 선택하면 귀국일이 자동 계산됩니다.';
+  }
+  function updatePeoplePreview(){
+    var el = $('people-preview');
+    if (!el) return;
+    var count = getPeopleCount();
+    el.textContent = count === 1 ? '총 예상 경비는 1인 기준으로 계산됩니다.' : '총 예상 경비는 ' + formatPeopleLabel(count) + ' 전체 기준으로 계산됩니다.';
+  }
   function escapeHtml(str){
     return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
@@ -907,16 +976,26 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     return areas.join(' · ');
   }
 
-  function formatKrwRange(low, high){
-    return Math.round(low) + '만~' + Math.round(high) + '만원';
+  function formatKrwRange(low, high, peopleCount){
+    var label = Math.round(low) + '만~' + Math.round(high) + '만원';
+    return peopleCount > 1 ? label + ' (총 ' + formatPeopleLabel(peopleCount) + ')' : label + ' (1인 기준)';
   }
 
-  function estimateCostRange(dest, days, gradeKey){
+  function getPeopleCostMultiplier(peopleCount){
+    var n = Math.max(1, Number(peopleCount||1));
+    if (n === 1) return 1;
+    var lodgingShared = 0.28 * (1 + 0.55 * (n - 1));
+    var personVariable = 0.72 * n;
+    return lodgingShared + personVariable;
+  }
+
+  function estimateCostRange(dest, days, gradeKey, peopleCount){
     var grade = GRADE_META[gradeKey];
     var factor = dest.costFactor || 1;
-    var low = grade.daily[0] * days * factor;
-    var high = grade.daily[1] * days * factor;
-    return formatKrwRange(low, high);
+    var peopleFactor = getPeopleCostMultiplier(peopleCount);
+    var low = grade.daily[0] * days * factor * peopleFactor;
+    var high = grade.daily[1] * days * factor * peopleFactor;
+    return formatKrwRange(low, high, peopleCount);
   }
 
   function summarizeStyles(styles){
@@ -931,17 +1010,18 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
         var highlights = [
           summarizeStyles(styles) + '을(를) 자연스럽게 섞은 동선',
           meta.meal + ' + ' + meta.stay + ' 조합',
-          getAreaSnippet(dest) + ' 중심으로 이동 효율을 잡은 코스'
+          getAreaSnippet(dest) + ' 중심으로 이동 효율을 잡은 코스',
+          formatPeopleLabel(params.peopleCount) + ' 여행 기준으로 잡은 예산 감각'
         ];
         if (g.key === 'budget') highlights[1] = '무료 스폿과 로컬 식당 위주로 경비를 아낀 구성';
         if (g.key === 'luxury') highlights[1] = '분위기 좋은 숙소와 특별한 저녁 경험을 넣은 구성';
         return {
           grade_en: g.key,
-          cost_range: estimateCostRange(dest, Number(params.days), g.key),
+          cost_range: estimateCostRange(dest, Number(params.days), g.key, params.peopleCount),
           accommodation: meta.accommodation,
           transport: meta.transport,
           highlights: highlights,
-          best_for: styles.length > 1 ? styles.slice(0,2).join(' + ') + ' 취향을 함께 챙기고 싶은 여행자' : styles[0] + ' 취향이 뚜렷한 여행자'
+          best_for: (styles.length > 1 ? styles.slice(0,2).join(' + ') + ' 취향을 함께 챙기고 싶은 여행자' : styles[0] + ' 취향이 뚜렷한 여행자') + ' · ' + formatPeopleLabel(params.peopleCount) + ' 추천'
         };
       })
     };
@@ -1111,9 +1191,11 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
         prevStop = picked;
         summarySpots += 1;
       }
+      var dayDateInfo = params.startDate ? addDays(params.startDate, day) : null;
       dayPlans.push({
         day: day + 1,
         title: getDayTitle(dest, pattern),
+        dateLabel: dayDateInfo ? formatDateLong(dayDateInfo) : '',
         stops: stops
       });
     }
@@ -1130,7 +1212,7 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     return {
       summary:{
         total_spots: summarySpots,
-        estimated_total_cost: estimateCostRange(dest, days, gradeKey),
+        estimated_total_cost: estimateCostRange(dest, days, gradeKey, params.peopleCount),
         best_season: dest.bestSeason,
         currency: dest.currencyTip
       },
@@ -1140,7 +1222,7 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
   }
 
   function renderRoutes(){
-    $('routes-title').textContent = params.dest + ' ' + params.dayLabel + ' — 등급별 추천 루트';
+    $('routes-title').textContent = params.dest + ' ' + params.dayLabel + ' · ' + params.peopleLabel + (params.dateLabel ? ' · ' + params.dateLabel : '') + ' — 등급별 추천 루트';
     var html = '';
     (routesData.routes || []).forEach(function(r){
       var g = G.find(function(x){ return x.key === r.grade_en; }) || G[1];
@@ -1192,6 +1274,8 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     $('detail-summary').innerHTML =
       '<div class="schip">목적지 <span>'+escapeHtml(params.dest)+'</span></div>' +
       '<div class="schip">기간 <span>'+escapeHtml(params.dayLabel)+'</span></div>' +
+      '<div class="schip">인원 <span>'+escapeHtml(params.peopleLabel)+'</span></div>' +
+      (params.dateLabel ? '<div class="schip">날짜 <span>'+escapeHtml(params.dateLabel)+'</span></div>' : '') +
       '<div class="schip">스타일 <span>'+escapeHtml(params.styleLabel)+'</span></div>' +
       '<div class="schip">총 '+escapeHtml(s.total_spots||0)+'개 장소</div>' +
       '<div class="schip">예산 <span>'+escapeHtml(s.estimated_total_cost||'')+'</span></div>' +
@@ -1244,7 +1328,7 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 
       html += '<div class="day-card">' +
           '<div class="day-header">' +
-            '<span>Day '+escapeHtml(day.day)+' — '+escapeHtml(day.title)+'</span>' +
+            '<span>Day '+escapeHtml(day.day)+' — '+escapeHtml(day.title)+(day.dateLabel ? ' <span style="font-size:12px;font-weight:400;color:#888">· '+escapeHtml(day.dateLabel)+'</span>' : '')+'</span>' +
             '<span style="font-size:12px;color:#888;">'+escapeHtml((day.stops||[]).length)+'개 장소</span>' +
           '</div>' +
           '<div class="day-body">'+stops+'</div>' +
@@ -1268,9 +1352,16 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     if (!origin || !dest || !selectedStyles.length) { $('err-input').style.display = 'block'; return; }
 
     var daysVal = getSelectedDays();
+    var peopleCount = getPeopleCount();
     var dlabels = {'3':'2박 3일','4':'3박 4일','5':'4박 5일','7':'6박 7일','10':'9박 10일'};
+    var startDateValue = $('start-date').value;
+    var dateInfo = getDateRangeInfo(startDateValue, daysVal);
     params = { origin:origin, dest:dest, days:daysVal, styles:selectedStyles,
-               styleLabel:selectedStyles.join(', '), dayLabel:dlabels[daysVal] };
+               peopleCount: peopleCount, peopleLabel: formatPeopleLabel(peopleCount),
+               styleLabel:selectedStyles.join(', '), dayLabel:dlabels[daysVal],
+               startDateValue:startDateValue, startDate: dateInfo ? dateInfo.start : null,
+               dateLabel: dateInfo ? dateInfo.shortLabel : '',
+               dateFullLabel: dateInfo ? dateInfo.fullLabel : '' };
     currentDestination = resolveDestination(dest);
 
     $('gen-btn').disabled = true;
@@ -1306,6 +1397,17 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
       if (preset === 'trend') ['쇼핑·트렌디','맛집 탐방'].forEach(checkStyle);
     });
   });
+
+  var today = new Date();
+  var yyyy = today.getFullYear();
+  var mm = String(today.getMonth()+1).padStart(2, '0');
+  var dd = String(today.getDate()).padStart(2, '0');
+  if ($('start-date')) $('start-date').value = yyyy + '-' + mm + '-' + dd;
+  updateDatePreview();
+  updatePeoplePreview();
+  if ($('start-date')) $('start-date').addEventListener('change', updateDatePreview);
+  if ($('people-count')) $('people-count').addEventListener('change', updatePeoplePreview);
+  document.querySelectorAll('input[name="days"]').forEach(function(el){ el.addEventListener('change', updateDatePreview); });
 
   function checkStyle(label){
     var el = document.querySelector('input[name="style"][value="'+label+'"]');
