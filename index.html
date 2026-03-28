@@ -1,31 +1,42 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AI 해외여행 루트 추천</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; }
 .app { max-width: 860px; margin: 0 auto; padding: 1rem; }
 .header { text-align: center; padding: 1.5rem 0 1rem; }
-.header h1 { font-size: 22px; font-weight: 500; }
-.header p { font-size: 14px; color: #666; margin-top: 4px; }
+.header h1 { font-size: 22px; font-weight: 600; }
+.header p { font-size: 14px; color: #666; margin-top: 4px; line-height: 1.5; }
 .card { background: #fff; border: 0.5px solid #e0e0dc; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
-.section-title { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.section-title { font-size: 12px; font-weight: 600; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
 .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 .input-group { display: flex; flex-direction: column; gap: 4px; }
 .input-group label { font-size: 13px; color: #666; }
 input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; border-radius: 8px; font-size: 14px; background: #f9f9f7; color: #1a1a18; font-family: inherit; }
+
+/* 안내 카드 */
+.mode-card { background:#fff; border:0.5px solid #e0e0dc; border-radius:12px; padding:1rem 1.25rem; margin-bottom:1rem; }
+.mode-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:600; color:#1a1a18; }
+.mode-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:12px; background:#E6F1FB; color:#185FA5; font-weight:600; margin-top:10px; }
+.mode-help { font-size:13px; color:#666; line-height:1.6; margin-top:8px; }
+.mode-note { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+.mode-item { background:#f9f9f7; border-radius:8px; padding:10px 12px; font-size:12px; color:#666; line-height:1.5; }
+.mode-item strong { color:#1a1a18; display:block; margin-bottom:3px; }
 
 /* 날짜 체크박스 그리드 */
 .days-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 4px; }
 .day-option { position: relative; }
 .day-option input { position: absolute; opacity: 0; pointer-events: none; }
 .day-chip { display: flex; flex-direction: column; align-items: center; padding: 10px 6px 8px; border: 0.5px solid #ccc; border-radius: 10px; font-size: 13px; color: #666; background: #f9f9f7; cursor: pointer; user-select: none; transition: all .15s; text-align: center; }
-.day-chip .dc-nights { font-size: 18px; font-weight: 600; color: #1a1a18; line-height: 1; }
+.day-chip .dc-nights { font-size: 18px; font-weight: 700; color: #1a1a18; line-height: 1; }
 .day-chip .dc-label { font-size: 11px; color: #999; margin-top: 3px; }
 .day-chip .dc-sub { font-size: 10px; color: #bbb; margin-top: 1px; }
 .day-option input:checked + .day-chip { border-color: #185FA5; background: #E6F1FB; }
-.day-option input:checked + .day-chip .dc-nights { color: #185FA5; }
+.day-option input:checked + .day-chip .dc-nights,
 .day-option input:checked + .day-chip .dc-label { color: #185FA5; }
 .day-option input:checked + .day-chip .dc-sub { color: #5b96cc; }
 
@@ -34,10 +45,14 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 .style-option { position: relative; }
 .style-option input { position: absolute; opacity: 0; pointer-events: none; }
 .style-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 0.5px solid #ccc; border-radius: 999px; font-size: 13px; color: #666; background: #f5f5f3; cursor: pointer; user-select: none; transition: all .15s; }
-.style-option input:checked + .style-chip { border-color: #185FA5; background: #E6F1FB; color: #185FA5; font-weight: 500; }
+.style-option input:checked + .style-chip { border-color: #185FA5; background: #E6F1FB; color: #185FA5; font-weight: 600; }
 
-.generate-btn { width: 100%; padding: 11px; background: #185FA5; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 8px; }
-.generate-btn:hover { opacity: 0.88; }
+.quick-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.quick-btn { border:0.5px solid #d8d8d4; background:#f3f3f0; color:#444; border-radius:999px; padding:6px 10px; font-size:12px; cursor:pointer; }
+.quick-btn:hover { background:#ecece8; }
+
+.generate-btn { width: 100%; padding: 11px; background: #185FA5; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+.generate-btn:hover { opacity: 0.9; }
 .generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .err-box { background: #FCEBEB; color: #501313; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 8px; display: none; white-space: pre-wrap; }
 .loading { display: none; text-align: center; padding: 2rem; }
@@ -48,14 +63,14 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 
 /* 루트 카드 */
 .routes-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 1rem; }
-.route-card { border: 1.5px solid #e0e0dc; border-radius: 12px; overflow: hidden; cursor: pointer; background: #fff; transition: border-color 0.15s; }
-.route-card:hover { border-color: #185FA5; }
+.route-card { border: 1.5px solid #e0e0dc; border-radius: 12px; overflow: hidden; cursor: pointer; background: #fff; transition: border-color 0.15s, transform 0.15s; }
+.route-card:hover { border-color: #185FA5; transform: translateY(-1px); }
 .route-card.selected { border-color: #185FA5; }
 .rch { padding: 12px 14px 8px; display: flex; align-items: center; gap: 10px; }
 .grade-icon { font-size: 22px; }
-.grade-name { font-size: 15px; font-weight: 500; }
+.grade-name { font-size: 15px; font-weight: 600; }
 .grade-cost { font-size: 12px; margin-top: 2px; }
-.gbadge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.gbadge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
 .g-budget{background:#D3D1C7;color:#2C2C2A;} .g-value{background:#9FE1CB;color:#04342C;}
 .g-normal{background:#B5D4F4;color:#042C53;} .g-luxury{background:#CECBF6;color:#26215C;}
 .c-budget{color:#5F5E5A;} .c-value{color:#0F6E56;} .c-normal{color:#185FA5;} .c-luxury{color:#534AB7;}
@@ -63,32 +78,28 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 .hlrow { display: flex; gap: 7px; font-size: 13px; color: #666; line-height: 1.4; }
 .hldot { width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; }
 .d-budget{background:#888780;} .d-value{background:#1D9E75;} .d-normal{background:#378ADD;} .d-luxury{background:#7F77DD;}
-.rfooter { padding: 8px 14px; border-top: 0.5px solid #e0e0dc; font-size: 13px; font-weight: 500; color: #185FA5; }
+.rfooter { padding: 8px 14px; border-top: 0.5px solid #e0e0dc; font-size: 13px; font-weight: 600; color: #185FA5; }
 
 /* 상세 일정 */
 .day-card { border: 0.5px solid #e0e0dc; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
-.day-header { background: #f9f9f7; padding: 10px 14px; font-weight: 500; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+.day-header { background: #f9f9f7; padding: 10px 14px; font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
 .day-body { padding: 12px 14px; }
-
-/* 장소 스톱 */
 .stop { display: flex; gap: 12px; align-items: flex-start; }
-.snum { width:26px; height:26px; border-radius:50%; background:#E6F1FB; color:#185FA5; font-size:12px; font-weight:500; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
-.sname { font-size:14px; font-weight:500; }
+.snum { width:26px; height:26px; border-radius:50%; background:#E6F1FB; color:#185FA5; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+.sname { font-size:14px; font-weight:600; }
 .sdesc { font-size:13px; color:#666; margin-top:2px; line-height:1.5; }
 .srow2 { display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap; }
 .sbadge { font-size:11px; padding:2px 7px; border-radius:10px; }
 .b-food{background:#FAEEDA;color:#633806;} .b-sight{background:#E1F5EE;color:#085041;}
 .b-hotel{background:#EEEDFE;color:#3C3489;} .b-transport{background:#F1EFE8;color:#444441;} .b-activity{background:#FAECE7;color:#4A1B0C;}
-.scost { font-size:12px; font-weight:500; color:#0F6E56; }
+.scost { font-size:12px; font-weight:600; color:#0F6E56; }
 
-/* 이동 수단 표시 */
+/* 이동 수단 */
 .transit-row { display: flex; align-items: center; gap: 0; margin: 8px 0 8px 13px; }
 .transit-line { width: 1px; background: #d0d0cc; flex-shrink: 0; align-self: stretch; min-height: 8px; }
-.transit-bubble { display: flex; align-items: center; gap: 6px; margin-left: 12px; background: #f3f3f0; border: 0.5px solid #e0e0dc; border-radius: 20px; padding: 4px 10px 4px 7px; font-size: 12px; color: #555; }
+.transit-bubble { display: flex; align-items: center; gap: 6px; margin-left: 12px; background: #f3f3f0; border: 0.5px solid #e0e0dc; border-radius: 20px; padding: 4px 10px 4px 7px; font-size: 12px; color: #555; flex-wrap: wrap; }
 .transit-icon { font-size: 14px; }
 .transit-time { font-size: 11px; color: #999; margin-left: 2px; }
-
-/* 이동수단 뱃지 색상 */
 .tr-subway { background: #E6F1FB; border-color: #b5d4f4; color: #185FA5; }
 .tr-bus { background: #E8F5E9; border-color: #a5d6a7; color: #2E7D32; }
 .tr-walk { background: #FFF8E1; border-color: #ffe082; color: #8a6300; }
@@ -99,35 +110,14 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 
 .tips-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .tip-item { background:#f9f9f7; border-radius:8px; padding:10px 12px; font-size:13px; color:#666; line-height:1.5; }
-.tip-label { font-size:12px; font-weight:500; color:#1a1a18; margin-bottom:3px; }
+.tip-label { font-size:12px; font-weight:600; color:#1a1a18; margin-bottom:3px; }
 .sbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
 .schip { background:#f9f9f7; border:0.5px solid #e0e0dc; border-radius:8px; padding:5px 11px; font-size:13px; color:#666; }
-.schip span { font-weight:500; color:#1a1a18; }
+.schip span { font-weight:600; color:#1a1a18; }
 .back-btn { background:none; border:0.5px solid #ccc; border-radius:8px; padding:7px 14px; font-size:13px; color:#666; cursor:pointer; margin-bottom:12px; }
 
-/* AI 제공자 선택 + API Key 카드 */
-.apikey-card { background:#fff; border:0.5px solid #e0e0dc; border-radius:12px; padding:1rem 1.25rem; margin-bottom:1rem; }
-.provider-tabs { display:flex; gap:6px; margin-bottom:12px; }
-.provider-tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:9px 6px; border:1.5px solid #e0e0dc; border-radius:10px; cursor:pointer; transition:all .15s; background:#f9f9f7; }
-.provider-tab:hover { border-color:#aaa; }
-.provider-tab.active { border-color:#185FA5; background:#E6F1FB; }
-.provider-tab .pt-icon { font-size:20px; line-height:1; }
-.provider-tab .pt-name { font-size:12px; font-weight:500; color:#666; }
-.provider-tab .pt-model { font-size:10px; color:#aaa; }
-.provider-tab.active .pt-name { color:#185FA5; }
-.provider-tab.active .pt-model { color:#5b96cc; }
-.apikey-row { display:flex; gap:8px; align-items:center; }
-.apikey-input-wrap { position:relative; flex:1; }
-.apikey-input-wrap input { width:100%; padding:8px 36px 8px 10px; border:0.5px solid #ccc; border-radius:8px; font-size:14px; background:#f9f9f7; color:#1a1a18; font-family:inherit; }
-.apikey-toggle { position:absolute; right:9px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:15px; color:#999; padding:0; line-height:1; }
-.apikey-save-btn { padding:8px 14px; background:#f0f0ed; border:0.5px solid #d8d8d4; border-radius:8px; font-size:13px; color:#444; cursor:pointer; white-space:nowrap; font-family:inherit; transition:background .15s; }
-.apikey-save-btn:hover { background:#e4e4e0; }
-.apikey-status { font-size:12px; margin-top:6px; min-height:16px; }
-.apikey-help { font-size:12px; color:#999; margin-top:8px; line-height:1.6; }
-.apikey-help a { color:#185FA5; text-decoration:none; }
-.apikey-help a:hover { text-decoration:underline; }
 @media (max-width:600px){
-  .input-row, .routes-grid, .tips-grid { grid-template-columns:1fr; }
+  .input-row, .routes-grid, .tips-grid, .mode-note { grid-template-columns:1fr; }
   .days-grid { grid-template-columns: repeat(3, 1fr); }
 }
 </style>
@@ -136,35 +126,17 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 <div class="app">
   <div class="header">
     <h1>AI 해외여행 루트 추천</h1>
-    <p>목적지와 기간을 선택하면 4가지 예산 등급 루트와 상세 이동 정보를 알려드립니다</p>
+    <p>API 없이 바로 작동하는 오프라인 추천 버전입니다.<br>목적지와 기간을 선택하면 4가지 예산 등급 루트와 상세 이동 정보를 자동으로 조합해 드립니다.</p>
   </div>
 
-  <!-- AI 제공자 선택 + API Key -->
-  <div class="apikey-card">
-    <div class="section-title">AI 제공자 선택</div>
-    <div class="provider-tabs">
-      <div class="provider-tab active" data-provider="openai">
-        <span class="pt-icon">🤖</span>
-        <span class="pt-name">GPT-4o</span>
-        <span class="pt-model">OpenAI</span>
-      </div>
-      <div class="provider-tab" data-provider="gemini">
-        <span class="pt-icon">✨</span>
-        <span class="pt-name">Gemini</span>
-        <span class="pt-model">Google</span>
-      </div>
-    </div>
-    <div class="apikey-row">
-      <div class="apikey-input-wrap">
-        <input type="password" id="api-key" placeholder="sk-..." autocomplete="off" />
-        <button class="apikey-toggle" id="key-toggle" title="보기/숨기기">👁</button>
-      </div>
-      <button class="apikey-save-btn" id="key-save-btn">저장</button>
-    </div>
-    <div class="apikey-status" id="apikey-status"></div>
-    <div class="apikey-help" id="apikey-help">
-      API Key는 이 기기 브라우저에만 저장되며 외부로 전송되지 않습니다.<br>
-      키 발급 → <a id="key-link" href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>
+  <div class="mode-card">
+    <div class="section-title">실행 방식</div>
+    <div class="mode-title">🧭 오프라인 추천 모드</div>
+    <div class="mode-badge">API 키 필요 없음 · 브라우저에서 바로 생성</div>
+    <div class="mode-help">도시별 추천 데이터와 규칙 기반 일정 생성 로직으로 작동합니다. 주요 도시에서는 더 자연스럽고, 등록되지 않은 도시도 일반 여행 패턴으로 자동 추천합니다.</div>
+    <div class="mode-note">
+      <div class="mode-item"><strong>잘 맞는 경우</strong>도쿄·오사카·교토·후쿠오카·방콕·타이베이·싱가포르·파리·런던·뉴욕 같은 인기 도시</div>
+      <div class="mode-item"><strong>알아둘 점</strong>실시간 운영시간/가격 조회는 하지 않으므로 최종 예약 전에 한 번 더 확인해 주세요.</div>
     </div>
   </div>
 
@@ -175,7 +147,6 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
       <div class="input-group"><label>목적지 (해외)</label><input type="text" id="dest" placeholder="예: 도쿄, 파리, 방콕" /></div>
     </div>
 
-    <!-- 날짜 체크박스 -->
     <div style="margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <label style="font-size:13px;color:#666;">여행 기간 선택</label>
@@ -190,7 +161,6 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
       </div>
     </div>
 
-    <!-- 여행 스타일 -->
     <div style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <label style="font-size:13px;color:#666;">여행 스타일</label>
@@ -205,6 +175,13 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
         <label class="style-option"><input type="checkbox" name="style" value="쇼핑·트렌디" /><span class="style-chip">🛍 쇼핑·트렌디</span></label>
         <label class="style-option"><input type="checkbox" name="style" value="허니문·로맨틱" /><span class="style-chip">💑 허니문·로맨틱</span></label>
       </div>
+      <div class="quick-actions">
+        <button type="button" class="quick-btn" data-preset="classic">관광 + 역사</button>
+        <button type="button" class="quick-btn" data-preset="foodie">관광 + 맛집</button>
+        <button type="button" class="quick-btn" data-preset="relax">자연 + 로맨틱</button>
+        <button type="button" class="quick-btn" data-preset="trend">쇼핑 + 맛집</button>
+        <button type="button" class="quick-btn" data-preset="alloff">모두 해제</button>
+      </div>
     </div>
 
     <div class="err-box" id="err-input">출발 도시, 목적지, 여행 스타일을 확인해 주세요.</div>
@@ -213,19 +190,19 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
   </div>
 
   <div class="loading" id="load-routes">
-    <div style="font-size:15px;font-weight:500;" class="dot-anim">4가지 등급 루트를 분석하고 있어요</div>
-    <div style="margin-top:6px;font-size:13px;color:#666;">최저가부터 럭셔리까지 AI가 최적 루트를 짜고 있습니다</div>
+    <div style="font-size:15px;font-weight:600;" class="dot-anim">추천 루트를 조합하고 있어요</div>
+    <div style="margin-top:6px;font-size:13px;color:#666;">선택한 도시와 스타일을 바탕으로 4가지 예산 등급을 정리합니다</div>
   </div>
 
   <div id="sec-routes" class="hidden">
-    <div style="font-size:15px;font-weight:500;margin-bottom:10px;" id="routes-title"></div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:10px;" id="routes-title"></div>
     <div class="routes-grid" id="routes-grid"></div>
     <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">원하는 등급을 선택하면 대중교통 동선 포함 상세 일정을 볼 수 있어요</p>
   </div>
 
   <div class="loading" id="load-detail">
-    <div style="font-size:15px;font-weight:500;" class="dot-anim">대중교통 동선 포함 상세 일정 생성 중</div>
-    <div style="margin-top:6px;font-size:13px;color:#666;">장소간 이동 수단과 소요 시간도 함께 정리합니다</div>
+    <div style="font-size:15px;font-weight:600;" class="dot-anim">대중교통 동선 포함 상세 일정 생성 중</div>
+    <div style="margin-top:6px;font-size:13px;color:#666;">장소 간 이동 수단과 하루 테마를 정리하고 있습니다</div>
   </div>
 
   <div id="sec-detail" class="hidden">
@@ -245,10 +222,9 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     {key:'budget', label:'최저가', icon:'🎒', gc:'g-budget', cc:'c-budget', dc:'d-budget', desc:'호스텔·게스트하우스, 길거리음식, 대중교통, 무료 관광지 최대 활용'},
     {key:'value',  label:'가성비', icon:'👍', gc:'g-value',  cc:'c-value',  dc:'d-value',  desc:'저가~중가 호텔, 현지 맛집 위주, 유료 명소 선별, 가끔 택시'},
     {key:'normal', label:'보통',   icon:'🏨', gc:'g-normal', cc:'c-normal', dc:'d-normal', desc:'비즈니스~3성 호텔, 일반 레스토랑, 편의 교통'},
-    {key:'luxury', label:'럭셔리', icon:'✨', gc:'g-luxury', cc:'c-luxury', dc:'d-luxury', desc:'5성 호텔·리조트, 파인다이닝, 전용 차량, 프리미엄 투어'}
+    {key:'luxury', label:'럭셔리', icon:'✨', gc:'g-luxury', cc:'c-luxury', dc:'d-luxury', desc:'4~5성 호텔, 파인다이닝, 프라이빗 이동, 프리미엄 체험'}
   ];
 
-  // 이동수단 → 이모지·스타일 매핑
   var TR_MAP = {
     '지하철':  { icon:'🚇', cls:'tr-subway' },
     '전철':    { icon:'🚇', cls:'tr-subway' },
@@ -258,222 +234,907 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     '도보':    { icon:'🚶', cls:'tr-walk'   },
     '걷기':    { icon:'🚶', cls:'tr-walk'   },
     '택시':    { icon:'🚕', cls:'tr-taxi'   },
-    '그랩':    { icon:'🚕', cls:'tr-taxi'   },
+    '차량':    { icon:'🚕', cls:'tr-taxi'   },
     '기차':    { icon:'🚆', cls:'tr-train'  },
     '신칸센':  { icon:'🚅', cls:'tr-train'  },
     '트램':    { icon:'🚊', cls:'tr-tram'   },
-    '페리':    { icon:'⛴',  cls:'tr-ferry'  },
-    '보트':    { icon:'⛴',  cls:'tr-ferry'  },
+    '페리':    { icon:'⛴', cls:'tr-ferry'  },
+    '보트':    { icon:'⛴', cls:'tr-ferry'  }
   };
 
-  function getTransitStyle(mode) {
-    if (!mode) return { icon:'🚌', cls:'tr-bus' };
-    for (var key in TR_MAP) {
-      if (mode.indexOf(key) !== -1) return TR_MAP[key];
-    }
-    return { icon:'🚌', cls:'tr-bus' };
-  }
+  var STYLE_META = {
+    '관광 중심': {pool:'sight', label:'랜드마크'},
+    '맛집 탐방': {pool:'food', label:'현지 맛집'},
+    '자연·힐링': {pool:'nature', label:'공원·전망'},
+    '역사·문화': {pool:'culture', label:'유적·박물관'},
+    '액티비티': {pool:'activity', label:'체험'},
+    '쇼핑·트렌디': {pool:'shopping', label:'쇼핑 스폿'},
+    '허니문·로맨틱': {pool:'romantic', label:'야경·감성'}
+  };
 
-  var routesData = null, params = {};
+  var GRADE_META = {
+    budget: {
+      accommodation:'호스텔·캡슐·게스트하우스',
+      transport:'대중교통 + 도보',
+      daily:[7, 11],
+      meal:'로컬 식당·캐주얼 맛집',
+      stay:'역 접근성 좋은 실속 숙소'
+    },
+    value: {
+      accommodation:'저가~중가 호텔',
+      transport:'대중교통 + 가끔 택시',
+      daily:[11, 17],
+      meal:'검증된 인기 맛집 중심',
+      stay:'중심지 근처 실속 호텔'
+    },
+    normal: {
+      accommodation:'3~4성급 호텔',
+      transport:'편의 교통 + 택시 혼합',
+      daily:[18, 27],
+      meal:'예약 가능한 레스토랑 포함',
+      stay:'동선 좋은 미드스케일 호텔'
+    },
+    luxury: {
+      accommodation:'4~5성급 호텔·리조트',
+      transport:'프라이빗 이동 + 택시',
+      daily:[30, 52],
+      meal:'파인다이닝·시그니처 경험',
+      stay:'대표 지역 프리미엄 호텔'
+    }
+  };
+
+  var DESTINATIONS = [
+    {
+      key:'tokyo',
+      aliases:['도쿄','tokyo','동경'],
+      city:'도쿄',
+      country:'일본',
+      currency:'엔',
+      costFactor:1.25,
+      bestSeason:'3~5월 · 10~11월',
+      currencyTip:'교통은 IC카드, 소규모 식당은 현금/교통카드 결제도 대비해 주세요.',
+      transitHub:'JR·도쿄메트로',
+      areas:['시부야','아사쿠사','긴자','신주쿠','우에노'],
+      pools:{
+        sight:[
+          {name:'센소지', area:'아사쿠사', description:'도쿄의 대표 사찰과 전통 상점가를 함께 보기 좋습니다.'},
+          {name:'도쿄 타워 전망대', area:'미나토', description:'도심 전경을 한 번에 보기 좋은 클래식 전망 포인트입니다.'},
+          {name:'메이지 신궁', area:'하라주쿠', description:'도심 속 숲길과 신사 분위기를 함께 느끼기 좋습니다.'},
+          {name:'도쿄 스카이트리 타운', area:'오시아게', description:'전망·쇼핑·야경을 한 번에 즐기기 좋은 복합 스폿입니다.'},
+          {name:'시부야 스크램블 교차로', area:'시부야', description:'도쿄의 에너지를 상징하는 대표 랜드마크입니다.'}
+        ],
+        food:[
+          {name:'츠키지 외시장', area:'츠키지', description:'해산물 덮밥·계란말이·길거리 간식을 즐기기 좋은 구역입니다.'},
+          {name:'이자카야 골목 저녁', area:'신주쿠', description:'꼬치구이와 하이볼로 가볍게 현지 분위기를 느끼기 좋습니다.'},
+          {name:'라멘 스트리트', area:'도쿄역', description:'취향대로 라멘 가게를 골라보기 좋은 밀집 구역입니다.'},
+          {name:'오모테산도 브런치 카페', area:'오모테산도', description:'트렌디한 카페와 디저트 동선을 잡기 좋습니다.'},
+          {name:'우에노 시장 간식 투어', area:'우에노', description:'합리적인 가격대로 현지 먹거리를 다양하게 즐기기 좋습니다.'}
+        ],
+        nature:[
+          {name:'신주쿠 교엔', area:'신주쿠', description:'산책과 휴식을 동시에 즐기기 좋은 대형 정원입니다.'},
+          {name:'요요기 공원', area:'요요기', description:'피크닉과 여유로운 산책에 잘 맞는 도심 공원입니다.'},
+          {name:'오다이바 해변공원', area:'오다이바', description:'바닷바람과 도시 야경을 함께 즐기기 좋습니다.'},
+          {name:'하마리큐 정원', area:'시오도메', description:'전통 정원 분위기와 차분한 휴식을 느끼기 좋습니다.'}
+        ],
+        culture:[
+          {name:'에도도쿄박물관 주변 역사 산책', area:'료고쿠', description:'에도·메이지 시기의 도시 변화를 이해하기 좋습니다.'},
+          {name:'우에노 박물관 지구', area:'우에노', description:'미술관과 박물관이 밀집해 문화 코스를 짜기 좋습니다.'},
+          {name:'가구라자카 골목', area:'가구라자카', description:'작은 골목과 전통감이 살아 있는 분위기 좋은 동네입니다.'},
+          {name:'야네센 산책', area:'닛포리', description:'옛 도쿄의 낮은 주거 골목 감성을 느끼기 좋습니다.'}
+        ],
+        activity:[
+          {name:'팀랩 플래닛츠', area:'도요스', description:'몰입형 미디어아트 체험으로 사진이 잘 나오는 인기 코스입니다.'},
+          {name:'도쿄 베이 크루즈', area:'도쿄만', description:'도시 야경을 물 위에서 보는 색다른 체험입니다.'},
+          {name:'아키하바라 게임·피규어 탐방', area:'아키하바라', description:'서브컬처와 체험형 상점을 함께 보기 좋습니다.'},
+          {name:'카페·아케이드 체험', area:'이케부쿠로', description:'가벼운 실내 액티비티를 넣기 좋은 구역입니다.'}
+        ],
+        shopping:[
+          {name:'긴자 백화점 거리', area:'긴자', description:'백화점·편집숍 위주로 깔끔하게 쇼핑하기 좋습니다.'},
+          {name:'하라주쿠·오모테산도', area:'하라주쿠', description:'트렌디 브랜드와 감각적인 편집숍 동선에 잘 맞습니다.'},
+          {name:'시부야 파르코·미야시타파크', area:'시부야', description:'쇼핑과 카페, 저녁 산책을 함께 묶기 좋습니다.'},
+          {name:'도쿄역 캐릭터 스트리트', area:'도쿄역', description:'기념품·캐릭터 굿즈를 보기 좋은 실내 쇼핑 구간입니다.'}
+        ],
+        romantic:[
+          {name:'롯폰기 힐즈 야경', area:'롯폰기', description:'분위기 있는 저녁과 야경 감상에 잘 어울립니다.'},
+          {name:'오다이바 레인보우브리지 뷰', area:'오다이바', description:'노을부터 야경까지 천천히 즐기기 좋은 코스입니다.'},
+          {name:'긴자 디너 산책', area:'긴자', description:'조용한 거리 산책과 식사를 묶기 좋은 저녁 동선입니다.'},
+          {name:'도쿄 미드타운 라이트업 구역', area:'아카사카', description:'계절별 조명 연출과 감성적인 산책이 어울립니다.'}
+        ]
+      }
+    },
+    {
+      key:'osaka',
+      aliases:['오사카','osaka'],
+      city:'오사카',
+      country:'일본',
+      currency:'엔',
+      costFactor:1.05,
+      bestSeason:'3~5월 · 10~11월',
+      currencyTip:'지하철 1일권·난카이/JR 패스를 동선에 맞게 선택하면 교통비를 아끼기 좋습니다.',
+      transitHub:'오사카메트로·JR',
+      areas:['난바','우메다','도톤보리','신세카이','우메다'],
+      pools:{
+        sight:[
+          {name:'오사카성 공원', area:'오사카성', description:'성곽과 공원 산책을 함께 즐기기 좋은 대표 명소입니다.'},
+          {name:'우메다 스카이빌딩', area:'우메다', description:'도심 전경을 보기 좋은 전망 포인트입니다.'},
+          {name:'도톤보리 강변 산책', area:'난바', description:'오사카 특유의 활기와 간판 풍경을 느끼기 좋습니다.'},
+          {name:'신세카이 쓰텐카쿠', area:'신세카이', description:'복고 감성이 살아 있는 대표 관광지입니다.'}
+        ],
+        food:[
+          {name:'도톤보리 타코야키 투어', area:'도톤보리', description:'가볍게 여러 가게를 비교하며 먹기 좋은 구역입니다.'},
+          {name:'쿠시카츠 저녁', area:'신세카이', description:'오사카다운 로컬 음식 경험에 잘 맞습니다.'},
+          {name:'오코노미야키 맛집', area:'난바', description:'현지 인기 메뉴를 편하게 즐기기 좋습니다.'},
+          {name:'우메다 디저트 카페', area:'우메다', description:'쇼핑 사이 쉬어가기 좋은 카페 코스입니다.'}
+        ],
+        nature:[
+          {name:'나카노시마 공원', area:'기타하마', description:'강변 산책과 휴식에 잘 맞는 도심 공원입니다.'},
+          {name:'텐노지 공원', area:'텐노지', description:'가볍게 쉬며 주변 명소와 묶기 좋은 곳입니다.'},
+          {name:'만박기념공원', area:'스이타', description:'조금 여유 있는 일정에 넣기 좋은 넓은 공원입니다.'}
+        ],
+        culture:[
+          {name:'시텐노지', area:'텐노지', description:'일본의 오래된 사찰 중 하나로 역사 감상이 좋습니다.'},
+          {name:'오사카 역사박물관', area:'오사카성', description:'도시의 흐름을 정리해 보기 좋은 실내 코스입니다.'},
+          {name:'나카자키초 골목', area:'나카자키초', description:'작은 상점과 오래된 분위기가 공존하는 동네입니다.'}
+        ],
+        activity:[
+          {name:'유니버설시티워크', area:'베이 에어리어', description:'테마파크 없이도 분위기와 쇼핑을 즐기기 좋습니다.'},
+          {name:'헵파이브 관람차', area:'우메다', description:'짧고 가벼운 액티비티로 넣기 좋습니다.'},
+          {name:'오사카 강변 크루즈', area:'난바', description:'도심 풍경을 색다르게 보는 체험입니다.'}
+        ],
+        shopping:[
+          {name:'신사이바시 쇼핑 아케이드', area:'신사이바시', description:'브랜드·드럭스토어·기념품 동선을 한 번에 보기 좋습니다.'},
+          {name:'우메다 한큐·루쿠아', area:'우메다', description:'실내 쇼핑과 식사를 묶기 좋은 구역입니다.'},
+          {name:'덴덴타운', area:'닛폰바시', description:'전자기기·서브컬처 쇼핑에 잘 맞습니다.'}
+        ],
+        romantic:[
+          {name:'오사카 베이 야경', area:'베이 에어리어', description:'야경과 저녁 산책에 잘 어울리는 코스입니다.'},
+          {name:'도톤보리 리버뷰 디너', area:'난바', description:'분위기 있는 저녁 일정에 넣기 좋습니다.'},
+          {name:'우메다 공중정원 야경', area:'우메다', description:'전망과 사진 포인트가 좋은 데이트 코스입니다.'}
+        ]
+      }
+    },
+    {
+      key:'kyoto',
+      aliases:['교토','kyoto'],
+      city:'교토',
+      country:'일본',
+      currency:'엔',
+      costFactor:1.1,
+      bestSeason:'3~5월 · 10~11월',
+      currencyTip:'버스 혼잡이 잦아 지하철+도보 조합이 편할 때가 많습니다.',
+      transitHub:'시내버스·게이한·한큐',
+      areas:['기온','아라시야마','히가시야마','가와라마치'],
+      pools:{
+        sight:[
+          {name:'기요미즈데라', area:'히가시야마', description:'교토를 대표하는 고즈넉한 사찰 전망 명소입니다.'},
+          {name:'후시미 이나리 신사', area:'후시미', description:'붉은 도리이 길 산책으로 유명한 대표 코스입니다.'},
+          {name:'아라시야마 대나무숲', area:'아라시야마', description:'사진과 산책을 함께 즐기기 좋습니다.'},
+          {name:'금각사', area:'기타', description:'짧게 보기 좋아 다른 코스와 연결하기 편합니다.'}
+        ],
+        food:[
+          {name:'가이세키 런치', area:'기온', description:'교토다운 정갈한 식사 경험에 잘 맞습니다.'},
+          {name:'니시키시장 먹거리', area:'가와라마치', description:'가볍게 여러 먹거리를 나눠 먹기 좋습니다.'},
+          {name:'말차 디저트 카페', area:'기온', description:'교토 감성 카페 코스로 잘 어울립니다.'},
+          {name:'두부·유바 전문점', area:'히가시야마', description:'전통 식재료를 경험해 보기 좋은 메뉴입니다.'}
+        ],
+        nature:[
+          {name:'철학의 길', area:'히가시야마', description:'천천히 걷기 좋은 산책 루트입니다.'},
+          {name:'가모가와 강변', area:'가와라마치', description:'저녁 산책과 휴식에 잘 맞습니다.'},
+          {name:'아라시야마 강변', area:'아라시야마', description:'자연 풍경과 여유로운 시간이 잘 어울립니다.'}
+        ],
+        culture:[
+          {name:'기온 전통 거리 산책', area:'기온', description:'마치야와 전통 거리 풍경을 즐기기 좋습니다.'},
+          {name:'산주산겐도', area:'히가시야마', description:'불상과 전통 건축을 깊게 보기 좋습니다.'},
+          {name:'난젠지', area:'오카자키', description:'차분한 사찰 분위기가 매력적인 곳입니다.'}
+        ],
+        activity:[
+          {name:'기모노 체험 산책', area:'기온', description:'사진 중심 일정에 잘 어울리는 체험입니다.'},
+          {name:'사가노 관광열차 주변 코스', area:'아라시야마', description:'기차·강변 풍경을 묶기 좋은 활동형 일정입니다.'},
+          {name:'찻집 다도 체험', area:'히가시야마', description:'조용한 체험형 일정으로 넣기 좋습니다.'}
+        ],
+        shopping:[
+          {name:'가와라마치 편집숍', area:'가와라마치', description:'감각적인 소품과 의류를 보기 좋습니다.'},
+          {name:'교토 기념품 상점가', area:'기요미즈자카', description:'과자·소품·도자기 쇼핑에 잘 맞습니다.'},
+          {name:'니시키시장 주방잡화', area:'니시키', description:'작은 선물용 아이템을 고르기 좋습니다.'}
+        ],
+        romantic:[
+          {name:'기온 저녁 산책', area:'기온', description:'은은한 조명과 골목 풍경이 잘 어울립니다.'},
+          {name:'아라시야마 강변 노을', area:'아라시야마', description:'느긋한 커플 일정으로 인기가 많습니다.'},
+          {name:'기온 디너 코스', area:'기온', description:'조용하고 분위기 있는 식사 동선에 잘 맞습니다.'}
+        ]
+      }
+    },
+    {
+      key:'fukuoka',
+      aliases:['후쿠오카','fukuoka','하카타'],
+      city:'후쿠오카',
+      country:'일본',
+      currency:'엔',
+      costFactor:0.95,
+      bestSeason:'3~5월 · 10~11월',
+      currencyTip:'공항과 시내가 가까워 지하철 위주로 동선 짜기가 편합니다.',
+      transitHub:'지하철 공항선',
+      areas:['하카타','텐진','모모치','오호리'],
+      pools:{
+        sight:[
+          {name:'오호리 공원', area:'오호리', description:'가벼운 산책으로 시작하기 좋은 대표 공원입니다.'},
+          {name:'후쿠오카 타워', area:'모모치', description:'바다와 도심을 함께 내려다보기 좋은 전망대입니다.'},
+          {name:'구시다 신사', area:'하카타', description:'짧게 들르기 좋은 도심 사찰 명소입니다.'},
+          {name:'캐널시티 분수 쇼', area:'하카타', description:'쇼핑과 가벼운 볼거리를 묶기 좋은 곳입니다.'}
+        ],
+        food:[
+          {name:'하카타 라멘', area:'하카타', description:'후쿠오카 대표 메뉴를 가장 쉽게 즐길 수 있습니다.'},
+          {name:'야타이 포장마차', area:'나카스', description:'밤 분위기와 로컬 먹거리를 함께 경험하기 좋습니다.'},
+          {name:'모츠나베 저녁', area:'텐진', description:'현지 인기 메뉴로 든든한 저녁에 잘 맞습니다.'},
+          {name:'멘타이코 정식', area:'하카타', description:'후쿠오카다운 한 끼 메뉴로 무난합니다.'}
+        ],
+        nature:[
+          {name:'모모치 해변', area:'모모치', description:'해변 산책과 여유로운 시간에 잘 맞습니다.'},
+          {name:'노코노시마 분위기 산책', area:'외곽', description:'하루 여유가 있을 때 넣기 좋은 자연형 코스입니다.'},
+          {name:'마이즈루 공원', area:'오호리', description:'도심 공원 산책과 휴식을 함께 즐기기 좋습니다.'}
+        ],
+        culture:[
+          {name:'하카타 마치야 민속관', area:'하카타', description:'지역 문화와 생활사를 가볍게 보기 좋습니다.'},
+          {name:'도초지', area:'하카타', description:'대형 목조 불상으로 유명한 사찰입니다.'},
+          {name:'다자이후 텐만구 주변', area:'다자이후', description:'반나절 문화 코스로 연결하기 좋습니다.'}
+        ],
+        activity:[
+          {name:'후쿠오카 강변 크루즈', area:'나카스', description:'저녁 시간대에 분위기 좋게 넣기 좋습니다.'},
+          {name:'캐널시티 실내 엔터테인먼트', area:'하카타', description:'가벼운 실내 액티비티를 묶기 좋습니다.'},
+          {name:'야구·스포츠 관람 주변 코스', area:'모모치', description:'행사 일정이 맞으면 활동형 여행에 적합합니다.'}
+        ],
+        shopping:[
+          {name:'텐진 지하상가', area:'텐진', description:'날씨와 상관없이 쇼핑하기 편한 대표 코스입니다.'},
+          {name:'아뮤플라자 하카타', area:'하카타', description:'기념품과 패션 쇼핑을 함께 하기 좋습니다.'},
+          {name:'캐널시티 쇼핑', area:'하카타', description:'식사와 쇼핑을 한 번에 묶기 좋습니다.'}
+        ],
+        romantic:[
+          {name:'모모치 해변 일몰', area:'모모치', description:'가볍고 로맨틱한 저녁 산책 코스로 좋습니다.'},
+          {name:'나카스 강변 야경', area:'나카스', description:'식사 후 산책 코스로 잘 어울립니다.'},
+          {name:'후쿠오카 타워 야경', area:'모모치', description:'커플 사진 포인트로 인기가 많습니다.'}
+        ]
+      }
+    },
+    {
+      key:'bangkok',
+      aliases:['방콕','bangkok'],
+      city:'방콕',
+      country:'태국',
+      currency:'바트',
+      costFactor:0.85,
+      bestSeason:'11월~2월',
+      currencyTip:'BTS·MRT와 그랩을 함께 쓰면 체감 이동 피로가 많이 줄어듭니다.',
+      transitHub:'BTS·MRT',
+      areas:['시암','아속','차이나타운','짜오프라야 강변'],
+      pools:{
+        sight:[
+          {name:'왓 포', area:'라타나코신', description:'방콕 대표 사원 코스로 짧게 둘러보기 좋습니다.'},
+          {name:'왕궁·왓 프라깨우', area:'라타나코신', description:'역사·볼거리 비중이 큰 핵심 관광지입니다.'},
+          {name:'왓 아룬', area:'강변', description:'강 건너 풍경과 사진이 잘 나오는 명소입니다.'},
+          {name:'마하나콘 스카이워크', area:'사톤', description:'도시 전경과 유리 전망대 체험이 가능한 명소입니다.'}
+        ],
+        food:[
+          {name:'차이나타운 길거리 음식', area:'야오와랏', description:'방콕다운 먹거리를 밀도 있게 즐기기 좋은 구역입니다.'},
+          {name:'팟타이·솜땀 맛집', area:'시암', description:'여행자 만족도가 높은 대표 메뉴 코스입니다.'},
+          {name:'루프톱 바 전 가벼운 디너', area:'사톤', description:'야경 일정과 연결하기 좋습니다.'},
+          {name:'터미널21 푸드코트', area:'아속', description:'가성비 높게 여러 메뉴를 즐기기 좋습니다.'}
+        ],
+        nature:[
+          {name:'룸피니 공원', area:'실롬', description:'도심 속 여유와 산책을 즐기기 좋은 곳입니다.'},
+          {name:'짜오프라야 강변 산책', area:'강변', description:'노을 시간대에 분위기가 좋습니다.'},
+          {name:'벤자키티 공원', area:'아속', description:'산책과 휴식, 가벼운 사진 코스에 잘 맞습니다.'}
+        ],
+        culture:[
+          {name:'짐 톰슨 하우스', area:'시암', description:'실내 문화 코스로 무난하게 넣기 좋습니다.'},
+          {name:'탈랏노이 골목', area:'탈랏노이', description:'로컬 감성과 사진 포인트가 살아 있는 동네입니다.'},
+          {name:'방콕 국립박물관', area:'라타나코신', description:'태국 역사 흐름을 보기 좋은 실내 코스입니다.'}
+        ],
+        activity:[
+          {name:'짜오프라야 강 보트 이동', area:'강변', description:'교통과 체험을 동시에 즐기기 좋은 코스입니다.'},
+          {name:'타이 마사지 체험', area:'아속', description:'하루 중간 회복 일정으로 잘 어울립니다.'},
+          {name:'야시장 탐방', area:'랏차다/시암', description:'쇼핑과 먹거리를 함께 즐기기 좋습니다.'}
+        ],
+        shopping:[
+          {name:'아이콘시암', area:'강변', description:'프리미엄 쇼핑과 푸드홀을 한 번에 보기 좋습니다.'},
+          {name:'시암 스퀘어·시암센터', area:'시암', description:'트렌디한 쇼핑 동선에 잘 맞습니다.'},
+          {name:'터미널21', area:'아속', description:'실내 쇼핑과 간단한 식사를 묶기 좋습니다.'}
+        ],
+        romantic:[
+          {name:'루프톱 바 야경', area:'사톤', description:'분위기 있는 저녁 일정으로 인기가 많습니다.'},
+          {name:'강변 디너 크루즈 주변 코스', area:'강변', description:'특별한 저녁을 만들기 좋습니다.'},
+          {name:'아이콘시암 분수 쇼', area:'강변', description:'가볍게 로맨틱한 포인트를 넣기 좋습니다.'}
+        ]
+      }
+    },
+    {
+      key:'taipei',
+      aliases:['타이베이','taipei','대만','taiwan taipei'],
+      city:'타이베이',
+      country:'대만',
+      currency:'대만달러',
+      costFactor:0.9,
+      bestSeason:'10월~4월',
+      currencyTip:'이지카드 충전 후 MRT·버스·편의점에서 폭넓게 쓰기 편합니다.',
+      transitHub:'MRT',
+      areas:['시먼딩','융캉제','신이','단수이'],
+      pools:{
+        sight:[
+          {name:'타이베이 101 전망대', area:'신이', description:'도시 전경과 랜드마크 감상을 하기 좋습니다.'},
+          {name:'중정기념당', area:'중정', description:'대표적인 상징 공간으로 사진 포인트가 많습니다.'},
+          {name:'용산사', area:'완화', description:'짧게 들르기 좋은 도심 전통 사찰입니다.'},
+          {name:'국립고궁박물원 주변 코스', area:'스린', description:'대표 문화 명소와 함께 묶기 좋습니다.'}
+        ],
+        food:[
+          {name:'융캉제 딤섬·우육면', area:'융캉제', description:'타이베이 인기 메뉴를 한 동선에서 즐기기 좋습니다.'},
+          {name:'닝샤 야시장', area:'다퉁', description:'길거리 간식 중심의 저녁 일정에 잘 맞습니다.'},
+          {name:'시먼딩 간식 투어', area:'시먼딩', description:'짧게 여러 메뉴를 맛보기 좋습니다.'},
+          {name:'브런치 카페', area:'동먼', description:'느긋한 오전 일정과 잘 어울립니다.'}
+        ],
+        nature:[
+          {name:'단수이 강변 산책', area:'단수이', description:'노을과 여유로운 분위기를 즐기기 좋습니다.'},
+          {name:'샹산 트레일', area:'신이', description:'가벼운 전망 하이킹으로 인기가 많습니다.'},
+          {name:'베이터우 온천공원', area:'베이터우', description:'휴식 중심 일정에 잘 맞습니다.'}
+        ],
+        culture:[
+          {name:'화산 1914 문화창의공원', area:'중산', description:'전시·소품·카페를 함께 보기 좋은 복합 공간입니다.'},
+          {name:'디화제 거리', area:'다다오청', description:'전통 상점과 오래된 거리 감성이 살아 있습니다.'},
+          {name:'국립고궁박물원', area:'스린', description:'중화권 유물을 깊게 보기 좋은 대표 박물관입니다.'}
+        ],
+        activity:[
+          {name:'베이터우 온천 체험', area:'베이터우', description:'휴식형 액티비티로 만족도가 높습니다.'},
+          {name:'마오콩 곤돌라 주변 코스', area:'원산', description:'차밭 풍경과 이동 체험을 함께 즐길 수 있습니다.'},
+          {name:'야시장 게임·간식', area:'스린', description:'저녁 시간대 활동성을 높이기 좋습니다.'}
+        ],
+        shopping:[
+          {name:'신이 쇼핑 지구', area:'신이', description:'백화점과 브랜드 매장이 밀집해 있습니다.'},
+          {name:'시먼딩 쇼핑', area:'시먼딩', description:'젊은 분위기의 스트리트 쇼핑에 잘 맞습니다.'},
+          {name:'중산 편집숍', area:'중산', description:'감성 소품과 편집숍을 둘러보기 좋습니다.'}
+        ],
+        romantic:[
+          {name:'단수이 노을', area:'단수이', description:'커플 일정으로 만족도가 높은 대표 코스입니다.'},
+          {name:'타이베이 101 야경', area:'신이', description:'저녁 사진 포인트로 좋습니다.'},
+          {name:'다다오청 저녁 산책', area:'다다오청', description:'분위기 있는 저녁 동선으로 잘 어울립니다.'}
+        ]
+      }
+    },
+    {
+      key:'singapore',
+      aliases:['싱가포르','singapore'],
+      city:'싱가포르',
+      country:'싱가포르',
+      currency:'싱달러',
+      costFactor:1.35,
+      bestSeason:'연중 무난',
+      currencyTip:'대중교통은 카드 태그인/아웃이 편하고, 실내 냉방이 강해 얇은 겉옷이 있으면 좋습니다.',
+      transitHub:'MRT',
+      areas:['마리나베이','오차드','차이나타운','캄퐁글램'],
+      pools:{
+        sight:[
+          {name:'가든스 바이 더 베이', area:'마리나베이', description:'실내 돔과 야외 정원을 함께 즐기기 좋습니다.'},
+          {name:'마리나베이 산책로', area:'마리나베이', description:'싱가포르 첫날 핵심 풍경을 보기 좋은 코스입니다.'},
+          {name:'멀라이언 파크', area:'마리나베이', description:'대표 포토 스폿으로 짧게 넣기 좋습니다.'},
+          {name:'주얼 창이 주변 코스', area:'창이', description:'도착·출발일 일정에 잘 맞는 랜드마크입니다.'}
+        ],
+        food:[
+          {name:'라우파삿 호커센터', area:'마리나', description:'현지 음식과 사테를 함께 즐기기 좋습니다.'},
+          {name:'티옹바루 브런치', area:'티옹바루', description:'카페 감성과 식사를 함께 묶기 좋습니다.'},
+          {name:'막스웰 푸드센터', area:'차이나타운', description:'가성비 좋은 현지 식사 코스로 무난합니다.'},
+          {name:'캄퐁글램 카페', area:'부기스', description:'감각적인 카페와 산책을 연결하기 좋습니다.'}
+        ],
+        nature:[
+          {name:'보타닉 가든', area:'오차드', description:'도심 속 자연 휴식 코스로 만족도가 높습니다.'},
+          {name:'이스트코스트 산책', area:'동부', description:'바다 느낌을 더하고 싶을 때 좋습니다.'},
+          {name:'포트캐닝 파크', area:'도비곳', description:'짧은 산책과 포토 스폿을 함께 즐기기 좋습니다.'}
+        ],
+        culture:[
+          {name:'차이나타운 헤리티지 구역', area:'차이나타운', description:'역사와 먹거리를 함께 보기 좋습니다.'},
+          {name:'리틀인디아 산책', area:'리틀인디아', description:'색감 있는 거리 풍경이 인상적입니다.'},
+          {name:'국립미술관 주변 코스', area:'시빅디스트릭트', description:'실내 문화 일정으로 잘 맞습니다.'}
+        ],
+        activity:[
+          {name:'리버 크루즈', area:'클락키', description:'도시를 가볍게 즐기는 체험형 일정입니다.'},
+          {name:'센토사 케이블카 주변', area:'센토사', description:'활동적인 오후 일정에 잘 맞습니다.'},
+          {name:'나이트 사파리 주변 코스', area:'북부', description:'하루를 길게 쓰는 액티비티형 여행에 어울립니다.'}
+        ],
+        shopping:[
+          {name:'오차드로드 쇼핑', area:'오차드', description:'브랜드 쇼핑과 실내 이동이 편리합니다.'},
+          {name:'부기스 쇼핑', area:'부기스', description:'가성비 아이템과 캐주얼 쇼핑에 잘 맞습니다.'},
+          {name:'마리나베이 더샵스', area:'마리나베이', description:'프리미엄 쇼핑과 식사를 함께 묶기 좋습니다.'}
+        ],
+        romantic:[
+          {name:'마리나베이 야경', area:'마리나베이', description:'야경과 저녁 산책의 완성도가 높습니다.'},
+          {name:'가든 랩소디 야간 쇼', area:'마리나베이', description:'분위기 있는 저녁 일정으로 좋습니다.'},
+          {name:'클락키 리버사이드 디너', area:'클락키', description:'식사와 분위기를 동시에 챙기기 좋습니다.'}
+        ]
+      }
+    },
+    {
+      key:'paris',
+      aliases:['파리','paris'],
+      city:'파리',
+      country:'프랑스',
+      currency:'유로',
+      costFactor:1.4,
+      bestSeason:'4~6월 · 9~10월',
+      currencyTip:'메트로는 묶음권이나 일일권이 편하고, 인기 식당은 예약해 두면 동선이 안정적입니다.',
+      transitHub:'메트로·RER',
+      areas:['에펠탑','루브르','마레','생제르맹'],
+      pools:{
+        sight:[
+          {name:'에펠탑 주변 산책', area:'7구', description:'파리 첫인상으로 가장 강한 랜드마크 코스입니다.'},
+          {name:'루브르 외관·정원', area:'1구', description:'실내 관람 여부와 무관하게 상징성이 높습니다.'},
+          {name:'몽마르트 언덕', area:'18구', description:'도시 전망과 골목 산책을 함께 즐기기 좋습니다.'},
+          {name:'개선문·샹젤리제', area:'8구', description:'대표적인 도시 축을 보기 좋은 코스입니다.'}
+        ],
+        food:[
+          {name:'브라세리 런치', area:'생제르맹', description:'파리다운 식사 분위기를 느끼기 좋습니다.'},
+          {name:'마레 디저트 투어', area:'마레', description:'가볍게 여러 디저트를 즐기기 좋은 구역입니다.'},
+          {name:'비스트로 디너', area:'오페라/마레', description:'여행의 분위기를 살리는 저녁 코스입니다.'},
+          {name:'시장형 먹거리', area:'생마르탱', description:'로컬 감성과 간단한 식사를 함께 즐기기 좋습니다.'}
+        ],
+        nature:[
+          {name:'튈르리 정원', area:'1구', description:'루브르와 콩코르드를 잇는 산책 코스로 좋습니다.'},
+          {name:'뤽상부르 공원', area:'6구', description:'차분하게 쉬기 좋은 대표 공원입니다.'},
+          {name:'센강변 산책', area:'센강', description:'시간대만 잘 맞추면 가장 파리다운 장면을 줍니다.'}
+        ],
+        culture:[
+          {name:'오르세 미술관 주변 코스', area:'7구', description:'인상주의·실내 문화 일정에 적합합니다.'},
+          {name:'생트샤펠·시테섬', area:'1구', description:'역사적 분위기가 진하게 살아 있는 구역입니다.'},
+          {name:'마레 지구 골목', area:'마레', description:'건물·작은 상점·전시를 함께 즐기기 좋습니다.'}
+        ],
+        activity:[
+          {name:'센강 유람선', area:'센강', description:'짧고 만족도 높은 체험형 코스입니다.'},
+          {name:'마카롱 클래스 주변 코스', area:'마레', description:'특별한 체험을 넣고 싶을 때 좋습니다.'},
+          {name:'몽파르나스 전망대', area:'14구', description:'실내 전망 액티비티로 날씨 영향이 적습니다.'}
+        ],
+        shopping:[
+          {name:'갤러리 라파예트', area:'오페라', description:'대표 백화점 쇼핑과 돔 감상을 함께 할 수 있습니다.'},
+          {name:'마레 편집숍', area:'마레', description:'감각적인 브랜드와 소품을 보기 좋습니다.'},
+          {name:'생제르맹 부티크', area:'6구', description:'분위기 있는 쇼핑 산책에 잘 맞습니다.'}
+        ],
+        romantic:[
+          {name:'트로카데로 야경', area:'16구', description:'에펠탑 야경을 보기 좋은 대표 포인트입니다.'},
+          {name:'센강 야간 산책', area:'센강', description:'커플 여행에 잘 어울리는 파리다운 코스입니다.'},
+          {name:'몽마르트 저녁 산책', area:'18구', description:'감성적인 밤 분위기를 만들기 좋습니다.'}
+        ]
+      }
+    },
+    {
+      key:'london',
+      aliases:['런던','london'],
+      city:'런던',
+      country:'영국',
+      currency:'파운드',
+      costFactor:1.45,
+      bestSeason:'5~6월 · 9월',
+      currencyTip:'오이스터·컨택트리스 결제가 편하고, 박물관 무료 관람을 적극 활용하면 좋습니다.',
+      transitHub:'언더그라운드',
+      areas:['웨스트민스터','소호','노팅힐','사우스뱅크'],
+      pools:{
+        sight:[
+          {name:'빅벤·웨스트민스터', area:'웨스트민스터', description:'런던의 상징을 한 번에 보기 좋은 핵심 구역입니다.'},
+          {name:'타워브리지', area:'타워힐', description:'강변 풍경과 함께 묶기 좋은 대표 랜드마크입니다.'},
+          {name:'버킹엄궁 주변 산책', area:'세인트제임스', description:'공원과 랜드마크를 함께 보기 좋습니다.'},
+          {name:'런던아이 주변 코스', area:'사우스뱅크', description:'첫날 혹은 마지막날 넣기 좋은 도심 포인트입니다.'}
+        ],
+        food:[
+          {name:'버러마켓 먹거리', area:'사우스워크', description:'가볍게 여러 메뉴를 시도하기 좋습니다.'},
+          {name:'소호 브런치', area:'소호', description:'트렌디한 식사와 거리 산책을 묶기 좋습니다.'},
+          {name:'펍 디너', area:'코벤트가든', description:'런던다운 분위기의 저녁 코스로 잘 맞습니다.'},
+          {name:'애프터눈티', area:'메이페어', description:'특별한 여행 포인트로 좋습니다.'}
+        ],
+        nature:[
+          {name:'하이드파크', area:'하이드파크', description:'도심 속 휴식과 산책에 적합합니다.'},
+          {name:'리젠트파크', area:'리젠트', description:'여유로운 오전 일정으로 좋습니다.'},
+          {name:'템스강변 산책', area:'사우스뱅크', description:'낮과 밤 모두 분위기가 좋은 루트입니다.'}
+        ],
+        culture:[
+          {name:'대영박물관 주변 코스', area:'블룸즈버리', description:'무료 문화 일정의 대표 선택지입니다.'},
+          {name:'내셔널갤러리 주변', area:'트라팔가', description:'실내 문화 동선으로 무난합니다.'},
+          {name:'노팅힐 골목', area:'노팅힐', description:'거리 풍경과 카페가 잘 어울립니다.'}
+        ],
+        activity:[
+          {name:'템스 리버 크루즈', area:'템스', description:'도시를 다른 시점으로 보는 체험입니다.'},
+          {name:'뮤지컬 거리 주변 일정', area:'웨스트엔드', description:'저녁 시간을 특별하게 쓰기 좋습니다.'},
+          {name:'스카이가든 전망', area:'시티', description:'예약형 가벼운 액티비티로 좋습니다.'}
+        ],
+        shopping:[
+          {name:'옥스퍼드 스트리트', area:'웨스트엔드', description:'브랜드 쇼핑 동선으로 가장 익숙합니다.'},
+          {name:'코벤트가든', area:'코벤트가든', description:'쇼핑과 거리 공연을 함께 즐기기 좋습니다.'},
+          {name:'소호 편집숍', area:'소호', description:'감각적인 쇼핑 코스로 잘 맞습니다.'}
+        ],
+        romantic:[
+          {name:'사우스뱅크 야경', area:'사우스뱅크', description:'강변 야경과 산책을 함께 즐기기 좋습니다.'},
+          {name:'노팅힐 저녁 산책', area:'노팅힐', description:'차분한 커플 일정으로 좋습니다.'},
+          {name:'웨스트엔드 디너', area:'소호', description:'식사와 공연 분위기를 연결하기 좋습니다.'}
+        ]
+      }
+    },
+    {
+      key:'newyork',
+      aliases:['뉴욕','new york','newyork','nyc'],
+      city:'뉴욕',
+      country:'미국',
+      currency:'달러',
+      costFactor:1.55,
+      bestSeason:'4~6월 · 9~11월',
+      currencyTip:'지하철 OMNY 태그 결제가 편하고, 인기 전망대는 시간 지정 예약이 안정적입니다.',
+      transitHub:'지하철',
+      areas:['맨해튼 미드타운','소호','브루클린','센트럴파크'],
+      pools:{
+        sight:[
+          {name:'타임스스퀘어', area:'미드타운', description:'뉴욕의 에너지를 상징하는 대표 스폿입니다.'},
+          {name:'센트럴파크', area:'업타운', description:'휴식과 산책을 동시에 즐기기 좋습니다.'},
+          {name:'브루클린 브리지', area:'다운타운', description:'도보 이동과 사진 포인트가 좋은 명소입니다.'},
+          {name:'탑오브더록 주변 코스', area:'미드타운', description:'전망과 랜드마크 밀집도가 높습니다.'}
+        ],
+        food:[
+          {name:'뉴욕 피자 슬라이스 투어', area:'맨해튼', description:'가볍게 여러 가게를 비교하기 좋습니다.'},
+          {name:'첼시마켓', area:'첼시', description:'실내에서 다양한 메뉴를 즐기기 좋습니다.'},
+          {name:'브런치 카페', area:'소호', description:'감각적인 거리와 함께 묶기 좋습니다.'},
+          {name:'델리·베이글 코스', area:'어퍼웨스트', description:'현지 일상 메뉴를 편하게 경험하기 좋습니다.'}
+        ],
+        nature:[
+          {name:'허드슨리버파크', area:'웨스트사이드', description:'강변 산책과 휴식에 잘 맞습니다.'},
+          {name:'브라이언트파크', area:'미드타운', description:'중간 휴식 코스로 넣기 좋습니다.'},
+          {name:'하이라인', area:'첼시', description:'도시형 산책로로 사진 포인트가 많습니다.'}
+        ],
+        culture:[
+          {name:'메트로폴리탄 미술관 주변', area:'어퍼이스트', description:'실내 문화 일정의 대표 선택지입니다.'},
+          {name:'모마 주변 코스', area:'미드타운', description:'짧은 문화 일정으로 무난합니다.'},
+          {name:'그리니치빌리지 산책', area:'빌리지', description:'동네 분위기와 작은 상점을 함께 보기 좋습니다.'}
+        ],
+        activity:[
+          {name:'서밋 원 밴더빌트', area:'미드타운', description:'사진 중심 액티비티로 인기가 높습니다.'},
+          {name:'브루클린 덤보 산책', area:'브루클린', description:'활동적인 동선과 사진 포인트가 좋습니다.'},
+          {name:'야구·공연장 주변 일정', area:'미드타운/브루클린', description:'행사와 연결하기 좋습니다.'}
+        ],
+        shopping:[
+          {name:'소호 쇼핑', area:'소호', description:'트렌디한 브랜드와 거리를 함께 즐기기 좋습니다.'},
+          {name:'5번가 쇼핑', area:'미드타운', description:'백화점·브랜드 쇼핑에 잘 맞습니다.'},
+          {name:'첼시·플랫아이언 편집숍', area:'첼시', description:'감각적인 쇼핑 동선으로 좋습니다.'}
+        ],
+        romantic:[
+          {name:'브루클린 브리지 야경', area:'브루클린', description:'도시 야경이 특히 좋은 저녁 코스입니다.'},
+          {name:'허드슨강 선셋', area:'웨스트사이드', description:'느긋한 커플 일정에 잘 맞습니다.'},
+          {name:'루프톱 바 주변 디너', area:'미드타운', description:'특별한 밤 분위기를 만들기 좋습니다.'}
+        ]
+      }
+    }
+  ];
+
+  var routesData = null, params = {}, currentDestination = null;
 
   function $(id){ return document.getElementById(id); }
   function show(id){ $(id).classList.remove('hidden'); }
   function hide(id){ $(id).classList.add('hidden'); }
   function showL(id){ $(id).classList.add('visible'); }
   function hideL(id){ $(id).classList.remove('visible'); }
-  function getSelectedDays(){
-    var checked = document.querySelector('input[name="days"]:checked');
-    return checked ? checked.value : '5';
-  }
-  function getSelectedStyles(){
-    return Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; });
-  }
+  function getSelectedDays(){ var checked = document.querySelector('input[name="days"]:checked'); return checked ? checked.value : '5'; }
+  function getSelectedStyles(){ return Array.from(document.querySelectorAll('input[name="style"]:checked')).map(function(el){ return el.value; }); }
   function escapeHtml(str){
     return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
+  function normalize(str){ return String(str||'').toLowerCase().replace(/\s+/g,'').replace(/[()]/g,''); }
+  function hashSeed(str){
+    var h = 0, s = String(str||'seed');
+    for (var i=0;i<s.length;i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+  function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+  function titleCaseArea(area){ return area || '도심'; }
 
-  // ─── AI 제공자 설정 ───
-  var PROVIDERS = {
-    openai: {
-      name: 'GPT-4o',
-      placeholder: 'sk-...',
-      link: 'https://platform.openai.com/api-keys',
-      linkText: 'platform.openai.com/api-keys',
-      storageKey: 'ai_key_openai',
-      validate: function(k){ return k.startsWith('sk-'); },
-      errMsg: 'OpenAI API Key는 sk- 로 시작해야 합니다.'
-    },
-    gemini: {
-      name: 'Gemini',
-      placeholder: 'AIza...',
-      link: 'https://aistudio.google.com/app/apikey',
-      linkText: 'aistudio.google.com/app/apikey',
-      storageKey: 'ai_key_gemini',
-      validate: function(k){ return k.length > 10; },
-      errMsg: 'Gemini API Key를 확인해 주세요.'
-    }
-  };
-
-  var currentProvider = localStorage.getItem('ai_provider') || 'openai';
-
-  function getApiKey(){
-    var p = PROVIDERS[currentProvider];
-    return (localStorage.getItem(p.storageKey) || '').trim();
+  function getTransitStyle(mode) {
+    if (!mode) return { icon:'🚌', cls:'tr-bus' };
+    for (var key in TR_MAP) { if (mode.indexOf(key) !== -1) return TR_MAP[key]; }
+    return { icon:'🚌', cls:'tr-bus' };
   }
 
-  function updateProviderUI(){
-    var p = PROVIDERS[currentProvider];
-    var keyInput = $('api-key');
-    var status = $('apikey-status');
-
-    // 탭 active 상태
-    document.querySelectorAll('.provider-tab').forEach(function(tab){
-      tab.classList.toggle('active', tab.dataset.provider === currentProvider);
-    });
-
-    // placeholder·link 업데이트
-    keyInput.type = 'password';
-    $('key-toggle').textContent = '👁';
-    keyInput.placeholder = p.placeholder;
-    $('key-link').href = p.link;
-    $('key-link').textContent = p.linkText;
-
-    // 저장된 키 불러오기
-    var saved = localStorage.getItem(p.storageKey) || '';
-    keyInput.value = saved;
-    if (saved) {
-      status.style.color = '#0F6E56';
-      status.textContent = '✓ ' + p.name + ' 키가 저장되어 있습니다';
-    } else {
-      status.textContent = '';
-    }
-  }
-
-  (function initKeyUI(){
-    // 탭 클릭
-    document.querySelectorAll('.provider-tab').forEach(function(tab){
-      tab.addEventListener('click', function(){
-        currentProvider = tab.dataset.provider;
-        localStorage.setItem('ai_provider', currentProvider);
-        updateProviderUI();
-      });
-    });
-
-    // 보기/숨기기
-    $('key-toggle').addEventListener('click', function(){
-      var ki = $('api-key');
-      if (ki.type === 'password') { ki.type = 'text'; this.textContent = '🙈'; }
-      else { ki.type = 'password'; this.textContent = '👁'; }
-    });
-
-    // 저장 버튼
-    $('key-save-btn').addEventListener('click', function(){
-      var val = $('api-key').value.trim();
-      var p = PROVIDERS[currentProvider];
-      var status = $('apikey-status');
-      if (!val) {
-        status.style.color = '#8B1E1E'; status.textContent = 'API Key를 입력해 주세요.'; return;
-      }
-      if (!p.validate(val)) {
-        status.style.color = '#8B1E1E'; status.textContent = p.errMsg; return;
-      }
-      localStorage.setItem(p.storageKey, val);
-      status.style.color = '#0F6E56'; status.textContent = '✓ ' + p.name + ' 키가 저장되었습니다';
-      setTimeout(function(){ status.textContent = ''; }, 2500);
-    });
-
-    $('api-key').addEventListener('input', function(){ $('apikey-status').textContent = ''; });
-
-    updateProviderUI();
-  })();
-
-  async function callAI(prompt, maxTokens) {
-    var apiKey = getApiKey();
-    if (!apiKey) throw new Error('API Key가 없습니다. 상단에서 ' + PROVIDERS[currentProvider].name + ' API Key를 입력하고 저장해 주세요.');
-
-    var response, txt;
-
-    // ── OpenAI GPT-4o ──
-    if (currentProvider === 'openai') {
-      response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          max_tokens: maxTokens || 1400,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      if (!response.ok) {
-        var t = await response.text();
-        var msg = t.slice(0, 200);
-        try { var j = JSON.parse(t); msg = (j.error && j.error.message) || msg; } catch(e){}
-        if (response.status === 401) msg = 'OpenAI API Key가 올바르지 않습니다.';
-        if (response.status === 429) msg = '요청 한도 초과 또는 잔액 부족입니다. OpenAI 계정을 확인해 주세요.';
-        throw new Error(msg);
-      }
-      var d = await response.json();
-      txt = (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '';
-
-    // ── Google Gemini ──
-    } else if (currentProvider === 'gemini') {
-      response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+  function resolveDestination(input){
+    var n = normalize(input);
+    for (var i=0;i<DESTINATIONS.length;i++){
+      var d = DESTINATIONS[i];
+      for (var j=0;j<d.aliases.length;j++){
+        if (n === normalize(d.aliases[j]) || n.indexOf(normalize(d.aliases[j])) !== -1 || normalize(d.aliases[j]).indexOf(n) !== -1) {
+          return deepClone(d);
         }
-      );
-      if (!response.ok) {
-        var t2 = await response.text();
-        var msg2 = t2.slice(0, 200);
-        try { var j2 = JSON.parse(t2); msg2 = (j2.error && j2.error.message) || msg2; } catch(e){}
-        if (response.status === 400) msg2 = 'Gemini API Key가 올바르지 않거나 권한이 없습니다.';
-        if (response.status === 429) msg2 = 'Gemini 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.';
-        throw new Error(msg2);
       }
-      var d2 = await response.json();
-      txt = (d2.candidates && d2.candidates[0] && d2.candidates[0].content &&
-             d2.candidates[0].content.parts && d2.candidates[0].content.parts[0] &&
-             d2.candidates[0].content.parts[0].text) || '';
     }
-
-    var m = txt.match(/\{[\s\S]*\}/);
-    if (!m) throw new Error('JSON 응답을 찾지 못했습니다: ' + txt.slice(0, 150));
-    return JSON.parse(m[0]);
+    return buildGenericDestination(input);
   }
 
-  // ─── 생성 버튼 ───
-  $('gen-btn').addEventListener('click', function(){
-    var origin = $('origin').value.trim();
-    var dest = $('dest').value.trim();
-    var selectedStyles = getSelectedStyles();
-    $('err-input').style.display = 'none';
-    $('err-api').style.display = 'none';
-    if (!origin || !dest || !selectedStyles.length) { $('err-input').style.display = 'block'; return; }
+  function buildGenericDestination(name){
+    var city = (name || '해외 도시').trim();
+    return {
+      key:'generic',
+      aliases:[city],
+      city:city,
+      country:'해외',
+      currency:'현지통화',
+      costFactor:1.0,
+      bestSeason:'봄·가을',
+      currencyTip:'공항-도심 이동은 공식 교통수단을 우선 확인하고, 결제는 트래블카드와 소액 현금을 함께 준비해 두면 편합니다.',
+      transitHub:'도심 대중교통',
+      areas:['올드타운','다운타운','리버사이드','시티센터'],
+      pools:{
+        sight:[
+          {name:city+' 대표 랜드마크', area:'시티센터', description:'처음 방문할 때 도시 감각을 잡기 좋은 핵심 명소입니다.'},
+          {name:city+' 전망 포인트', area:'다운타운', description:'도시 전경을 보기 좋고 동선 연결도 편합니다.'},
+          {name:city+' 중앙광장', area:'올드타운', description:'주요 관광지와 카페 동선을 연결하기 좋습니다.'},
+          {name:city+' 워터프런트 산책로', area:'리버사이드', description:'가벼운 산책과 사진 포인트에 적합합니다.'}
+        ],
+        food:[
+          {name:'로컬 인기 식당', area:'시티센터', description:'현지 대표 메뉴를 무난하게 즐기기 좋습니다.'},
+          {name:'시장 먹거리 구역', area:'올드타운', description:'짧은 시간에 다양한 음식을 시도하기 좋습니다.'},
+          {name:'트렌디 브런치 카페', area:'다운타운', description:'감성적인 휴식과 식사를 묶기 좋습니다.'},
+          {name:'야간 미식 거리', area:'리버사이드', description:'저녁 분위기와 식사를 함께 즐기기 좋습니다.'}
+        ],
+        nature:[
+          {name:'도심 공원', area:'시티센터', description:'일정 중간 쉬어가기 좋은 녹지 공간입니다.'},
+          {name:'강변 산책 코스', area:'리버사이드', description:'노을 시간대에 특히 잘 어울립니다.'},
+          {name:'전망 언덕·공원', area:'외곽', description:'자연과 전망을 함께 즐기기 좋습니다.'}
+        ],
+        culture:[
+          {name:'역사 지구 산책', area:'올드타운', description:'구시가지 분위기와 건축 감상을 하기 좋습니다.'},
+          {name:'시립 박물관', area:'시티센터', description:'도시 배경을 이해하기 좋은 실내 코스입니다.'},
+          {name:'전통 시장 골목', area:'올드타운', description:'생활 문화와 로컬 분위기를 느끼기 좋습니다.'}
+        ],
+        activity:[
+          {name:'전망대 체험', area:'다운타운', description:'짧지만 만족도 높은 액티비티입니다.'},
+          {name:'수변 크루즈·보트', area:'리버사이드', description:'도시를 색다르게 즐기기 좋습니다.'},
+          {name:'로컬 체험 클래스', area:'시티센터', description:'여행에 개성을 더하고 싶을 때 좋습니다.'}
+        ],
+        shopping:[
+          {name:'중심가 쇼핑 거리', area:'다운타운', description:'브랜드 쇼핑과 카페를 함께 즐기기 좋습니다.'},
+          {name:'기념품 마켓', area:'올드타운', description:'선물용 아이템을 고르기 좋습니다.'},
+          {name:'현대 쇼핑몰', area:'시티센터', description:'날씨와 상관없이 편하게 둘러보기 좋습니다.'}
+        ],
+        romantic:[
+          {name:'야경 포인트', area:'리버사이드', description:'저녁 분위기를 만들기 좋은 산책 코스입니다.'},
+          {name:'감성 디너 거리', area:'다운타운', description:'식사와 산책을 함께 묶기 좋습니다.'},
+          {name:'노을 전망 스폿', area:'외곽', description:'허니문·데이트 일정에 잘 맞습니다.'}
+        ]
+      }
+    };
+  }
 
-    var daysVal = getSelectedDays();
-    var dlabels = {'3':'2박 3일','4':'3박 4일','5':'4박 5일','7':'6박 7일','10':'9박 10일'};
-    params = { origin:origin, dest:dest, days:daysVal, styles:selectedStyles,
-               styleLabel:selectedStyles.join(', '), dayLabel:dlabels[daysVal] };
+  function getAreaSnippet(dest){
+    var areas = (dest.areas || []).slice(0, 3);
+    return areas.join(' · ');
+  }
 
-    $('gen-btn').disabled = true;
-    showL('load-routes'); hide('sec-routes'); hide('sec-detail');
+  function formatKrwRange(low, high){
+    return Math.round(low) + '만~' + Math.round(high) + '만원';
+  }
 
-    var p = '해외여행 전문 플래너입니다. '+origin+'에서 '+dest+' '+params.dayLabel+' 여행을 계획합니다. 여행 스타일은 '+params.styleLabel+' 입니다. 선택한 스타일을 자연스럽게 섞은 4가지 예산 등급 루트 개요를 JSON으로만 반환하세요. 마크다운 없이 순수 JSON만 반환하세요. 가격은 현지에서 무난하게 참고할 수 있게 대략적으로 쓰세요.\n{"routes":[{"grade_en":"budget","cost_range":"30만~50만원","accommodation":"호스텔","transport":"지하철","highlights":["특징1","특징2","특징3"],"best_for":"추천 대상"},{"grade_en":"value","cost_range":"50만~90만원","accommodation":"저가~중가 호텔","transport":"대중교통+가끔 택시","highlights":["특징1","특징2","특징3"],"best_for":"추천 대상"},{"grade_en":"normal","cost_range":"90만~140만원","accommodation":"3성급 호텔","transport":"편의 교통","highlights":["특징1","특징2","특징3"],"best_for":"추천 대상"},{"grade_en":"luxury","cost_range":"140만원 이상","accommodation":"5성 호텔","transport":"프라이빗 이동 포함","highlights":["특징1","특징2","특징3"],"best_for":"추천 대상"}]}';
+  function estimateCostRange(dest, days, gradeKey){
+    var grade = GRADE_META[gradeKey];
+    var factor = dest.costFactor || 1;
+    var low = grade.daily[0] * days * factor;
+    var high = grade.daily[1] * days * factor;
+    return formatKrwRange(low, high);
+  }
 
-    callAI(p, 1400).then(function(d){
-      routesData = d; renderRoutes();
-    }).catch(function(e){
-      $('err-api').textContent = '오류: ' + e.message;
-      $('err-api').style.display = 'block';
-    }).finally(function(){
-      hideL('load-routes'); $('gen-btn').disabled = false;
+  function summarizeStyles(styles){
+    return styles.map(function(s){ return STYLE_META[s] ? STYLE_META[s].label : s; }).join(' + ');
+  }
+
+  function buildRoutes(params, dest){
+    var styles = params.styles;
+    return {
+      routes: G.map(function(g){
+        var meta = GRADE_META[g.key];
+        var highlights = [
+          summarizeStyles(styles) + '을(를) 자연스럽게 섞은 동선',
+          meta.meal + ' + ' + meta.stay + ' 조합',
+          getAreaSnippet(dest) + ' 중심으로 이동 효율을 잡은 코스'
+        ];
+        if (g.key === 'budget') highlights[1] = '무료 스폿과 로컬 식당 위주로 경비를 아낀 구성';
+        if (g.key === 'luxury') highlights[1] = '분위기 좋은 숙소와 특별한 저녁 경험을 넣은 구성';
+        return {
+          grade_en: g.key,
+          cost_range: estimateCostRange(dest, Number(params.days), g.key),
+          accommodation: meta.accommodation,
+          transport: meta.transport,
+          highlights: highlights,
+          best_for: styles.length > 1 ? styles.slice(0,2).join(' + ') + ' 취향을 함께 챙기고 싶은 여행자' : styles[0] + ' 취향이 뚜렷한 여행자'
+        };
+      })
+    };
+  }
+
+  function uniquePick(pool, state, seed, day, slot){
+    if (!pool || !pool.length) return null;
+    var key = pool.map(function(x){ return x.name; }).join('|');
+    var offset = (seed + day * 7 + slot * 13) % pool.length;
+    for (var i=0;i<pool.length;i++){
+      var idx = (offset + i) % pool.length;
+      var item = pool[idx];
+      if (!state.used[item.name]) {
+        state.used[item.name] = true;
+        return deepClone(item);
+      }
+    }
+    var fallback = deepClone(pool[offset % pool.length]);
+    fallback.description = fallback.description + ' 재방문/주변 동선으로 무리 없이 연결하기 좋습니다.';
+    return fallback;
+  }
+
+  function getBasePattern(styles, day){
+    var pools = styles.map(function(s){ return STYLE_META[s] && STYLE_META[s].pool; }).filter(Boolean);
+    if (!pools.length) pools = ['sight'];
+    var a = pools[day % pools.length] || 'sight';
+    var b = pools[(day + 1) % pools.length] || 'sight';
+    return [a, 'food', b, (pools[(day + 2) % pools.length] || (day % 2 ? 'shopping' : 'romantic'))];
+  }
+
+  function normalizePoolName(pool){
+    if (pool === 'culture') return 'sight';
+    if (pool === 'nature' || pool === 'shopping' || pool === 'romantic') return 'activity';
+    return pool;
+  }
+
+  function getStopCost(pool, gradeKey, currency){
+    var map = {
+      '엔': {
+        budget:{food:'1인 900~1,500엔', sight:'무료~1,000엔', activity:'무료~2,000엔'},
+        value:{food:'1인 1,500~2,500엔', sight:'무료~1,800엔', activity:'1,000~3,500엔'},
+        normal:{food:'1인 2,500~4,500엔', sight:'1,000~2,500엔', activity:'2,000~5,000엔'},
+        luxury:{food:'1인 5,000엔+', sight:'2,000~4,000엔', activity:'4,000~8,000엔'}
+      },
+      '바트': {
+        budget:{food:'1인 120~220바트', sight:'무료~300바트', activity:'300~700바트'},
+        value:{food:'1인 250~500바트', sight:'200~500바트', activity:'500~1,200바트'},
+        normal:{food:'1인 600~1,200바트', sight:'300~700바트', activity:'800~1,800바트'},
+        luxury:{food:'1인 1,500바트+', sight:'500~1,200바트', activity:'1,500~3,000바트'}
+      },
+      '대만달러': {
+        budget:{food:'1인 120~220대만달러', sight:'무료~150대만달러', activity:'150~350대만달러'},
+        value:{food:'1인 250~450대만달러', sight:'100~250대만달러', activity:'250~600대만달러'},
+        normal:{food:'1인 500~900대만달러', sight:'200~400대만달러', activity:'500~1,200대만달러'},
+        luxury:{food:'1인 1,200대만달러+', sight:'300~700대만달러', activity:'1,000~2,200대만달러'}
+      },
+      '싱달러': {
+        budget:{food:'1인 8~15싱달러', sight:'무료~15싱달러', activity:'15~35싱달러'},
+        value:{food:'1인 18~30싱달러', sight:'10~25싱달러', activity:'25~60싱달러'},
+        normal:{food:'1인 35~60싱달러', sight:'20~35싱달러', activity:'50~120싱달러'},
+        luxury:{food:'1인 90싱달러+', sight:'25~50싱달러', activity:'100~220싱달러'}
+      },
+      '유로': {
+        budget:{food:'1인 10~18유로', sight:'무료~15유로', activity:'15~30유로'},
+        value:{food:'1인 20~35유로', sight:'10~25유로', activity:'25~55유로'},
+        normal:{food:'1인 40~70유로', sight:'15~35유로', activity:'40~90유로'},
+        luxury:{food:'1인 100유로+', sight:'25~45유로', activity:'90~180유로'}
+      },
+      '파운드': {
+        budget:{food:'1인 9~15파운드', sight:'무료~18파운드', activity:'15~35파운드'},
+        value:{food:'1인 18~30파운드', sight:'12~28파운드', activity:'25~60파운드'},
+        normal:{food:'1인 35~60파운드', sight:'18~35파운드', activity:'45~95파운드'},
+        luxury:{food:'1인 85파운드+', sight:'25~45파운드', activity:'90~180파운드'}
+      },
+      '달러': {
+        budget:{food:'1인 12~20달러', sight:'무료~20달러', activity:'20~40달러'},
+        value:{food:'1인 22~40달러', sight:'15~30달러', activity:'30~70달러'},
+        normal:{food:'1인 45~80달러', sight:'20~40달러', activity:'60~130달러'},
+        luxury:{food:'1인 110달러+', sight:'30~60달러', activity:'120~250달러'}
+      },
+      '현지통화': {
+        budget:{food:'가벼운 현지식', sight:'무료~저가', activity:'저가 체험'},
+        value:{food:'인기 식당 기준', sight:'합리적 입장료', activity:'중간 체험'},
+        normal:{food:'예약 가능한 식당', sight:'유료 명소 포함', activity:'프리미엄 체험'},
+        luxury:{food:'시그니처 레스토랑', sight:'대표 유료 명소', activity:'고급 체험'}
+      }
+    };
+    var t = map[currency] || map['현지통화'];
+    var key = normalizePoolName(pool);
+    return t[gradeKey][key] || t[gradeKey].activity;
+  }
+
+  function getTimeLabel(slot){
+    return ['09:30','12:00','15:00','18:30'][slot] || '10:00';
+  }
+
+  function makeTransit(prev, next, gradeKey, dest, seed, slot){
+    var areaFrom = prev && prev.area ? prev.area : '중심지';
+    var areaTo = next && next.area ? next.area : '다음 구역';
+    var metro = dest.transitHub || '대중교통';
+    var optionsByGrade = {
+      budget:['도보','지하철 ' + metro,'버스'],
+      value:['지하철 ' + metro,'지하철 ' + metro,'택시'],
+      normal:['지하철 ' + metro,'택시','기차 ' + metro],
+      luxury:['택시','차량 이동','택시']
+    };
+    var arr = optionsByGrade[gradeKey] || optionsByGrade.value;
+    var mode = arr[(seed + slot) % arr.length];
+    var duration = (slot === 1 ? 12 : slot === 2 ? 18 : 14) + (seed % 6);
+    var fare = '';
+    if (mode.indexOf('도보') !== -1) fare = '무료';
+    else if (mode.indexOf('택시') !== -1 || mode.indexOf('차량') !== -1) {
+      fare = gradeKey === 'luxury' ? '호텔/프라이빗 차량 기준' : '현지 택시비 기준';
+    } else if (dest.currency === '엔') fare = '180~320엔';
+    else if (dest.currency === '바트') fare = '25~60바트';
+    else if (dest.currency === '대만달러') fare = '20~45대만달러';
+    else if (dest.currency === '싱달러') fare = '1.5~3싱달러';
+    else if (dest.currency === '유로') fare = '2~4유로';
+    else if (dest.currency === '파운드') fare = '2.5~5파운드';
+    else if (dest.currency === '달러') fare = '2.9~6달러';
+    else fare = '도심 교통권 기준';
+    return {
+      mode: mode,
+      line: titleCaseArea(areaFrom) + ' → ' + titleCaseArea(areaTo),
+      duration: duration + '분',
+      fare: fare,
+      tip: mode.indexOf('도보') !== -1 ? '도보 구간은 편한 신발 기준으로 잡아 두세요.' : '혼잡 시간대를 피하면 이동 피로가 줄어듭니다.'
+    };
+  }
+
+  function getDayTitle(dest, pools){
+    var labels = pools.filter(function(p, idx){ return idx === 0 || idx === 2 || idx === 3; }).map(function(p){
+      var name = Object.keys(STYLE_META).find(function(k){ return STYLE_META[k].pool === p; });
+      return name ? name.replace('·',' / ') : p;
     });
-  });
+    var area = dest.areas && dest.areas.length ? dest.areas[0] : '도심';
+    return area + ' · ' + labels.slice(0,2).join(' + ');
+  }
 
-  // ─── 루트 카드 렌더 ───
+  function buildPlan(params, dest, route, gradeKey){
+    var days = Number(params.days);
+    var styles = params.styles;
+    var seed = hashSeed(params.dest + gradeKey + params.styleLabel + params.days);
+    var state = { used:{} };
+    var summarySpots = 0;
+    var dayPlans = [];
+    for (var day=0; day<days; day++){
+      var pattern = getBasePattern(styles, day);
+      var stops = [];
+      var prevStop = null;
+      for (var slot=0; slot<4; slot++){
+        var poolName = pattern[slot];
+        var pool = dest.pools[poolName] || dest.pools.sight;
+        var picked = uniquePick(pool, state, seed, day + 1, slot + 1);
+        if (!picked) continue;
+        var type = normalizePoolName(poolName);
+        var stop = {
+          order: slot + 1,
+          name: picked.name,
+          description: picked.description,
+          type: type,
+          time: getTimeLabel(slot),
+          cost: getStopCost(poolName, gradeKey, dest.currency),
+          transit: slot === 0 ? null : makeTransit(prevStop, picked, gradeKey, dest, seed + day, slot)
+        };
+        stops.push(stop);
+        prevStop = picked;
+        summarySpots += 1;
+      }
+      dayPlans.push({
+        day: day + 1,
+        title: getDayTitle(dest, pattern),
+        stops: stops
+      });
+    }
+
+    var tips = [
+      {label:'항공·도착', content:'첫날은 ' + (dest.transitHub || '대중교통') + ' 접근성이 좋은 구역부터 시작하면 적응이 편합니다.'},
+      {label:'숙소', content:GRADE_META[gradeKey].stay + ' 기준으로 ' + getAreaSnippet(dest) + ' 중 한 곳을 잡으면 이동 효율이 좋습니다.'},
+      {label:'현지 교통', content:(dest.transitHub || '도심 대중교통') + ' 중심으로 움직이고, 밤 귀가나 짐 이동만 택시/차량을 섞으면 편합니다.'},
+      {label:'예산 관리', content:gradeKey === 'budget' ? '점심을 메인 식사로 두고 저녁은 로컬 식당·간식 위주로 조절하면 좋습니다.' : gradeKey === 'luxury' ? '전망대·파인다이닝은 예약 비용이 커서 하루 1개씩만 넣는 편이 안정적입니다.' : '유료 명소와 식사 포인트를 하루 1~2개 정도로 맞추면 만족도와 예산 균형이 좋습니다.'},
+      {label:'주의사항', content:'운영시간·휴무일은 시즌마다 달라질 수 있어 방문 전 한 번만 재확인하면 안전합니다.'},
+      {label:'환전·결제', content:dest.currencyTip}
+    ];
+
+    return {
+      summary:{
+        total_spots: summarySpots,
+        estimated_total_cost: estimateCostRange(dest, days, gradeKey),
+        best_season: dest.bestSeason,
+        currency: dest.currencyTip
+      },
+      days: dayPlans,
+      tips: tips
+    };
+  }
+
   function renderRoutes(){
     $('routes-title').textContent = params.dest + ' ' + params.dayLabel + ' — 등급별 추천 루트';
     var html = '';
@@ -502,42 +1163,27 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     show('sec-routes');
   }
 
-  // ─── 상세 일정 로드 ───
   function loadDetail(key){
     var g = G.find(function(x){ return x.key === key; }) || G[1];
     var r = (routesData.routes || []).find(function(x){ return x.grade_en === key; }) || {};
     showL('load-detail'); hide('sec-detail');
     $('load-detail').scrollIntoView({behavior:'smooth', block:'start'});
-
-    var p = '해외여행 전문 플래너입니다. 아래 조건으로 상세 여행 일정을 JSON으로만 반환하세요. 마크다운 없이 순수 JSON만 반환하세요.\n' +
-      '목적지:'+params.dest+'\n기간:'+params.dayLabel+'('+params.days+'일)\n스타일:'+params.styleLabel+'\n' +
-      '예산등급:'+g.label+' - '+g.desc+'\n숙소:'+(r.accommodation||'')+'\n교통:'+(r.transport||'')+'\n\n' +
-      '요청사항:\n' +
-      '1. 선택한 여러 스타일을 하루 일정 안에서 자연스럽게 섞어 주세요.\n' +
-      '2. 각 장소 사이에 transit 필드로 이동 정보를 반드시 포함하세요. transit은 첫 번째 stop에는 넣지 않고 2번째 stop부터 포함합니다.\n' +
-      '   transit 예시: {"mode":"지하철 JR야마노테선","line":"야마노테선 시부야→하라주쿠","duration":"3분","fare":"170엔","tip":"IC카드 사용 추천"}\n' +
-      '   mode는 실제 노선명/수단을 구체적으로 적어주세요 (예: "지하철 2호선", "JR중앙선", "BTS 수쿰빗선", "MRT 블루라인", "도보", "택시").\n\n' +
-      '{"summary":{"total_spots":12,"estimated_total_cost":"50만원","best_season":"봄·가을","currency":"환전/결제 팁 한 줄"},' +
-      '"days":[{"day":1,"title":"첫째 날","stops":[' +
-      '{"order":1,"name":"장소명","description":"한 줄 설명","type":"sight","time":"09:00","cost":"무료","transit":null},' +
-      '{"order":2,"name":"장소명","description":"한 줄 설명","type":"food","time":"12:00","cost":"1인 2000엔","transit":{"mode":"지하철 노선명","line":"A역→B역","duration":"10분","fare":"200엔","tip":"이동 팁"}}' +
-      ']}],' +
-      '"tips":[{"label":"항공","content":"팁"},{"label":"숙소","content":"팁"},{"label":"현지 교통","content":"팁"},{"label":"예산 관리","content":"팁"},{"label":"주의사항","content":"팁"},{"label":"환전·결제","content":"팁"}]}';
-
-    callAI(p, 2800).then(function(plan){
-      renderDetail(plan, g);
-    }).catch(function(e){
-      $('err-api').textContent = '상세 일정 오류: ' + e.message;
-      $('err-api').style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }).finally(function(){
-      hideL('load-detail');
-    });
+    setTimeout(function(){
+      try{
+        var plan = buildPlan(params, currentDestination, r, key);
+        renderDetail(plan, g);
+      } catch (e) {
+        $('err-api').textContent = '상세 일정 오류: ' + e.message;
+        $('err-api').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } finally {
+        hideL('load-detail');
+      }
+    }, 350);
   }
 
-  // ─── 상세 일정 렌더 ───
   function renderDetail(plan, g){
-    $('detail-badge').innerHTML = '<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;" class="'+g.gc+'">'+g.icon+' '+g.label+' 등급 상세 일정</div>';
+    $('detail-badge').innerHTML = '<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;" class="'+g.gc+'">'+g.icon+' '+g.label+' 등급 상세 일정</div>';
     var s = plan.summary || {};
     $('detail-summary').innerHTML =
       '<div class="schip">목적지 <span>'+escapeHtml(params.dest)+'</span></div>' +
@@ -555,7 +1201,6 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     (plan.days || []).forEach(function(day){
       var stops = '';
       (day.stops || []).forEach(function(st, i){
-        // 이동 수단 버블 (2번째 stop부터)
         var transitHtml = '';
         if (i > 0 && st.transit && st.transit.mode) {
           var tr = st.transit;
@@ -570,13 +1215,10 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
                 (tr.fare ? '<span class="transit-time">· '+escapeHtml(tr.fare)+'</span>' : '') +
               '</div>' +
             '</div>';
-          // 팁이 있으면 작은 글씨로 추가
           if (tr.tip) {
-            transitHtml +=
-              '<div style="font-size:11px;color:#aaa;margin:-4px 0 6px 38px;">💡 '+escapeHtml(tr.tip)+'</div>';
+            transitHtml += '<div style="font-size:11px;color:#aaa;margin:-4px 0 6px 38px;">💡 '+escapeHtml(tr.tip)+'</div>';
           }
         } else if (i > 0) {
-          // transit 정보 없을 때 최소 구분선
           transitHtml = '<div style="width:1px;height:12px;background:#e0e0dc;margin:6px 0 6px 13px;"></div>';
         }
 
@@ -596,8 +1238,7 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
           '</div>';
       });
 
-      html +=
-        '<div class="day-card">' +
+      html += '<div class="day-card">' +
           '<div class="day-header">' +
             '<span>Day '+escapeHtml(day.day)+' — '+escapeHtml(day.title)+'</span>' +
             '<span style="font-size:12px;color:#888;">'+escapeHtml((day.stops||[]).length)+'개 장소</span>' +
@@ -614,10 +1255,64 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     $('sec-detail').scrollIntoView({behavior:'smooth', block:'start'});
   }
 
+  $('gen-btn').addEventListener('click', function(){
+    var origin = $('origin').value.trim();
+    var dest = $('dest').value.trim();
+    var selectedStyles = getSelectedStyles();
+    $('err-input').style.display = 'none';
+    $('err-api').style.display = 'none';
+    if (!origin || !dest || !selectedStyles.length) { $('err-input').style.display = 'block'; return; }
+
+    var daysVal = getSelectedDays();
+    var dlabels = {'3':'2박 3일','4':'3박 4일','5':'4박 5일','7':'6박 7일','10':'9박 10일'};
+    params = { origin:origin, dest:dest, days:daysVal, styles:selectedStyles,
+               styleLabel:selectedStyles.join(', '), dayLabel:dlabels[daysVal] };
+    currentDestination = resolveDestination(dest);
+
+    $('gen-btn').disabled = true;
+    showL('load-routes'); hide('sec-routes'); hide('sec-detail');
+
+    setTimeout(function(){
+      try{
+        routesData = buildRoutes(params, currentDestination);
+        renderRoutes();
+      } catch(e){
+        $('err-api').textContent = '오류: ' + e.message;
+        $('err-api').style.display = 'block';
+      } finally {
+        hideL('load-routes');
+        $('gen-btn').disabled = false;
+      }
+    }, 350);
+  });
+
   $('back-btn').addEventListener('click', function(){
     hide('sec-detail');
     $('sec-routes').scrollIntoView({behavior:'smooth', block:'start'});
   });
+
+  document.querySelectorAll('.quick-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var preset = btn.dataset.preset;
+      var all = Array.from(document.querySelectorAll('input[name="style"]'));
+      all.forEach(function(el){ el.checked = false; });
+      if (preset === 'classic') ['관광 중심','역사·문화'].forEach(checkStyle);
+      if (preset === 'foodie') ['관광 중심','맛집 탐방'].forEach(checkStyle);
+      if (preset === 'relax') ['자연·힐링','허니문·로맨틱'].forEach(checkStyle);
+      if (preset === 'trend') ['쇼핑·트렌디','맛집 탐방'].forEach(checkStyle);
+    });
+  });
+
+  function checkStyle(label){
+    var el = document.querySelector('input[name="style"][value="'+label+'"]');
+    if (el) el.checked = true;
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    });
+  }
 })();
 </script>
 </body>
