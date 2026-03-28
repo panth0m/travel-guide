@@ -1,36 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>AI 여행 플래너</title>
-
-<!-- PWA 필수 -->
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#185FA5" />
-
-<!-- iOS 홈 화면 지원 -->
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="여행 플래너" />
-<link rel="apple-touch-icon" href="icon-192.png" />
-
-<!-- Android / 브라우저 -->
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="description" content="AI가 4가지 예산 등급 해외여행 루트와 대중교통 동선을 추천해 드립니다" />
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('sw.js');
-    });
-  }
-</script>
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 해외여행 루트 추천</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18;
-  padding-bottom: env(safe-area-inset-bottom); }
-.app { max-width: 860px; margin: 0 auto; padding: 1rem; padding-top: calc(1rem + env(safe-area-inset-top)); }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; }
+.app { max-width: 860px; margin: 0 auto; padding: 1rem; }
 .header { text-align: center; padding: 1.5rem 0 1rem; }
 .header h1 { font-size: 22px; font-weight: 500; }
 .header p { font-size: 14px; color: #666; margin-top: 4px; }
@@ -130,8 +105,17 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 .schip span { font-weight:500; color:#1a1a18; }
 .back-btn { background:none; border:0.5px solid #ccc; border-radius:8px; padding:7px 14px; font-size:13px; color:#666; cursor:pointer; margin-bottom:12px; }
 
-/* API Key 카드 */
+/* AI 제공자 선택 + API Key 카드 */
 .apikey-card { background:#fff; border:0.5px solid #e0e0dc; border-radius:12px; padding:1rem 1.25rem; margin-bottom:1rem; }
+.provider-tabs { display:flex; gap:6px; margin-bottom:12px; }
+.provider-tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:9px 6px; border:1.5px solid #e0e0dc; border-radius:10px; cursor:pointer; transition:all .15s; background:#f9f9f7; }
+.provider-tab:hover { border-color:#aaa; }
+.provider-tab.active { border-color:#185FA5; background:#E6F1FB; }
+.provider-tab .pt-icon { font-size:20px; line-height:1; }
+.provider-tab .pt-name { font-size:12px; font-weight:500; color:#666; }
+.provider-tab .pt-model { font-size:10px; color:#aaa; }
+.provider-tab.active .pt-name { color:#185FA5; }
+.provider-tab.active .pt-model { color:#5b96cc; }
 .apikey-row { display:flex; gap:8px; align-items:center; }
 .apikey-input-wrap { position:relative; flex:1; }
 .apikey-input-wrap input { width:100%; padding:8px 36px 8px 10px; border:0.5px solid #ccc; border-radius:8px; font-size:14px; background:#f9f9f7; color:#1a1a18; font-family:inherit; }
@@ -139,7 +123,7 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 .apikey-save-btn { padding:8px 14px; background:#f0f0ed; border:0.5px solid #d8d8d4; border-radius:8px; font-size:13px; color:#444; cursor:pointer; white-space:nowrap; font-family:inherit; transition:background .15s; }
 .apikey-save-btn:hover { background:#e4e4e0; }
 .apikey-status { font-size:12px; margin-top:6px; min-height:16px; }
-.apikey-help { font-size:12px; color:#999; margin-top:8px; line-height:1.55; }
+.apikey-help { font-size:12px; color:#999; margin-top:8px; line-height:1.6; }
 .apikey-help a { color:#185FA5; text-decoration:none; }
 .apikey-help a:hover { text-decoration:underline; }
 @media (max-width:600px){
@@ -155,20 +139,32 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     <p>목적지와 기간을 선택하면 4가지 예산 등급 루트와 상세 이동 정보를 알려드립니다</p>
   </div>
 
-  <!-- API Key 입력 -->
+  <!-- AI 제공자 선택 + API Key -->
   <div class="apikey-card">
-    <div class="section-title">Anthropic API Key</div>
+    <div class="section-title">AI 제공자 선택</div>
+    <div class="provider-tabs">
+      <div class="provider-tab active" data-provider="openai">
+        <span class="pt-icon">🤖</span>
+        <span class="pt-name">GPT-4o</span>
+        <span class="pt-model">OpenAI</span>
+      </div>
+      <div class="provider-tab" data-provider="gemini">
+        <span class="pt-icon">✨</span>
+        <span class="pt-name">Gemini</span>
+        <span class="pt-model">Google</span>
+      </div>
+    </div>
     <div class="apikey-row">
       <div class="apikey-input-wrap">
-        <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off" />
+        <input type="password" id="api-key" placeholder="sk-..." autocomplete="off" />
         <button class="apikey-toggle" id="key-toggle" title="보기/숨기기">👁</button>
       </div>
       <button class="apikey-save-btn" id="key-save-btn">저장</button>
     </div>
     <div class="apikey-status" id="apikey-status"></div>
-    <div class="apikey-help">
-      API Key는 이 기기의 브라우저에만 저장되며 외부로 전송되지 않습니다.<br>
-      키 발급 → <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com/settings/keys</a>
+    <div class="apikey-help" id="apikey-help">
+      API Key는 이 기기 브라우저에만 저장되며 외부로 전송되지 않습니다.<br>
+      키 발급 → <a id="key-link" href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>
     </div>
   </div>
 
@@ -280,53 +276,11 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
 
   var routesData = null, params = {};
 
-  // ─── API Key 관리 ───
-  function getApiKey(){ return (localStorage.getItem('anthropic_api_key') || '').trim(); }
-
-  (function initKeyUI(){
-    var keyInput = $('api-key');
-    var status   = $('apikey-status');
-
-    // 저장된 키 불러오기
-    var saved = getApiKey();
-    if (saved) {
-      keyInput.value = saved;
-      status.style.color = '#0F6E56';
-      status.textContent = '✓ 저장된 키가 있습니다';
-    }
-
-    // 보기/숨기기 토글
-    $('key-toggle').addEventListener('click', function(){
-      if (keyInput.type === 'password') { keyInput.type = 'text'; this.textContent = '🙈'; }
-      else { keyInput.type = 'password'; this.textContent = '👁'; }
-    });
-
-    // 저장 버튼
-    $('key-save-btn').addEventListener('click', function(){
-      var val = keyInput.value.trim();
-      if (!val) {
-        status.style.color = '#8B1E1E'; status.textContent = 'API Key를 입력해 주세요.'; return;
-      }
-      if (!val.startsWith('sk-ant-')) {
-        status.style.color = '#8B1E1E'; status.textContent = '올바른 Anthropic API Key 형식이 아닙니다 (sk-ant- 로 시작해야 합니다).'; return;
-      }
-      localStorage.setItem('anthropic_api_key', val);
-      status.style.color = '#0F6E56'; status.textContent = '✓ 저장되었습니다';
-      setTimeout(function(){ status.textContent = ''; }, 2500);
-    });
-
-    // 입력 중 상태 초기화
-    keyInput.addEventListener('input', function(){
-      status.textContent = '';
-    });
-  })();
-
   function $(id){ return document.getElementById(id); }
   function show(id){ $(id).classList.remove('hidden'); }
   function hide(id){ $(id).classList.add('hidden'); }
   function showL(id){ $(id).classList.add('visible'); }
   function hideL(id){ $(id).classList.remove('visible'); }
-
   function getSelectedDays(){
     var checked = document.querySelector('input[name="days"]:checked');
     return checked ? checked.value : '5';
@@ -338,34 +292,153 @@ input[type=text] { width: 100%; padding: 8px 10px; border: 0.5px solid #ccc; bor
     return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  // ─── AI 제공자 설정 ───
+  var PROVIDERS = {
+    openai: {
+      name: 'GPT-4o',
+      placeholder: 'sk-...',
+      link: 'https://platform.openai.com/api-keys',
+      linkText: 'platform.openai.com/api-keys',
+      storageKey: 'ai_key_openai',
+      validate: function(k){ return k.startsWith('sk-'); },
+      errMsg: 'OpenAI API Key는 sk- 로 시작해야 합니다.'
+    },
+    gemini: {
+      name: 'Gemini',
+      placeholder: 'AIza...',
+      link: 'https://aistudio.google.com/app/apikey',
+      linkText: 'aistudio.google.com/app/apikey',
+      storageKey: 'ai_key_gemini',
+      validate: function(k){ return k.length > 10; },
+      errMsg: 'Gemini API Key를 확인해 주세요.'
+    }
+  };
+
+  var currentProvider = localStorage.getItem('ai_provider') || 'openai';
+
+  function getApiKey(){
+    var p = PROVIDERS[currentProvider];
+    return (localStorage.getItem(p.storageKey) || '').trim();
+  }
+
+  function updateProviderUI(){
+    var p = PROVIDERS[currentProvider];
+    var keyInput = $('api-key');
+    var status = $('apikey-status');
+
+    // 탭 active 상태
+    document.querySelectorAll('.provider-tab').forEach(function(tab){
+      tab.classList.toggle('active', tab.dataset.provider === currentProvider);
+    });
+
+    // placeholder·link 업데이트
+    keyInput.type = 'password';
+    $('key-toggle').textContent = '👁';
+    keyInput.placeholder = p.placeholder;
+    $('key-link').href = p.link;
+    $('key-link').textContent = p.linkText;
+
+    // 저장된 키 불러오기
+    var saved = localStorage.getItem(p.storageKey) || '';
+    keyInput.value = saved;
+    if (saved) {
+      status.style.color = '#0F6E56';
+      status.textContent = '✓ ' + p.name + ' 키가 저장되어 있습니다';
+    } else {
+      status.textContent = '';
+    }
+  }
+
+  (function initKeyUI(){
+    // 탭 클릭
+    document.querySelectorAll('.provider-tab').forEach(function(tab){
+      tab.addEventListener('click', function(){
+        currentProvider = tab.dataset.provider;
+        localStorage.setItem('ai_provider', currentProvider);
+        updateProviderUI();
+      });
+    });
+
+    // 보기/숨기기
+    $('key-toggle').addEventListener('click', function(){
+      var ki = $('api-key');
+      if (ki.type === 'password') { ki.type = 'text'; this.textContent = '🙈'; }
+      else { ki.type = 'password'; this.textContent = '👁'; }
+    });
+
+    // 저장 버튼
+    $('key-save-btn').addEventListener('click', function(){
+      var val = $('api-key').value.trim();
+      var p = PROVIDERS[currentProvider];
+      var status = $('apikey-status');
+      if (!val) {
+        status.style.color = '#8B1E1E'; status.textContent = 'API Key를 입력해 주세요.'; return;
+      }
+      if (!p.validate(val)) {
+        status.style.color = '#8B1E1E'; status.textContent = p.errMsg; return;
+      }
+      localStorage.setItem(p.storageKey, val);
+      status.style.color = '#0F6E56'; status.textContent = '✓ ' + p.name + ' 키가 저장되었습니다';
+      setTimeout(function(){ status.textContent = ''; }, 2500);
+    });
+
+    $('api-key').addEventListener('input', function(){ $('apikey-status').textContent = ''; });
+
+    updateProviderUI();
+  })();
+
   async function callAI(prompt, maxTokens) {
     var apiKey = getApiKey();
-    if (!apiKey) throw new Error('API Key가 없습니다. 상단에서 Anthropic API Key를 입력하고 저장해 주세요.');
-    var response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: maxTokens || 1400,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-    if (!response.ok) {
-      var t = await response.text();
-      var msg = t.slice(0, 200);
-      try { var j = JSON.parse(t); msg = (j.error && j.error.message) || msg; } catch(e){}
-      if (response.status === 401) msg = 'API Key가 올바르지 않습니다. 다시 확인해 주세요.';
-      if (response.status === 402) msg = '크레딧이 부족합니다. Anthropic Console에서 결제를 확인해 주세요.';
-      if (response.status === 429) msg = '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
-      throw new Error(msg);
+    if (!apiKey) throw new Error('API Key가 없습니다. 상단에서 ' + PROVIDERS[currentProvider].name + ' API Key를 입력하고 저장해 주세요.');
+
+    var response, txt;
+
+    // ── OpenAI GPT-4o ──
+    if (currentProvider === 'openai') {
+      response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          max_tokens: maxTokens || 1400,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      if (!response.ok) {
+        var t = await response.text();
+        var msg = t.slice(0, 200);
+        try { var j = JSON.parse(t); msg = (j.error && j.error.message) || msg; } catch(e){}
+        if (response.status === 401) msg = 'OpenAI API Key가 올바르지 않습니다.';
+        if (response.status === 429) msg = '요청 한도 초과 또는 잔액 부족입니다. OpenAI 계정을 확인해 주세요.';
+        throw new Error(msg);
+      }
+      var d = await response.json();
+      txt = (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '';
+
+    // ── Google Gemini ──
+    } else if (currentProvider === 'gemini') {
+      response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        }
+      );
+      if (!response.ok) {
+        var t2 = await response.text();
+        var msg2 = t2.slice(0, 200);
+        try { var j2 = JSON.parse(t2); msg2 = (j2.error && j2.error.message) || msg2; } catch(e){}
+        if (response.status === 400) msg2 = 'Gemini API Key가 올바르지 않거나 권한이 없습니다.';
+        if (response.status === 429) msg2 = 'Gemini 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.';
+        throw new Error(msg2);
+      }
+      var d2 = await response.json();
+      txt = (d2.candidates && d2.candidates[0] && d2.candidates[0].content &&
+             d2.candidates[0].content.parts && d2.candidates[0].content.parts[0] &&
+             d2.candidates[0].content.parts[0].text) || '';
     }
-    var d = await response.json();
-    var txt = (d.content || []).map(function(c){ return c.text || ''; }).join('');
+
     var m = txt.match(/\{[\s\S]*\}/);
     if (!m) throw new Error('JSON 응답을 찾지 못했습니다: ' + txt.slice(0, 150));
     return JSON.parse(m[0]);
