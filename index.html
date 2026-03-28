@@ -745,9 +745,13 @@ var currentDay = 1;
 /* 지도 초기화 */
 function initMap(){
   map = L.map('map', {zoomControl:true}).setView([35.6762, 139.6503], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© OpenStreetMap contributors', maxZoom:19
+
+  /* 한국어 지도 타일 — Carto (한글 표기 지원) */
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains:'abcd', maxZoom:19
   }).addTo(map);
+
   routeLayer = L.layerGroup().addTo(map);
   markerLayer = L.layerGroup().addTo(map);
 }
