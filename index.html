@@ -168,12 +168,13 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>window.L||document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"><\\/script>')</script>
 <script>
 /*
   여기 한 줄에 Groq 키를 넣으세요.
   예: const GROQ_API_KEY = "gsk_xxx";
 */
-const GROQ_API_KEY = "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";
+const GROQ_API_KEY = "";
 
 const TOKYO_COORDS = {
   "아사쿠사":[35.7148,139.7967],"센소지":[35.7148,139.7967],"스카이트리":[35.7101,139.8107],"우에노":[35.7138,139.7773],
@@ -368,17 +369,28 @@ JSON 형식:
 }
 
 function ensureMap(){
-  if (state.map) return;
+  if (state.map) return true;
+  if (typeof window.L === 'undefined') {
+    const mapEl = document.getElementById('map');
+    if (mapEl) {
+      mapEl.innerHTML = '<div style="padding:16px;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;font-size:13px;line-height:1.6">지도를 불러오지 못했습니다. 그래도 여행 플랜은 계속 볼 수 있습니다.</div>';
+    }
+    return false;
+  }
   state.map = L.map('map').setView([35.6762,139.6503], 11);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(state.map);
   state.markerLayer = L.layerGroup().addTo(state.map);
+  return true;
 }
 
 function drawMap(detail){
-  ensureMap();
+  if (!ensureMap()) {
+    document.getElementById('mapMeta').innerHTML = '<div class="map-chip">지도 없이 플랜만 표시 중</div>';
+    return;
+  }
   state.markerLayer.clearLayers();
   if (state.routeLine) state.map.removeLayer(state.routeLine);
 
