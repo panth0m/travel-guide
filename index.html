@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>도쿄 여행 가이드 · Groq + Leaflet</title>
+<title>도쿄 여행 가이드 · Groq 직접 연결</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <style>
 *{box-sizing:border-box}
@@ -28,16 +28,16 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
 .btn,.small-btn{border:none;background:#185FA5;color:#fff;border-radius:10px;cursor:pointer;font-weight:700}
 .btn{width:100%;padding:14px;font-size:15px;margin-top:10px}
 .small-btn{padding:7px 10px;font-size:12px;background:#eef2ff;color:#374151;border:1px solid #d1d5db}
-.tabs,.filters,.grades{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.tab,.filter,.grade-btn{padding:10px 14px;border-radius:999px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:13px}
-.tab.active,.filter.active,.grade-btn.active{background:#eaf3ff;border-color:#185FA5;color:#185FA5;font-weight:700}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filter{padding:10px 14px;border-radius:999px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:13px}
+.filter.active{background:#eaf3ff;border-color:#185FA5;color:#185FA5;font-weight:700}
 .route-card{border:1px solid #e5e7eb;border-radius:14px;padding:14px;background:#fff;cursor:pointer;transition:.15s;min-width:220px;flex:1}
 .route-card:hover{border-color:#185FA5}
 .route-card.active{border-color:#185FA5;background:#f7fbff}
 .route-title{font-size:16px;font-weight:800}
 .route-sub{font-size:13px;color:#6b7280;line-height:1.5;margin-top:4px}
 .grade-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.grade-card{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff}
+.grade-card{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff;cursor:pointer}
 .grade-card.active{border-color:#185FA5;background:#f7fbff}
 .grade-name{font-weight:800;margin-bottom:6px}
 .grade-cost{font-size:12px;color:#6b7280;margin-bottom:6px}
@@ -81,8 +81,8 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
 <div class="app">
   <div class="header">
     <h1>🗼 도쿄 여행 가이드</h1>
-    <p>Groq로 여행 플랜을 만들고, Leaflet 지도로 주요 스폿과 동선을 보여주는 버전입니다.<br>화면에는 API 입력칸이 없고, 지도는 기본 OSM 지도를 사용합니다.</p>
-    <div class="badge">Groq는 백엔드 프록시 사용 · 화면에 API칸 없음</div>
+    <p>Groq를 브라우저에서 직접 호출하는 버전입니다. 화면에 API 입력칸은 없고,<br>코드 상단의 <span class="code">GROQ_API_KEY</span>에 키를 넣으면 바로 사용됩니다.</p>
+    <div class="badge">Groq 직접 연결 · Leaflet 지도 · Disney 포함</div>
   </div>
 
   <div class="card">
@@ -122,9 +122,9 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
       <button class="small-btn" onclick="preset('full')">이것저것 다</button>
     </div>
 
-    <div class="warn" id="cfgWarn">
-      먼저 <span class="code">index.html</span> 상단의 <span class="code">PLAN_API_URL</span> 값을
-      배포한 Worker 주소로 바꿔야 합니다.
+    <div class="warn">
+      먼저 <span class="code">index.html</span> 상단의 <span class="code">GROQ_API_KEY</span> 값에
+      <span class="code">gsk_...</span> 키를 넣어주세요.
     </div>
     <div class="err" id="errBox"></div>
     <button class="btn" id="makeBtn">플랜 만들기</button>
@@ -173,10 +173,10 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
 /*
-  여기에 배포한 Worker 주소를 넣으세요.
-  예: const PLAN_API_URL = "https://your-worker.example.workers.dev";
+  여기 한 줄에 Groq 키를 넣으세요.
+  예: const GROQ_API_KEY = "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";
 */
-const PLAN_API_URL = "";
+const GROQ_API_KEY = "";
 
 const TOKYO_COORDS = {
   "아사쿠사":[35.7148,139.7967],"센소지":[35.7148,139.7967],"스카이트리":[35.7101,139.8107],"우에노":[35.7138,139.7773],
@@ -189,16 +189,7 @@ const TOKYO_COORDS = {
 };
 
 const FILTERS = ["통합","항공","숙소","관광","맛집","액티비티","이동"];
-let state = {
-  overview: null,
-  details: {},
-  activeRoute: null,
-  activeGrade: "value",
-  activeFilter: "통합",
-  map: null,
-  markerLayer: null,
-  routeLine: null
-};
+let state = { overview:null, details:{}, activeRoute:null, activeGrade:"value", activeFilter:"통합", map:null, markerLayer:null, routeLine:null };
 
 function pad(n){ return String(n).padStart(2,'0'); }
 function todayPlus(n){ const d=new Date(); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -244,7 +235,6 @@ function getTripPayload(){
     styles: selectedStyles()
   };
 }
-
 function setError(msg){
   const box = document.getElementById('errBox');
   if (!msg) { box.style.display = 'none'; box.textContent=''; return; }
@@ -252,17 +242,132 @@ function setError(msg){
   box.textContent = msg;
 }
 
-async function callPlanAPI(action, extra={}){
-  const res = await fetch(PLAN_API_URL, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({action, ...getTripPayload(), ...extra})
+async function callGroq(prompt){
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: "당신은 도쿄 전문 여행 플래너입니다. 순수 JSON만 반환하세요. 코드블록 금지. 정확하지 않은 승강장 번호나 출구 번호를 단정하지 말고, 일반적으로 빠른 편인 환승 팁 형태로만 안내하세요."
+        },
+        { role: "user", content: prompt }
+      ]
+    })
   });
+
   const text = await res.text();
   let data = {};
-  try { data = JSON.parse(text); } catch(e) { throw new Error(text || '응답 파싱 실패'); }
-  if (!res.ok || data.error) throw new Error(data.error || `오류 ${res.status}`);
-  return data;
+  try { data = JSON.parse(text); } catch (e) {
+    throw new Error(text || "Groq 응답 파싱 실패");
+  }
+  if (!res.ok) throw new Error(data?.error?.message || `Groq 오류 ${res.status}`);
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Groq 응답이 비어 있습니다.");
+  try { return JSON.parse(content); }
+  catch (e) {
+    const m = content.match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+    throw new Error("Groq JSON 파싱 실패");
+  }
+}
+
+function routeLabelMap(key){ return { efficient:"최적의 동선", scenic:"조금 돌아가지만 더 보는 동선", full:"이것저것 다 즐기는 동선" }[key] || key; }
+function gradeLabelMap(key){ return { budget:"최저가", value:"가성비", normal:"보통", luxury:"럭셔리" }[key] || key; }
+
+function commonInfo(body) {
+  const styles = (body.styles || []).join(", ") || "관광";
+  return `여행 기간: ${body.startDate} ~ ${body.endDate}
+인원: 성인 ${body.adults}명, 어린이 ${body.children}명, 유아 ${body.infants}명
+스타일: ${styles}
+어린이 또는 디즈니 스타일이 있으면 디즈니랜드/디즈니씨/마이하마를 적극 반영`;
+}
+
+async function makeOverview(body) {
+  const prompt = `
+${commonInfo(body)}
+
+도쿄 여행의 3가지 동선 타입 개요와, 각 동선 타입별 4개 예산 등급 요약을 JSON으로 작성하세요.
+
+동선 타입 key는 반드시 efficient, scenic, full 만 사용.
+예산 등급 key는 반드시 budget, value, normal, luxury 만 사용.
+
+JSON 형식:
+{
+  "routeTypes":[
+    {
+      "key":"efficient",
+      "label":"최적의 동선",
+      "description":"한 줄 설명",
+      "grades":{
+        "budget":{"summary":"요약","costEstimate":"1인 예상비용"},
+        "value":{"summary":"요약","costEstimate":"1인 예상비용"},
+        "normal":{"summary":"요약","costEstimate":"1인 예상비용"},
+        "luxury":{"summary":"요약","costEstimate":"1인 예상비용"}
+      }
+    }
+  ]
+}
+`;
+  return await callGroq(prompt);
+}
+
+async function makeDetail(body, routeType, grade) {
+  const allowedSpots = [
+    "아사쿠사","센소지","스카이트리","우에노","카파바시","야나카긴자",
+    "시부야","하라주쿠","오모테산도","신주쿠","다이칸야마","나카메구로","에비스",
+    "긴자","도쿄역","츠키지","마루노우치","도요스","오다이바","도쿄타워","팀랩",
+    "디즈니랜드","디즈니씨","마이하마"
+  ].join(", ");
+
+  const prompt = `
+${commonInfo(body)}
+선택된 동선 타입: ${routeLabelMap(routeType)}
+선택된 예산 등급: ${gradeLabelMap(grade)}
+
+반드시 허용된 스폿 이름만 사용하세요:
+${allowedSpots}
+
+요구사항:
+- days 배열로 일자별 상세 일정 작성
+- 각 stop에는 name, description, tags, transitHint 포함
+- transitHint는 "아사쿠사역 → 우에노역 · 긴자선 / 중간칸 선호 / 우에노 공원 쪽 출구가 편한 편" 같은 일반 환승 팁 형태
+- 정확한 승강장 번호를 단정하지 말 것
+- flight, hotels, food, activities, transit 도 함께 작성
+- 디즈니가 필요하면 디즈니랜드/디즈니씨/마이하마를 자연스럽게 포함
+
+JSON 형식:
+{
+  "days":[
+    {
+      "day":1,
+      "title":"일정 제목",
+      "dateLabel":"간단 날짜 표기",
+      "stops":[
+        {
+          "name":"아사쿠사",
+          "description":"설명",
+          "tags":["관광"],
+          "transitHint":"이동 힌트"
+        }
+      ]
+    }
+  ],
+  "flight":["문장1","문장2"],
+  "hotels":["문장1","문장2"],
+  "food":["문장1","문장2"],
+  "activities":["문장1","문장2"],
+  "transit":["문장1","문장2","문장3"]
+}
+`;
+  return await callGroq(prompt);
 }
 
 function ensureMap(){
@@ -305,19 +410,10 @@ function drawMap(detail){
   }
 
   document.getElementById('mapMeta').innerHTML = [
-    `<div class="map-chip">현재 동선: ${routeLabel(state.activeRoute)}</div>`,
-    `<div class="map-chip">예산 등급: ${gradeLabel(state.activeGrade)}</div>`,
+    `<div class="map-chip">현재 동선: ${routeLabelMap(state.activeRoute)}</div>`,
+    `<div class="map-chip">예산 등급: ${gradeLabelMap(state.activeGrade)}</div>`,
     `<div class="map-chip">주요 포인트 ${pts.length}개 표시</div>`
   ].join('');
-}
-
-function routeLabel(key){
-  const found = (state.overview?.routeTypes || []).find(x => x.key === key);
-  return found ? found.label : key;
-}
-function gradeLabel(key){
-  const m = {budget:'최저가', value:'가성비', normal:'보통', luxury:'럭셔리'};
-  return m[key] || key;
 }
 
 function renderOverview(){
@@ -336,7 +432,7 @@ function renderOverview(){
   const routeObj = (ov.routeTypes || []).find(x => x.key === state.activeRoute) || ov.routeTypes?.[0];
   const gradeGrid = Object.entries(routeObj?.grades || {}).map(([key, g]) => `
     <div class="grade-card ${key===state.activeGrade?'active':''}" onclick="selectGrade('${key}')">
-      <div class="grade-name">${gradeLabel(key)}</div>
+      <div class="grade-name">${gradeLabelMap(key)}</div>
       <div class="grade-cost">${g.costEstimate || ''}</div>
       <div class="grade-summary">${g.summary || ''}</div>
     </div>
@@ -347,7 +443,7 @@ function renderOverview(){
     `<button class="filter ${v===state.activeFilter?'active':''}" onclick="selectFilter('${v}')">${v}</button>`
   ).join('');
 
-  document.getElementById('mainTitle').textContent = `${routeObj?.label || ''} · ${gradeLabel(state.activeGrade)}`;
+  document.getElementById('mainTitle').textContent = `${routeObj?.label || ''} · ${gradeLabelMap(state.activeGrade)}`;
   document.getElementById('mainSub').textContent = routeObj?.description || '';
   document.getElementById('kpis').innerHTML = [
     `<div class="kpi">📅 ${document.getElementById('datePreview').textContent}</div>`,
@@ -395,7 +491,7 @@ function renderDetail(detail){
     right.push(listCard('이동 디테일', detail.transit || []));
     right.push(`<div class="warn"><b>중요</b><br>승강장 번호, 몇 번째 칸, 정확한 출구 번호는 바뀔 수 있어 현장 안내판을 최우선으로 보세요. 이 버전은 일반적으로 빠른 편인 환승 팁 위주로 안내합니다.</div>`);
   }
-  right.push(`<div class="note">Groq 키는 프론트 화면에 보이지 않게 Worker 쪽에서만 쓰는 구조입니다. GitHub Pages에 이 파일을 올려도 키 입력칸은 뜨지 않습니다.</div>`);
+  right.push(`<div class="note">이 버전은 Groq 키가 코드 안에 직접 들어가는 구조입니다. 화면 입력칸은 없지만, 공개 배포 시 키가 노출될 수 있습니다.</div>`);
 
   document.getElementById('leftCol').innerHTML = left.join('');
   document.getElementById('rightCol').innerHTML = right.join('');
@@ -428,9 +524,9 @@ async function loadDetail(){
   }
   document.getElementById('loading').classList.add('active');
   try {
-    const data = await callPlanAPI('detail', { routeType: state.activeRoute, grade: state.activeGrade });
-    state.details[comboKey] = data.detail;
-    renderDetail(data.detail);
+    const data = await makeDetail(getTripPayload(), state.activeRoute, state.activeGrade);
+    state.details[comboKey] = data;
+    renderDetail(data);
   } catch(err) {
     setError('상세 플랜 생성 실패\n' + err.message);
   } finally {
@@ -440,14 +536,13 @@ async function loadDetail(){
 
 document.getElementById('makeBtn').addEventListener('click', async () => {
   setError('');
-  if (!PLAN_API_URL) {
-    setError('index.html 상단의 PLAN_API_URL 값을 배포한 Worker 주소로 바꿔주세요.');
+  if (!GROQ_API_KEY) {
+    setError('index.html 상단의 GROQ_API_KEY 값에 gsk_... 키를 넣어주세요.');
     return;
   }
   document.getElementById('loading').classList.add('active');
   try {
-    const data = await callPlanAPI('overview');
-    state.overview = data.overview;
+    state.overview = await makeOverview(getTripPayload());
     state.activeRoute = state.overview.routeTypes?.[0]?.key || 'efficient';
     state.activeGrade = 'value';
     state.activeFilter = '통합';
