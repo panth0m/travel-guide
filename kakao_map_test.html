@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>카카오맵 테스트</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f7f9;color:#1d2329}
+    .wrap{max-width:960px;margin:0 auto;padding:20px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,.04)}
+    h1{font-size:28px;margin:0 0 8px}
+    p{margin:0 0 10px;line-height:1.55;color:#4b5563}
+    .muted{font-size:13px;color:#6b7280}
+    .grid{display:grid;grid-template-columns:1fr 160px;gap:10px}
+    input{width:100%;padding:12px 14px;border:1px solid #cfd5dd;border-radius:12px;font-size:15px}
+    button{border:none;border-radius:12px;padding:12px 14px;background:#ff5a00;color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+    button.secondary{background:#eef2f7;color:#1f2937}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#f3f4f6;color:#374151;font-size:13px}
+    .ok{background:#e8f8ee;color:#166534}
+    .warn{background:#fff3cd;color:#92400e}
+    .err{background:#fee2e2;color:#991b1b}
+    #map{width:100%;height:520px;border-radius:16px;border:1px solid #e5e7eb;background:#f3f4f6}
+    .status{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:14px;line-height:1.55;display:none;white-space:pre-wrap}
+    .status.show{display:block}
+    .status.ok{background:#ecfdf5;color:#065f46}
+    .status.warn{background:#fffbeb;color:#92400e}
+    .status.err{background:#fef2f2;color:#991b1b}
+    ul{margin:10px 0 0 18px;padding:0;line-height:1.7;color:#4b5563}
+    code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
+    @media (max-width:640px){.grid{grid-template-columns:1fr}.wrap{padding:14px}h1{font-size:24px}#map{height:420px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>카카오맵 테스트 파일</h1>
+      <p>이 파일은 <strong>카카오 JavaScript 키</strong>가 실제로 동작하는지 먼저 확인하는 용도입니다. 도쿄 중심 지도를 띄우고 주요 관광지 마커를 넣어둔 버전입니다.</p>
+      <div class="row" style="margin:12px 0 8px">
+        <span class="pill">현재 주소: <span id="origin-text" style="margin-left:6px;font-weight:700"></span></span>
+        <span class="pill warn">등록 권장 도메인: https://panth0m.github.io</span>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <input id="js-key" type="text" placeholder="카카오 JavaScript 키를 붙여넣으세요" autocomplete="off" />
+        <button id="load-btn">지도 불러오기</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="sample-btn" class="secondary" type="button">도쿄 주요 스팟 보기</button>
+        <button id="clear-btn" class="secondary" type="button">키 지우기</button>
+      </div>
+      <div id="status" class="status"></div>
+      <ul>
+        <li>카카오 디벨로퍼스의 <code>JavaScript SDK 도메인</code>에는 <code>https://panth0m.github.io</code> 만 넣어두는 쪽이 안전합니다.</li>
+        <li>이 파일은 키를 자동 저장하지 않습니다.</li>
+        <li>이 파일에서 지도가 뜨면, 그다음 메인 여행 앱에 카카오맵을 합치면 됩니다.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      var originText = document.getElementById('origin-text');
+      originText.textContent = location.origin || '(file:// 또는 미확인)';
+
+      var statusEl = document.getElementById('status');
+      var loadBtn = document.getElementById('load-btn');
+      var keyInput = document.getElementById('js-key');
+      var map, markers = [];
+      var spots = [
+        { name: '도쿄역', lat: 35.681236, lng: 139.767125 },
+        { name: '아사쿠사 센소지', lat: 35.714765, lng: 139.796655 },
+        { name: '시부야 스크램블', lat: 35.659494, lng: 139.700553 },
+        { name: '도쿄타워', lat: 35.658581, lng: 139.745433 },
+        { name: '도쿄 디즈니랜드', lat: 35.632896, lng: 139.880394 }
+      ];
+
+      function setStatus(type, msg){
+        statusEl.className = 'status show ' + type;
+        statusEl.textContent = msg;
+      }
+
+      function clearMarkers(){
+        markers.forEach(function(m){ m.setMap(null); });
+        markers = [];
+      }
+
+      function drawSpots(){
+        if (!window.kakao || !window.kakao.maps || !map) return;
+        clearMarkers();
+        var bounds = new kakao.maps.LatLngBounds();
+        spots.forEach(function(s){
+          var pos = new kakao.maps.LatLng(s.lat, s.lng);
+          var marker = new kakao.maps.Marker({ position: pos, map: map });
+          var info = new kakao.maps.InfoWindow({ content: '<div style="padding:6px 10px;font-size:12px;">' + s.name + '</div>' });
+          kakao.maps.event.addListener(marker, 'click', function(){ info.open(map, marker); });
+          markers.push(marker);
+          bounds.extend(pos);
+        });
+        map.setBounds(bounds);
+      }
+
+      function createMap(){
+        var container = document.getElementById('map');
+        var center = new kakao.maps.LatLng(35.6762, 139.6503);
+        map = new kakao.maps.Map(container, { center: center, level: 8 });
+        drawSpots();
+        setStatus('ok', '카카오맵 로드 성공. 도쿄 주요 스팟 마커도 표시했습니다.');
+      }
+
+      function removeExistingSdk(){
+        var old = document.getElementById('kakao-sdk');
+        if (old) old.remove();
+        if (window.kakao && window.kakao.maps) {
+          try { delete window.kakao; } catch(e) {}
+        }
+      }
+
+      function loadSdk(appKey){
+        return new Promise(function(resolve, reject){
+          removeExistingSdk();
+          var script = document.createElement('script');
+          script.id = 'kakao-sdk';
+          script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=' + encodeURIComponent(appKey) + '&autoload=false';
+          script.onload = function(){
+            if (!window.kakao || !window.kakao.maps) {
+              reject(new Error('SDK는 로드됐지만 kakao.maps 객체가 없습니다.'));
+              return;
+            }
+            window.kakao.maps.load(function(){ resolve(); });
+          };
+          script.onerror = function(){ reject(new Error('카카오 SDK 스크립트를 불러오지 못했습니다.')); };
+          document.head.appendChild(script);
+        });
+      }
+
+      async function handleLoad(){
+        var key = (keyInput.value || '').trim();
+        if (!key) {
+          setStatus('warn', '카카오 JavaScript 키를 먼저 입력해 주세요.');
+          return;
+        }
+        loadBtn.disabled = true;
+        setStatus('warn', '지도 로드 중입니다...');
+        try {
+          await loadSdk(key);
+          createMap();
+        } catch (err) {
+          setStatus('err', '지도 로드 실패\n\n' + err.message + '\n\n확인할 것:\n1) 카카오 디벨로퍼스의 JavaScript SDK 도메인에 https://panth0m.github.io 가 등록됐는지\n2) 실제 접속 주소가 https://panth0m.github.io/travel-guide/ 인지\n3) JavaScript 키를 넣었는지');
+        } finally {
+          loadBtn.disabled = false;
+        }
+      }
+
+      document.getElementById('load-btn').addEventListener('click', handleLoad);
+      document.getElementById('sample-btn').addEventListener('click', function(){
+        if (!map) {
+          setStatus('warn', '지도를 먼저 불러와 주세요.');
+          return;
+        }
+        drawSpots();
+        setStatus('ok', '도쿄 주요 스팟 마커를 다시 표시했습니다.');
+      });
+      document.getElementById('clear-btn').addEventListener('click', function(){
+        keyInput.value = '';
+        setStatus('warn', '키 입력값을 지웠습니다.');
+      });
+    })();
+  </script>
+</body>
+</html>
