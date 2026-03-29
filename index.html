@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>도쿄 여행 가이드 · No API 상세 동선판</title>
+<title>도쿄 여행 가이드 · Leaflet 지도 포함</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+ integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <style>
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f6f8;color:#1f2937}
-.app{max-width:1100px;margin:0 auto;padding:16px}
+.app{max-width:1180px;margin:0 auto;padding:16px}
 .header{padding:18px 0 10px;text-align:center}
 .header h1{margin:0;font-size:30px}
 .header p{margin:8px 0 0;color:#6b7280;line-height:1.6}
@@ -32,7 +34,7 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
 .title-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .kpis{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .kpi{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;font-size:13px}
-.columns{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.columns{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
 .day{border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;margin-bottom:10px;background:#fff}
 .day-h{background:#f8fafc;padding:12px 14px;font-weight:800;display:flex;justify-content:space-between;gap:10px;align-items:center}
 .day-b{padding:14px}
@@ -52,30 +54,27 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
 .warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6}
 .note{font-size:12px;color:#6b7280;line-height:1.6}
 .hidden{display:none}
-@media (max-width:800px){
-  .grid2,.grid3,.columns{grid-template-columns:1fr}
-}
+#map{height:420px;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb}
+.map-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.map-chip{background:#f8fafc;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;font-size:12px}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.legend-item{font-size:12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:999px;padding:5px 10px}
+@media (max-width:900px){ .grid2,.grid3,.columns{grid-template-columns:1fr} #map{height:340px} }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
     <h1>🗼 도쿄 여행 가이드</h1>
-    <p>API 입력 없이 쓰는 버전입니다. 같은 여행 테마를 예산 등급별로 다르게 풀어주고,<br>동선 타입에 따라 <b>최적 동선 / 조금 돌아가지만 더 보는 동선 / 이것저것 다 즐기는 동선</b>으로 나눠서 보여줍니다.</p>
-    <div class="badge">No API · 정적 추천형 · GitHub Pages 바로 사용 가능</div>
+    <p>API 입력칸 없이 쓰는 버전입니다. <b>디즈니 포함</b>, <b>Leaflet 지도 포함</b>, 그리고<br><b>최적 동선 / 조금 돌아가지만 더 보는 동선 / 이것저것 다 즐기는 동선</b>을 예산 등급별로 비교합니다.</p>
+    <div class="badge">No API 입력 · Leaflet 지도 · Disney 포함</div>
   </div>
 
   <div class="card">
     <div class="section-title">여행 정보</div>
     <div class="grid2">
-      <div>
-        <label>출발 날짜</label>
-        <input type="date" id="startDate">
-      </div>
-      <div>
-        <label>귀국 날짜</label>
-        <input type="date" id="endDate">
-      </div>
+      <div><label>출발 날짜</label><input type="date" id="startDate"></div>
+      <div><label>귀국 날짜</label><input type="date" id="endDate"></div>
     </div>
     <div class="preview" id="datePreview">날짜를 선택하면 일정 길이가 계산됩니다.</div>
 
@@ -96,6 +95,7 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
       <label><input type="checkbox" value="액티비티"><span class="chip">🎢 액티비티</span></label>
       <label><input type="checkbox" value="자연"><span class="chip">🌿 자연·힐링</span></label>
       <label><input type="checkbox" value="로맨틱"><span class="chip">💑 로맨틱</span></label>
+      <label><input type="checkbox" value="디즈니"><span class="chip">🏰 디즈니</span></label>
     </div>
 
     <div class="section-title" style="margin-top:16px">빠른 선택</div>
@@ -103,6 +103,7 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
       <button class="small-btn" onclick="preset('family')">가족 여행</button>
       <button class="small-btn" onclick="preset('couple')">커플 여행</button>
       <button class="small-btn" onclick="preset('food')">맛집 + 관광</button>
+      <button class="small-btn" onclick="preset('disney')">디즈니 중심</button>
       <button class="small-btn" onclick="preset('full')">이것저것 다</button>
     </div>
 
@@ -130,6 +131,17 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
       <div class="kpis" id="kpis"></div>
     </div>
 
+    <div class="card">
+      <div class="section-title">지도</div>
+      <div id="map"></div>
+      <div class="map-meta" id="mapMeta"></div>
+      <div class="legend">
+        <div class="legend-item">📍 주요 스폿</div>
+        <div class="legend-item">🟦 추천 동선</div>
+        <div class="legend-item">🏰 디즈니/마이하마 포함 시 자동 표시</div>
+      </div>
+    </div>
+
     <div class="columns">
       <div id="leftCol"></div>
       <div id="rightCol"></div>
@@ -137,7 +149,36 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
+const coords = {
+  "아사쿠사":[35.7148,139.7967],
+  "센소지":[35.7148,139.7967],
+  "스카이트리":[35.7101,139.8107],
+  "우에노":[35.7138,139.7773],
+  "카파바시":[35.7142,139.7892],
+  "야나카긴자":[35.7277,139.7670],
+  "시부야":[35.6595,139.7005],
+  "하라주쿠":[35.6702,139.7027],
+  "오모테산도":[35.6654,139.7126],
+  "신주쿠":[35.6900,139.7000],
+  "다이칸야마":[35.6480,139.7036],
+  "나카메구로":[35.6442,139.6987],
+  "에비스":[35.6467,139.7100],
+  "긴자":[35.6717,139.7650],
+  "도쿄역":[35.6812,139.7671],
+  "츠키지":[35.6655,139.7708],
+  "마루노우치":[35.6812,139.7649],
+  "도요스":[35.6486,139.7846],
+  "오다이바":[35.6272,139.7768],
+  "도쿄타워":[35.6586,139.7454],
+  "팀랩":[35.6490,139.7898],
+  "디즈니랜드":[35.6329,139.8804],
+  "디즈니씨":[35.6266,139.8855],
+  "마이하마":[35.6360,139.8838]
+};
+
 const routeTypes = {
   efficient: {
     label: "최적의 동선",
@@ -169,126 +210,85 @@ const routeTypes = {
 };
 
 const grades = {
-  budget: {
-    label: "최저가",
-    color: "#5f5e5a",
-    hotel: ["아사쿠사 캡슐/호스텔", "우에노 저가 비즈니스호텔"],
-    flight: ["LCC 위주", "수하물 옵션 분리 확인"],
-    food: ["로컬 체인·시장·저가 라멘", "편의점 야식 적극 활용"],
-    transport: ["지하철/JR 중심", "도보 많이 걷는 일정"],
-    cost: "1인 약 55만~85만원"
-  },
-  value: {
-    label: "가성비",
-    color: "#0f6e56",
-    hotel: ["우에노/아사쿠사 2~3성", "신주쿠 외곽 비즈니스호텔"],
-    flight: ["시간대 무난한 직항/준직항", "수하물 포함 여부 확인"],
-    food: ["평점 좋은 중저가 식당", "디저트 1회 추가"],
-    transport: ["지하철 + 필요 시 택시 1~2회"],
-    cost: "1인 약 85만~130만원"
-  },
-  normal: {
-    label: "보통",
-    color: "#185FA5",
-    hotel: ["긴자/시부야 3~4성", "교통 편한 역세권"],
-    flight: ["직항 우선", "출발 시간 편한 편"],
-    food: ["인기 맛집 예약 1~2회", "카페/바 포함"],
-    transport: ["교통 편의 우선", "택시 적절히 사용"],
-    cost: "1인 약 130만~210만원"
-  },
-  luxury: {
-    label: "럭셔리",
-    color: "#534AB7",
-    hotel: ["긴자/마루노우치 4~5성", "프리미엄 뷰 객실"],
-    flight: ["좋은 시간대 직항", "좌석/수하물 여유"],
-    food: ["오마카세/파인다이닝 1~2회", "라운지/바 포함"],
-    transport: ["프라이빗 이동 일부", "택시/호텔 컨시어지 활용"],
-    cost: "1인 약 210만원+"
-  }
+  budget: {label:"최저가", color:"#5f5e5a", hotel:["아사쿠사 캡슐/호스텔","우에노 저가 비즈니스호텔"], flight:["LCC 위주","수하물 옵션 분리 확인"], food:["로컬 체인·시장·저가 라멘","편의점 야식 적극 활용"], transport:["지하철/JR 중심","도보 많이 걷는 일정"], cost:"1인 약 55만~85만원"},
+  value: {label:"가성비", color:"#0f6e56", hotel:["우에노/아사쿠사 2~3성","신주쿠 외곽 비즈니스호텔"], flight:["시간대 무난한 직항/준직항","수하물 포함 여부 확인"], food:["평점 좋은 중저가 식당","디저트 1회 추가"], transport:["지하철 + 필요 시 택시 1~2회"], cost:"1인 약 85만~130만원"},
+  normal: {label:"보통", color:"#185FA5", hotel:["긴자/시부야 3~4성","교통 편한 역세권"], flight:["직항 우선","출발 시간 편한 편"], food:["인기 맛집 예약 1~2회","카페/바 포함"], transport:["교통 편의 우선","택시 적절히 사용"], cost:"1인 약 130만~210만원"},
+  luxury: {label:"럭셔리", color:"#534AB7", hotel:["긴자/마루노우치 4~5성","프리미엄 뷰 객실"], flight:["좋은 시간대 직항","좌석/수하물 여유"], food:["오마카세/파인다이닝 1~2회","라운지/바 포함"], transport:["프라이빗 이동 일부","택시/호텔 컨시어지 활용"], cost:"1인 약 210만원+"}
 };
 
-const filters = ["통합", "항공", "숙소", "관광", "맛집", "액티비티", "이동"];
+const filters = ["통합","항공","숙소","관광","맛집","액티비티","이동"];
 let activeRoute = "efficient";
 let activeGrade = "value";
 let activeFilter = "통합";
+let map, markerLayer, routeLine;
 
 function pad(n){ return String(n).padStart(2,'0'); }
-function todayPlus(n){
-  const d = new Date(); d.setDate(d.getDate()+n);
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
+function todayPlus(n){ const d=new Date(); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 document.getElementById('startDate').value = todayPlus(14);
 document.getElementById('endDate').value = todayPlus(18);
 
 function updatePreview(){
-  const s = document.getElementById('startDate').value;
-  const e = document.getElementById('endDate').value;
-  const sd = new Date(s), ed = new Date(e);
-  if (!s || !e || isNaN(sd) || isNaN(ed)) return;
-  const diff = Math.round((ed - sd)/86400000);
-  document.getElementById('datePreview').textContent = diff >= 0
-    ? `${s} → ${e} · ${diff}박 ${diff+1}일`
-    : `귀국 날짜가 더 빠릅니다.`;
-  const adults = +document.getElementById('adults').value;
-  const children = +document.getElementById('children').value;
-  const infants = +document.getElementById('infants').value;
-  let t = `성인 ${adults}명`;
-  if(children) t += ` · 어린이 ${children}명`;
-  if(infants) t += ` · 유아 ${infants}명`;
-  t += ` · 총 ${adults+children+infants}명`;
-  document.getElementById('peoplePreview').textContent = t;
+  const s=document.getElementById('startDate').value, e=document.getElementById('endDate').value;
+  const sd=new Date(s), ed=new Date(e);
+  if(!s||!e||isNaN(sd)||isNaN(ed)) return;
+  const diff=Math.round((ed-sd)/86400000);
+  document.getElementById('datePreview').textContent = diff >= 0 ? `${s} → ${e} · ${diff}박 ${diff+1}일` : `귀국 날짜가 더 빠릅니다.`;
+  const a=+document.getElementById('adults').value,c=+document.getElementById('children').value,i=+document.getElementById('infants').value;
+  let t=`성인 ${a}명`; if(c) t += ` · 어린이 ${c}명`; if(i) t += ` · 유아 ${i}명`; t += ` · 총 ${a+c+i}명`;
+  document.getElementById('peoplePreview').textContent=t;
 }
 ['startDate','endDate','adults','children','infants'].forEach(id => document.getElementById(id).addEventListener('change', updatePreview));
 updatePreview();
 
 function preset(type){
-  document.querySelectorAll('#styles input').forEach(el => el.checked = false);
+  document.querySelectorAll('#styles input').forEach(el => el.checked=false);
   const map = {
-    family: ['관광','액티비티'],
-    couple: ['관광','맛집','로맨틱'],
-    food: ['관광','맛집'],
-    full: ['관광','맛집','쇼핑','문화','액티비티']
+    family:['관광','액티비티','디즈니'],
+    couple:['관광','맛집','로맨틱'],
+    food:['관광','맛집'],
+    disney:['디즈니','액티비티','관광'],
+    full:['관광','맛집','쇼핑','문화','액티비티','디즈니']
   };
   (map[type]||[]).forEach(v => {
-    const el = [...document.querySelectorAll('#styles input')].find(x => x.value === v);
-    if(el) el.checked = true;
+    const el=[...document.querySelectorAll('#styles input')].find(x => x.value===v);
+    if(el) el.checked=true;
   });
 }
 
-function selectedStyles(){
-  return [...document.querySelectorAll('#styles input:checked')].map(el => el.value);
-}
-
-function getDaysCount(){
-  const sd = new Date(document.getElementById('startDate').value);
-  const ed = new Date(document.getElementById('endDate').value);
-  return Math.max(2, Math.round((ed - sd)/86400000) + 1);
-}
+function selectedStyles(){ return [...document.querySelectorAll('#styles input:checked')].map(el => el.value); }
+function getDaysCount(){ const sd=new Date(document.getElementById('startDate').value), ed=new Date(document.getElementById('endDate').value); return Math.max(2, Math.round((ed-sd)/86400000)+1); }
 
 function routePlan(routeKey){
-  const route = routeTypes[routeKey];
-  const days = getDaysCount();
-  const base = route.structure.slice(0, Math.min(days, route.structure.length));
-  while (base.length < days){
-    base.push(route.structure[route.structure.length - 1]);
-  }
-  return base.map((d, idx) => ({
-    day: idx + 1,
-    area: d.area,
-    stops: buildStops(d, idx)
-  }));
+  const route=routeTypes[routeKey];
+  const days=getDaysCount();
+  const base=route.structure.slice(0, Math.min(days, route.structure.length));
+  while(base.length<days) base.push(route.structure[route.structure.length-1]);
+  return base.map((d, idx) => ({ day: idx+1, area: d.area, stops: buildStops(d, idx, days) }));
 }
 
-function buildStops(dayInfo, idx){
+function buildStops(dayInfo, idx, days){
   const children = +document.getElementById('children').value;
   const styles = selectedStyles();
+  const wantsDisney = styles.includes('디즈니') || children > 0;
+  const lastDay = idx === days-1;
   const list = [];
-  list.push({name: dayInfo.spots[0], desc: `${dayInfo.area} 시작점. 오전 스타트 추천.`, tags:['관광']});
-  list.push({name: dayInfo.spots[1], desc: `핵심 포인트. 대표 사진 스폿 확보용.`, tags:['관광']});
-  if(styles.includes('맛집')) list.push({name: `${dayInfo.food[0]} 점심`, desc: `동선 중간에 넣기 좋은 식사 포인트.`, tags:['맛집']});
-  list.push({name: dayInfo.spots[2], desc: `중간 허브 역할. 쇼핑 또는 관람 1~2시간.`, tags:[styles.includes('쇼핑') ? '쇼핑' : '관광']});
-  if(children>0 || styles.includes('액티비티')) list.push({name: dayInfo.spots[3], desc: `체험/마무리 포인트. 아이 동반이나 액티비티 선호 시 만족도 높음.`, tags:[children>0 ? '액티비티' : '관광']});
-  else list.push({name: `${dayInfo.food[1]} 저녁`, desc: `저녁 시간대 추천.`, tags:['맛집']});
+  list.push({name: dayInfo.spots[0], desc:`${dayInfo.area} 시작점. 오전 스타트 추천.`, tags:['관광']});
+  list.push({name: dayInfo.spots[1], desc:`핵심 포인트. 대표 사진 스폿 확보용.`, tags:['관광']});
+  if(styles.includes('맛집')) list.push({name:`${dayInfo.food[0]} 점심`, desc:`동선 중간에 넣기 좋은 식사 포인트.`, tags:['맛집']});
+  list.push({name: dayInfo.spots[2], desc:`중간 허브 역할. 쇼핑 또는 관람 1~2시간.`, tags:[styles.includes('쇼핑')?'쇼핑':'관광']});
+
+  if (wantsDisney && idx === 1) {
+    list.push({name:'디즈니랜드', desc:'가족/첫 방문 우선. 개장 직후 입장 추천.', tags:['액티비티','디즈니']});
+    list.push({name:'마이하마', desc:'디즈니 이용 후 숙소/귀환 거점으로 편함.', tags:['이동','숙소권역']});
+  } else if (wantsDisney && idx === 2) {
+    list.push({name:'디즈니씨', desc:'성인·커플·재방문 만족도 높음.', tags:['액티비티','디즈니']});
+  } else if(children>0 || styles.includes('액티비티')) {
+    list.push({name: dayInfo.spots[3], desc:`체험/마무리 포인트. 아이 동반이나 액티비티 선호 시 만족도 높음.`, tags:['액티비티']});
+  } else {
+    list.push({name:`${dayInfo.food[1]} 저녁`, desc:`저녁 시간대 추천.`, tags:['맛집']});
+  }
+
+  if(lastDay) list.push({name:'도쿄역/공항 이동 조정', desc:'귀국편 시간에 맞춰 마지막 쇼핑·식사 분량 조절.', tags:['이동']});
   return list;
 }
 
@@ -307,7 +307,7 @@ function transitHints(routeKey){
     full: [
       {from:'아사쿠사역', to:'스카이트리', line:'아사쿠사선/도부선 연계', hint:'관광지 압축형', exit:'스카이트리타운 안내 우선', car:'중간칸 선호'},
       {from:'시부야역', to:'신주쿠역', line:'JR 야마노테선', hint:'가장 무난하고 배차 잦음', exit:'남쪽/동쪽/서쪽은 목적지별 상이', car:'중간칸 선호'},
-      {from:'도요스/팀랩 인근', to:'오다이바', line:'유리카모메', hint:'전망 좋음', exit:'목적지 최근접 역에서 하차', car:'앞칸 선호'}
+      {from:'팀랩/도요스 인근', to:'오다이바', line:'유리카모메', hint:'전망 좋음', exit:'목적지 최근접 역에서 하차', car:'앞칸 선호'}
     ]
   };
   return common[routeKey] || common.efficient;
@@ -315,38 +315,103 @@ function transitHints(routeKey){
 
 function buildFlight(gradeKey){
   const g = grades[gradeKey];
-  const adults = +document.getElementById('adults').value;
-  const children = +document.getElementById('children').value;
-  const infants = +document.getElementById('infants').value;
-  return [
-    `${g.flight[0]} · ${g.flight[1]}`,
-    `출발은 인천 오전대, 귀국은 도쿄 오후대 우선 추천`,
-    `인원 기준: 성인 ${adults} / 어린이 ${children} / 유아 ${infants}`
-  ];
+  const a=+document.getElementById('adults').value, c=+document.getElementById('children').value, i=+document.getElementById('infants').value;
+  return [`${g.flight[0]} · ${g.flight[1]}`, `출발은 인천 오전대, 귀국은 도쿄 오후대 우선 추천`, `인원 기준: 성인 ${a} / 어린이 ${c} / 유아 ${i}`];
 }
 function buildHotels(gradeKey, routeKey){
-  const g = grades[gradeKey];
-  const area = routeKey === 'efficient' ? '우에노·아사쿠사'
-            : routeKey === 'scenic' ? '아사쿠사·나카메구로 접근권'
-            : '긴자·도쿄역 또는 시부야';
-  return [
-    `${area} 권역 추천`,
-    ...g.hotel
-  ];
+  const g=grades[gradeKey], styles=selectedStyles();
+  let area = routeKey === 'efficient' ? '우에노·아사쿠사' : routeKey === 'scenic' ? '아사쿠사·나카메구로 접근권' : '긴자·도쿄역 또는 시부야';
+  if (styles.includes('디즈니') || +document.getElementById('children').value > 0) area += ' + 마이하마 1박 검토';
+  return [`${area} 권역 추천`, ...g.hotel];
 }
 function buildFoods(gradeKey){
-  return grades[gradeKey].food;
+  const arr = [...grades[gradeKey].food];
+  if (selectedStyles().includes('디즈니') || +document.getElementById('children').value > 0) arr.unshift('디즈니 입장일은 이동 동선 근처 식사 우선');
+  return arr;
 }
 function buildActivities(routeKey){
-  const styles = selectedStyles();
-  const children = +document.getElementById('children').value;
-  let arr = [];
-  if (routeKey === 'full') arr = ['팀랩', '오다이바', '전망대', '쇼핑몰'];
-  if (routeKey === 'efficient') arr = ['스카이트리', '우에노 공원', '시부야 스카이'];
-  if (routeKey === 'scenic') arr = ['야나카 산책', '나카메구로 산책', '오다이바 야경'];
-  if (children > 0) arr.unshift('디즈니/아쿠아리움 후보');
-  if (styles.includes('문화')) arr.push('박물관/전통거리');
+  const styles=selectedStyles();
+  const children=+document.getElementById('children').value;
+  let arr=[];
+  if(routeKey==='full') arr=['팀랩','오다이바','전망대','쇼핑몰'];
+  if(routeKey==='efficient') arr=['스카이트리','우에노 공원','시부야 스카이'];
+  if(routeKey==='scenic') arr=['야나카 산책','나카메구로 산책','오다이바 야경'];
+  if(children>0 || styles.includes('디즈니')) arr.unshift('디즈니랜드 또는 디즈니씨');
+  if(children>0) arr.push('마이하마 복귀 또는 근처 숙박 검토');
+  if(styles.includes('문화')) arr.push('박물관/전통거리');
   return arr;
+}
+
+function listCard(title, items){
+  return `<div class="list-card"><div class="list-title">${title}</div>${items.map(x=>`<div class="item">${x}</div>`).join('')}</div>`;
+}
+function transitBlock(routeKey, i){
+  const hints=transitHints(routeKey), h=hints[Math.min(i, hints.length-1)];
+  return `${h.from} → ${h.to} · <b>${h.line}</b><br>권장 칸 위치: ${h.car}<br>권장 하차/출구: ${h.exit}<br>메모: ${h.hint}`;
+}
+
+function collectMapPoints(days){
+  const seen = new Set();
+  const pts = [];
+  days.forEach(d => d.stops.forEach(s => {
+    if (coords[s.name] && !seen.has(s.name)) {
+      seen.add(s.name);
+      pts.push({name:s.name, latlng:coords[s.name]});
+    }
+  }));
+  return pts;
+}
+
+function ensureMap(){
+  if(map) return;
+  map = L.map('map').setView([35.6762,139.6503], 11);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  markerLayer = L.layerGroup().addTo(map);
+}
+
+function renderMap(days){
+  ensureMap();
+  markerLayer.clearLayers();
+  if (routeLine) map.removeLayer(routeLine);
+
+  const points = collectMapPoints(days);
+  const latlngs = points.map(p => p.latlng);
+
+  points.forEach((p, idx) => {
+    L.marker(p.latlng).bindPopup(`<b>${p.name}</b><br>${idx+1}번째 주요 포인트`).addTo(markerLayer);
+  });
+  if (latlngs.length >= 2) {
+    routeLine = L.polyline(latlngs, {color:'#185FA5', weight:4, opacity:0.75}).addTo(map);
+    map.fitBounds(routeLine.getBounds(), {padding:[20,20]});
+  } else if (latlngs.length === 1) {
+    map.setView(latlngs[0], 13);
+  } else {
+    map.setView([35.6762,139.6503], 11);
+  }
+
+  const styles = selectedStyles();
+  const disneyOn = styles.includes('디즈니') || +document.getElementById('children').value > 0;
+  document.getElementById('mapMeta').innerHTML = [
+    `<div class="map-chip">현재 동선: ${routeTypes[activeRoute].label}</div>`,
+    `<div class="map-chip">예산 등급: ${grades[activeGrade].label}</div>`,
+    `<div class="map-chip">디즈니 반영: ${disneyOn ? '예' : '아니오'}</div>`,
+    `<div class="map-chip">주요 포인트 ${points.length}개 표시</div>`
+  ].join('');
+}
+
+function renderTabs(){
+  document.getElementById('routeTabs').innerHTML = Object.entries(routeTypes).map(([k,v]) =>
+    `<button class="tab ${k===activeRoute?'active':''}" onclick="activeRoute='${k}';render()">${v.label}</button>`
+  ).join('');
+  document.getElementById('gradeTabs').innerHTML = Object.entries(grades).map(([k,v]) =>
+    `<button class="tab ${k===activeGrade?'active':''}" onclick="activeGrade='${k}';render()" style="${k===activeGrade?`border-color:${v.color};color:${v.color}`:''}">${v.label}</button>`
+  ).join('');
+  document.getElementById('filters').innerHTML = filters.map(v =>
+    `<button class="filter ${v===activeFilter?'active':''}" onclick="activeFilter='${v}';render()">${v}</button>`
+  ).join('');
 }
 
 function render(){
@@ -367,6 +432,8 @@ function render(){
     `<div class="kpi">🎨 ${styles.join(' · ') || '관광'}</div>`
   ].join('');
 
+  renderMap(days);
+
   const left = [];
   if (activeFilter === '통합' || activeFilter === '관광' || activeFilter === '이동'){
     left.push(`<div class="list-card"><div class="list-title">Day별 상세 동선</div>${
@@ -383,10 +450,7 @@ function render(){
                   <div class="tags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
                 </div>
               </div>
-              ${i<d.stops.length-1 ? `<div class="transit">
-                <b>이동 힌트</b><br>
-                ${transitBlock(activeRoute, i)}
-              </div>` : ``}
+              ${i<d.stops.length-1 ? `<div class="transit"><b>이동 힌트</b><br>${transitBlock(activeRoute, i)}</div>` : ``}
             `).join('')}
           </div>
         </div>
@@ -395,48 +459,20 @@ function render(){
   }
 
   const right = [];
-  if (activeFilter === '통합' || activeFilter === '항공'){
-    right.push(listCard('항공', buildFlight(activeGrade)));
-  }
-  if (activeFilter === '통합' || activeFilter === '숙소'){
-    right.push(listCard('숙소', buildHotels(activeGrade, activeRoute)));
-  }
-  if (activeFilter === '통합' || activeFilter === '맛집'){
-    right.push(listCard('맛집', buildFoods(activeGrade)));
-  }
-  if (activeFilter === '통합' || activeFilter === '액티비티'){
-    right.push(listCard('액티비티', buildActivities(activeRoute)));
-  }
-  if (activeFilter === '통합' || activeFilter === '이동'){
+  if (activeFilter === '통합' || activeFilter === '항공') right.push(listCard('항공', buildFlight(activeGrade)));
+  if (activeFilter === '통합' || activeFilter === '숙소') right.push(listCard('숙소', buildHotels(activeGrade, activeRoute)));
+  if (activeFilter === '통합' || activeFilter === '맛집') right.push(listCard('맛집', buildFoods(activeGrade)));
+  if (activeFilter === '통합' || activeFilter === '액티비티') right.push(listCard('액티비티', buildActivities(activeRoute)));
+  if (activeFilter === '통합' || activeFilter === '이동') {
     right.push(listCard('이동 디테일', transitHints(activeRoute).map(t =>
       `${t.from} → ${t.to} · ${t.line}<br><span class="muted">권장 칸 위치: ${t.car} / 권장 하차·출구: ${t.exit} / 메모: ${t.hint}</span>`
     )));
     right.push(`<div class="warn"><b>중요</b><br>정확한 승강장 번호·칸 번호·출구 번호는 개정될 수 있어 현장 안내판과 역내 표지판을 최우선으로 보세요. 이 버전은 실시간 지하철 API가 없는 정적 버전이라 <b>일반적으로 빠른 편인 이동 팁</b>만 제공합니다.</div>`);
   }
-  right.push(`<div class="note">API가 화면에 노출되던 문제를 피하려고 이 버전은 외부 AI 호출 없이 동작합니다. 그래서 계획은 정적 추천형이지만, 대신 화면에 API 입력칸이 전혀 없습니다.</div>`);
+  right.push(`<div class="note">이 버전은 API 입력칸이 없습니다. 대신 Leaflet 지도로 주요 포인트와 추천 동선을 바로 보여줍니다.</div>`);
 
   document.getElementById('leftCol').innerHTML = left.join('');
   document.getElementById('rightCol').innerHTML = right.join('');
-}
-function transitBlock(routeKey, i){
-  const hints = transitHints(routeKey);
-  const h = hints[Math.min(i, hints.length-1)];
-  return `${h.from} → ${h.to} · <b>${h.line}</b><br>권장 칸 위치: ${h.car}<br>권장 하차/출구: ${h.exit}<br>메모: ${h.hint}`;
-}
-function listCard(title, items){
-  return `<div class="list-card"><div class="list-title">${title}</div>${items.map(x=>`<div class="item">${x}</div>`).join('')}</div>`;
-}
-
-function renderTabs(){
-  document.getElementById('routeTabs').innerHTML = Object.entries(routeTypes).map(([k,v]) =>
-    `<button class="tab ${k===activeRoute?'active':''}" onclick="activeRoute='${k}';render()">${v.label}</button>`
-  ).join('');
-  document.getElementById('gradeTabs').innerHTML = Object.entries(grades).map(([k,v]) =>
-    `<button class="tab ${k===activeGrade?'active':''}" onclick="activeGrade='${k}';render()" style="${k===activeGrade?`border-color:${v.color};color:${v.color}`:''}">${v.label}</button>`
-  ).join('');
-  document.getElementById('filters').innerHTML = filters.map(v =>
-    `<button class="filter ${v===activeFilter?'active':''}" onclick="activeFilter='${v}';render()">${v}</button>`
-  ).join('');
 }
 
 document.getElementById('makeBtn').addEventListener('click', render);
