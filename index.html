@@ -4,7 +4,6 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>🗼 도쿄 여행 루트 가이드</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;}
@@ -26,6 +25,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sgroup input,.sgroup select{padding:7px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:13px;background:#f9f9f7;color:#1a1a18;font-family:inherit;}
 .sgroup input:focus,.sgroup select:focus{outline:none;border-color:#E8380D;}
 .date-result{font-size:12px;color:#555;background:#f0f0ec;border-radius:7px;padding:6px 10px;margin-top:6px;}
+
+/* 동선 모드 선택 */
+.route-mode-bar{display:flex;gap:6px;padding:12px 18px;background:#fff;border-bottom:1px solid #e8e8e4;}
+.mode-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:1.5px solid #e0e0dc;border-radius:10px;background:#f9f9f7;cursor:pointer;transition:all .15s;font-family:inherit;}
+.mode-btn:hover{border-color:#aaa;}
+.mode-btn.active{background:#fff9f8;border-color:#E8380D;}
+.mode-icon{font-size:16px;line-height:1;}
+.mode-name{font-size:11px;font-weight:700;color:#666;}
+.mode-desc{font-size:10px;color:#aaa;}
+.mode-btn.active .mode-name{color:#E8380D;}
+.mode-btn.active .mode-desc{color:#e88;}
 
 /* 등급 탭 */
 .grade-tabs{display:flex;gap:0;padding:14px 18px 0;background:#fff;border-bottom:1px solid #e8e8e4;}
@@ -88,7 +98,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .b-hotel{background:#EEEDFE;color:#3C3489;} .b-transport{background:#F1EFE8;color:#444441;}
 .b-activity{background:#E1F5EE;color:#085041;} .b-kids{background:#FCE4EC;color:#880E4F;}
 .stop-cost{font-size:11px;font-weight:700;color:#0F6E56;}
-.transit-bubble{display:inline-flex;align-items:center;gap:4px;background:#f3f3f0;border:0.5px solid #e0e0dc;border-radius:999px;padding:3px 9px;font-size:11px;color:#555;margin:5px 0 5px 39px;}
+
+/* 이동 수단 버블 — 모드별 색상 */
+.transit-bubble{display:flex;align-items:flex-start;gap:8px;border-radius:10px;padding:8px 11px;font-size:12px;margin:4px 0 6px 39px;line-height:1.5;}
+.transit-bubble.mode-optimal{background:#EDF4FF;border:1px solid #b5d4f4;color:#185FA5;}
+.transit-bubble.mode-cheap  {background:#E8F5E9;border:1px solid #a5d6a7;color:#1B5E20;}
+.transit-bubble.mode-fast   {background:#FFF3E0;border:1px solid #ffe082;color:#7A4100;}
+.transit-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+.transit-body{flex:1;}
+.transit-main{font-weight:700;font-size:12px;}
+.transit-detail{font-size:11px;margin-top:3px;opacity:.85;line-height:1.6;}
+.transit-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;margin-bottom:3px;}
+.tb-optimal{background:#185FA5;color:#fff;}
+.tb-cheap  {background:#2E7D32;color:#fff;}
+.tb-fast   {background:#E65100;color:#fff;}
 
 /* 예약 링크 */
 .booking-section{margin-top:16px;}
@@ -109,18 +132,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tip-label{font-size:11px;font-weight:700;color:#1a1a18;margin-bottom:3px;}
 .tip-body{font-size:12px;color:#555;line-height:1.5;}
 
-/* 지도 */
-#map{flex:1;height:100vh;}
-.map-wrap{position:relative;flex:1;}
+/* 카카오맵 */
+#map{width:100%;height:100vh;}
+.map-wrap{position:relative;flex:1;overflow:hidden;}
+
+/* 카카오맵 API키 안내 */
+.kakao-key-notice{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(255,255,255,.97);border:1px solid #e0e0dc;border-radius:12px;padding:12px 16px;font-size:12px;color:#555;max-width:320px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.12);}
+.kakao-key-notice b{color:#1a1a18;}
+.kakao-key-notice input{width:100%;margin-top:7px;padding:7px 10px;border:1px solid #ccc;border-radius:7px;font-size:12px;font-family:inherit;}
+.kakao-key-notice button{margin-top:7px;width:100%;padding:7px;background:#E8380D;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 
 /* 지도 범례 */
-.map-legend{position:absolute;bottom:20px;left:10px;z-index:1000;background:rgba(255,255,255,.95);border-radius:10px;padding:10px 13px;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.map-legend{position:absolute;bottom:20px;left:10px;z-index:400;background:rgba(255,255,255,.95);border-radius:10px;padding:10px 13px;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
 .legend-title{font-weight:700;color:#1a1a18;margin-bottom:6px;}
 .legend-item{display:flex;align-items:center;gap:6px;margin-bottom:4px;color:#555;}
 .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 
-/* Day 배지 (지도 팝업) */
-.leaflet-popup-content{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;min-width:160px;}
+/* 팝업 */
+.kmap-popup{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;min-width:160px;padding:4px 0;}
 .popup-name{font-weight:700;color:#1a1a18;margin-bottom:3px;}
 .popup-time{font-size:11px;color:#999;}
 .popup-desc{font-size:12px;color:#555;margin-top:4px;line-height:1.4;}
@@ -132,6 +161,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .panel{max-height:55vh;}
   #map{height:45vh;}
   .map-wrap{order:-1;}
+  .route-mode-bar{gap:4px;padding:10px 12px;}
 }
 </style>
 </head>
@@ -167,6 +197,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
       <div class="date-result" id="date-result">날짜를 선택하면 여행 기간이 계산됩니다.</div>
+    </div>
+
+    <!-- 동선 모드 선택 -->
+    <div class="route-mode-bar">
+      <button class="mode-btn active" data-mode="optimal">
+        <span class="mode-icon">⚖️</span>
+        <span class="mode-name">최적 동선</span>
+        <span class="mode-desc">거리·시간 균형</span>
+      </button>
+      <button class="mode-btn" data-mode="cheap">
+        <span class="mode-icon">💴</span>
+        <span class="mode-name">최저가 동선</span>
+        <span class="mode-desc">요금 최소화</span>
+      </button>
+      <button class="mode-btn" data-mode="fast">
+        <span class="mode-icon">⚡</span>
+        <span class="mode-name">최속 동선</span>
+        <span class="mode-desc">빠른 이동</span>
+      </button>
     </div>
 
     <!-- 등급 탭 -->
@@ -218,10 +267,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
 
-  <!-- 지도 -->
+  <!-- 카카오맵 -->
   <div class="map-wrap">
     <div id="map"></div>
-    <div class="map-legend">
+    <!-- API 키 입력 안내 (키 없을 때 표시) -->
+    <div class="kakao-key-notice" id="kakao-key-notice">
+      <b>🗺 카카오맵 API Key 입력</b><br>
+      <span style="font-size:11px;color:#888;">한글 지도를 사용하려면 카카오 API 키가 필요합니다.<br>
+      <a href="https://developers.kakao.com/console/app" target="_blank" style="color:#E8380D;">developers.kakao.com</a>에서 무료 발급 후 입력하세요.</span>
+      <input type="text" id="kakao-key-input" placeholder="JavaScript 앱 키 입력..." />
+      <button onclick="applyKakaoKey()">지도 불러오기</button>
+    </div>
+    <div class="map-legend" id="map-legend" style="display:none;">
       <div class="legend-title">장소 유형</div>
       <div class="legend-item"><div class="legend-dot" style="background:#E8380D"></div>관광지</div>
       <div class="legend-item"><div class="legend-dot" style="background:#FF8C00"></div>맛집</div>
@@ -232,10 +289,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+/* ══════════════════════════════════════
+   카카오맵 동적 로드
+══════════════════════════════════════ */
+var kakaoMap = null;
+var kakaoMarkers = [];
+var kakaoPolylines = [];
+var currentMode = 'optimal'; // optimal | cheap | fast
+
+function applyKakaoKey(){
+  var key = document.getElementById('kakao-key-input').value.trim();
+  if(!key){ alert('API 키를 입력해 주세요.'); return; }
+  localStorage.setItem('kakao_js_key', key);
+  loadKakaoMap(key);
+}
+
+function loadKakaoMap(key){
+  var script = document.createElement('script');
+  script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=' + key + '&autoload=false';
+  script.onload = function(){
+    kakao.maps.load(function(){
+      var container = document.getElementById('map');
+      var options = { center: new kakao.maps.LatLng(35.6762, 139.6503), level: 7 };
+      kakaoMap = new kakao.maps.Map(container, options);
+      document.getElementById('kakao-key-notice').style.display = 'none';
+      document.getElementById('map-legend').style.display = 'block';
+      // 이미 선택된 루트가 있으면 다시 그리기
+      if(currentRoute) drawRoute(currentRoute, currentDay);
+      else if(ROUTES[currentGrade] && ROUTES[currentGrade][0]) drawRoute(ROUTES[currentGrade][0], 1);
+    });
+  };
+  script.onerror = function(){
+    alert('카카오맵 로드 실패. API 키를 다시 확인해 주세요.\n\n발급: https://developers.kakao.com/console/app\n플랫폼 > Web > 사이트 도메인에 현재 주소 등록 필요');
+  };
+  document.head.appendChild(script);
+}
+
+/* 저장된 키로 자동 로드 */
 (function(){
-'use strict';
+  var saved = localStorage.getItem('kakao_js_key');
+  if(saved){
+    document.getElementById('kakao-key-input').value = saved;
+    loadKakaoMap(saved);
+  }
+})();
+
+/* ══════════════════════════════════════
+   동선 모드별 transit 데이터
+   각 stop의 transit 필드: { optimal, cheap, fast }
+   형식: { icon, badge, badgeCls, main, detail }
+══════════════════════════════════════ */
 
 /* ══════════════════════════════════════
    데이터: 등급별 5가지 루트
@@ -245,6 +349,299 @@ var ROUTES = {
 budget: [
   {
     id:'b1', title:'🎒 도쿄 핵심 알뜰 코스', sub:'아사쿠사·우에노·아키하바라 무료 명소 중심',
+    tags:['무료 명소','대중교통','편의점 식사'],
+    cost:'1인 약 32만원', costCls:'c-budget', numCls:'budget',
+    tips:[
+      {label:'항공',body:'LCC 에어서울·제주항공 이용, 나리타 도착 시 N\'EX보다 게이세이 스카이라이너가 저렴'},
+      {label:'숙소',body:'아사쿠사·우에노 인근 캡슐호텔·도미토리, 1박 2~4만원'},
+      {label:'식비',body:'세븐일레븐·패밀리마트 편의점 식사 + 로컬 500엔 런치 활용'},
+      {label:'교통',body:'IC카드(Suica) 충전 후 지하철·버스 이용, 하루 700~1,000엔'},
+      {label:'무료명소',body:'아사쿠사 센소지·우에노공원·메이지신궁 모두 무료'},
+      {label:'주의',body:'자판기·편의점은 카드 가능, 소규모 식당은 현금 준비 필수'}
+    ],
+    days:[
+      {day:1, label:'인천 출발 · 도쿄 도착',
+       stops:[
+        {name:'인천국제공항',time:'06:30',desc:'에어서울/제주항공 탑승 수속',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},
+        {name:'나리타공항 도착',time:'08:30',desc:'게이세이 스카이라이너 탑승',type:'transport',cost:'¥1,290',lat:35.7647,lng:140.3864,
+          transit:{
+            optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'게이세이 스카이라이너 → 닛포리역',detail:'나리타 공항 제1터미널 → 닛포리역\n소요 40분 · ¥2,570\n✔ 빠르고 환승 없음. IC카드 사용 가능.'},
+            cheap:  {icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',  main:'게이세이 본선 (보통) → 닛포리역',detail:'나리타 공항 제1터미널 → 닛포리역\n소요 80분 · ¥1,050\n✔ 가장 저렴. 환승 없이 한 번에 이동.'},
+            fast:   {icon:'🚆',badge:'최속',badgeCls:'tb-fast',    main:'게이세이 스카이라이너 → 닛포리역',detail:'나리타 공항 제1터미널 → 닛포리역\n소요 40분 · ¥2,570\n⚡ 최속 옵션. 지정석 사전 예매 추천.'}
+          }},
+        {name:'닛포리역',time:'09:20',desc:'아라카와선 트램 환승 포인트',type:'transport',cost:'무료 환승',lat:35.7280,lng:139.7710,
+          transit:{
+            optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'게이세이선 → 닛포리 도착 후 지하철 히비야선',detail:'닛포리 → 아사쿠사 (히비야선)\n소요 12분 · ¥199\n✔ 직결. 환승 1회.'},
+            cheap:  {icon:'🚶',badge:'최저가',badgeCls:'tb-cheap',  main:'도보 이동 가능 구간',detail:'닛포리 → 야네센 거리 도보 10분\n무료\n✔ 짐 보관 후 도보 이동 추천.'},
+            fast:   {icon:'🚕',badge:'최속',badgeCls:'tb-fast',    main:'택시 탑승',detail:'닛포리역 앞 택시 탑승 → 아사쿠사\n소요 10분 · 약 ¥1,200\n⚡ 짐 많을 때 추천.'}
+          }},
+        {name:'아사쿠사 센소지',time:'10:00',desc:'도쿄 대표 사찰·나카미세 상점가 산책',type:'sight',cost:'무료',lat:35.7148,lng:139.7967,
+          transit:{
+            optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'도에이 아사쿠사선 → 아사쿠사역',detail:'닛포리역 → 아사쿠사역 (아사쿠사선)\n소요 18분 · ¥264\n✔ 직결 노선. 환승 없음.'},
+            cheap:  {icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',  main:'도에이 버스 타운 라이너',detail:'닛포리 → 아사쿠사 (버스)\n소요 25분 · ¥210\n✔ 창밖 경치 구경 가능.'},
+            fast:   {icon:'🚇',badge:'최속',badgeCls:'tb-fast',    main:'도쿄 메트로 긴자선',detail:'우에노 → 아사쿠사 (긴자선)\n소요 5분 · ¥180\n⚡ 환승 포함해도 가장 빠름.'}
+          }},
+        {name:'아사쿠사 카미나리몬',time:'10:30',desc:'인증샷 필수 코스',type:'sight',cost:'무료',lat:35.7118,lng:139.7963,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보 이동',detail:'센소지 → 카미나리몬\n도보 5분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보 이동',detail:'도보 5분 · 무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보 이동',detail:'도보 5분 · 무료'}}},
+        {name:'우에노 아메요코 시장',time:'12:00',desc:'현지 길거리 음식 점심',type:'food',cost:'¥500~800',lat:35.7090,lng:139.7745,
+          transit:{
+            optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 아사쿠사 → 우에노역',detail:'아사쿠사역 → 우에노역 (긴자선)\n소요 6분 · ¥180\n✔ 가장 편리한 루트.'},
+            cheap:  {icon:'🚶',badge:'최저가',badgeCls:'tb-cheap',  main:'도보 이동 (환경 체험)',detail:'아사쿠사 → 아메요코 도보 22분\n무료 · 스미다 강변 산책 겸 이동.'},
+            fast:   {icon:'🚇',badge:'최속',badgeCls:'tb-fast',    main:'긴자선 급행',detail:'아사쿠사 → 우에노 (긴자선)\n소요 6분 · ¥180\n⚡ 이 구간은 지하철이 최속.'}
+          }},
+        {name:'우에노 공원',time:'13:30',desc:'도쿄 최대 공원 산책',type:'sight',cost:'무료',lat:35.7156,lng:139.7737,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보 이동',detail:'아메요코 → 우에노공원 도보 5분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'도보 5분 · 무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'도보 5분 · 무료'}}},
+        {name:'숙소 체크인 (우에노)',time:'15:00',desc:'우에노 인근 캡슐호텔/게스트하우스',type:'hotel',cost:'1박 2.5~3.5만원',lat:35.7116,lng:139.7755,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'우에노공원 → 숙소 도보 10분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}},
+        {name:'아키하바라 야경 산책',time:'19:00',desc:'전자상가·서브컬처 구경',type:'activity',cost:'무료',lat:35.7023,lng:139.7745,
+          transit:{
+            optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 우에노 → 아키하바라',detail:'우에노역 → 아키하바라역 (JR 야마노테선)\n소요 5분 · ¥150\n✔ 가장 간단. 환승 없음.'},
+            cheap:  {icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',  main:'도에이 아사쿠사선 환승',detail:'우에노 → 아사쿠사 환승 → 아키하바라\n소요 15분 · ¥150\n✔ 동일 요금. JR이 더 편리.'},
+            fast:   {icon:'🚇',badge:'최속',badgeCls:'tb-fast',    main:'JR 야마노테선',detail:'우에노 → 아키하바라 (JR)\n소요 5분 · ¥150\n⚡ 이 구간 최속.'}
+          }}
+       ]},
+      {day:2, label:'시부야·하라주쿠·신주쿠',
+       stops:[
+        {name:'편의점 아침',time:'08:00',desc:'숙소 근처 편의점 아침 식사',type:'food',cost:'¥400~600',lat:35.7116,lng:139.7755},
+        {name:'메이지 신궁',time:'09:00',desc:'도심 속 울창한 숲과 신사',type:'sight',cost:'무료',lat:35.6763,lng:139.6993,
+          transit:{
+            optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 우에노 → 하라주쿠역',detail:'우에노 → 하라주쿠 (JR 야마노테선)\n소요 33분 · ¥220\n✔ 환승 없이 직행.'},
+            cheap:  {icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',  main:'도에이·도쿄 메트로 환승',detail:'우에노 → 오모테산도 → 하라주쿠\n소요 40분 · ¥199\n✔ 21엔 절약.'},
+            fast:   {icon:'🚇',badge:'최속',badgeCls:'tb-fast',    main:'JR 야마노테선 직행',detail:'우에노 → 하라주쿠 (JR)\n소요 33분 · ¥220\n⚡ 직행이 가장 빠름.'}
+          }},
+        {name:'하라주쿠 다케시타 거리',time:'10:30',desc:'크레페·팝컬처 거리',type:'activity',cost:'크레페 ¥500',lat:35.6702,lng:139.7027,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'하라주쿠역 → 다케시타 거리',detail:'도보 5분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}},
+        {name:'요요기 공원 피크닉',time:'12:00',desc:'편의점 도시락으로 공원 점심',type:'food',cost:'¥600~800',lat:35.6717,lng:139.6942,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보 이동',detail:'하라주쿠 → 요요기공원 도보 5분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}},
+        {name:'시부야 스크램블 교차로',time:'14:00',desc:'세계 최대 교차로 체험',type:'sight',cost:'무료',lat:35.6595,lng:139.7005,
+          transit:{
+            optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'도쿄 메트로 치요다선 → 시부야',detail:'요요기공원역 → 시부야역 (치요다선)\n소요 8분 · ¥199\n✔ 환승 1회.'},
+            cheap:  {icon:'🚶',badge:'최저가',badgeCls:'tb-cheap',  main:'도보 이동',detail:'요요기공원 → 시부야 도보 20분\n무료 · 대로변 산책 가능.'},
+            fast:   {icon:'🚇',badge:'최속',badgeCls:'tb-fast',    main:'도쿄 메트로 직행',detail:'요요기공원 → 시부야 (메트로)\n소요 8분 · ¥199\n⚡ 가장 빠름.'}
+          }},
+        {name:'시부야 109 쇼핑',time:'14:30',desc:'트렌디 패션 구경',type:'activity',cost:'자유',lat:35.6592,lng:139.6985,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'시부야역 → 109 도보 5분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}},
+        {name:'신주쿠 이자카야 저녁',time:'18:00',desc:'500엔 균일 이자카야',type:'food',cost:'1인 ¥1,500',lat:35.6896,lng:139.6919,
+          transit:{
+            optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 시부야 → 신주쿠',detail:'시부야역 → 신주쿠역 (JR 야마노테선)\n소요 5분 · ¥150\n✔ 환승 없이 최단거리.'},
+            cheap:  {icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',  main:'도쿄 메트로 후쿠토신선',detail:'시부야 → 신주쿠산초메 (후쿠토신선)\n소요 4분 · ¥180\n⚡ 환승 없이 비슷한 속도.'},
+            fast:   {icon:'🚇',badge:'최속',badgeCls:'tb-fast',    main:'JR 야마노테선',detail:'시부야 → 신주쿠 (JR)\n소요 5분 · ¥150\n⚡ 최속.'}
+          }},
+        {name:'신주쿠 가부키초 야경',time:'20:00',desc:'도쿄 최대 번화가 야경',type:'sight',cost:'무료',lat:35.6940,lng:139.7036,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'신주쿠역 동쪽 출구 → 가부키초 도보 7분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}}
+       ]},
+      {day:3, label:'오다이바·귀국',
+       stops:[
+        {name:'오다이바 해변공원',time:'09:00',desc:'레인보우브리지 뷰포인트',type:'sight',cost:'무료',lat:35.6267,lng:139.7750,
+          transit:{
+            optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'유리카모메 신바시 → 다이바역',detail:'신주쿠 → 신바시역 (JR) → 유리카모메 다이바역\n소요 45분 · ¥620\n✔ 레인보우브리지 위 경치 감상 가능.'},
+            cheap:  {icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',  main:'도에이 버스 하마마츠초행',detail:'신주쿠 → 하마마츠초 버스 → 수상버스 오다이바\n소요 60분 · ¥520\n✔ 수상버스 탑승 체험 가능.'},
+            fast:   {icon:'🚇',badge:'최속',badgeCls:'tb-fast',    main:'린카이선 신키바 환승',detail:'신주쿠 → 신기바 (린카이선) → 도쿄텔레포트역\n소요 35분 · ¥570\n⚡ 가장 빠른 루트.'}
+          }},
+        {name:'다이버시티 도쿄',time:'10:30',desc:'건담 실물 크기 조형물',type:'sight',cost:'무료',lat:35.6255,lng:139.7785,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'오다이바 해변공원 → 다이버시티 도보 10분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}},
+        {name:'점심 (편의점·푸드코트)',time:'12:00',desc:'다이버시티 내 푸드코트',type:'food',cost:'¥700~1,000',lat:35.6258,lng:139.7789,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'도보 2분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}},
+        {name:'나리타공항 이동',time:'14:00',desc:'게이세이선으로 공항 이동',type:'transport',cost:'¥1,290',lat:35.7647,lng:140.3864,
+          transit:{
+            optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'유리카모메 → 신바시 → 게이세이 스카이라이너',detail:'오다이바 → 신바시 (유리카모메 30분)\n신바시 → 우에노 (JR 5분)\n우에노 → 나리타 (스카이라이너 36분)\n총 소요 75분 · ¥2,870'},
+            cheap:  {icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',  main:'게이세이 본선 (보통) 이용',detail:'오다이바 → 닛포리 (버스+JR 45분)\n닛포리 → 나리타 (게이세이 보통 80분)\n총 소요 130분 · ¥1,470\n✔ 시간 여유 있으면 추천.'},
+            fast:   {icon:'🚆',badge:'최속',badgeCls:'tb-fast',    main:'게이세이 스카이라이너 직행',detail:'우에노 → 나리타 (스카이라이너 36분)\n총 소요 70분 · ¥3,150\n⚡ 가장 빠른 공항행 루트.'}
+          }},
+        {name:'인천공항 귀국',time:'19:00',desc:'귀국 수속',type:'transport',cost:'',lat:37.4602,lng:126.4407}
+       ]}
+    ]
+  },
+  {
+    id:'b2', title:'🍜 라멘·스시·야키토리 미식 알뜰', sub:'1,000엔 이하 현지 맛집만 골라서',
+    tags:['현지 맛집','저가 식당','라멘 투어'],
+    cost:'1인 약 38만원', costCls:'c-budget', numCls:'budget',
+    tips:[
+      {label:'항공',body:'새벽 출발 LCC로 항공비 절감'},
+      {label:'식비',body:'런치 세트 500~900엔, 라멘 800~1,000엔으로 풍성하게'},
+      {label:'숙소',body:'도쿄역·신주쿠 비즈니스호텔 도미토리'},
+      {label:'교통',body:'1일 승차권(600엔) 활용하면 이동비 절감'},
+      {label:'맛집',body:'구글맵에서 "ラーメン" 검색 후 별점 4.0+ 로컬 가게 추천'},
+      {label:'주의',body:'인기 맛집은 개점 전 줄서기 필수'}
+    ],
+    days:[
+      {day:1, label:'인천 출발 · 도쿄 도착',
+       stops:[
+        {name:'인천국제공항',time:'07:00',desc:'LCC 탑승',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},
+        {name:'나리타/하네다 도착',time:'10:00',desc:'숙소 짐 맡기기',type:'transport',cost:'이동비 포함',lat:35.5494,lng:139.7798,
+          transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'도쿄 모노레일 → 하마마츠초',detail:'하네다 → 하마마츠초 (모노레일)\n소요 25분 · ¥500\n✔ 가장 편리한 시내 진입.'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'게이큐 공항선 버스',detail:'하네다 → 도쿄 시내 리무진버스\n소요 45분 · ¥1,000\n✔ 짐 많을 때 편리.'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐선 에어포트 급행',detail:'하네다 → 신바시 (게이큐 급행)\n소요 22분 · ¥590\n⚡ 최속.'}
+          }},
+        {name:'츠키지 외시장',time:'11:30',desc:'신선한 해산물 덮밥 점심',type:'food',cost:'¥1,000~1,500',lat:35.6655,lng:139.7706,
+          transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'도에이 오에도선 → 츠키지시죠역',detail:'하마마츠초 → 츠키지시죠 (오에도선)\n소요 15분 · ¥220\n✔ 직결.'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'도에이 버스',detail:'하마마츠초 → 츠키지 (버스)\n소요 20분 · ¥210'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'도에이 오에도선',detail:'소요 15분 · ¥220\n⚡ 직결 최속.'}}},
+        {name:'긴자 쇼윈도 구경',time:'13:30',desc:'명품 거리 구경 (무료)',type:'sight',cost:'무료',lat:35.6717,lng:139.7651,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'츠키지 → 긴자 도보 15분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'긴자선',detail:'츠키지 → 긴자 (메트로)\n소요 5분 · ¥180'}}},
+        {name:'라멘 스트리트 (도쿄역)',time:'18:00',desc:'도쿄역 지하 라멘 골목',type:'food',cost:'¥900~1,200',lat:35.6812,lng:139.7671,
+          transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 긴자 → 니혼바시',detail:'긴자 → 도쿄역 (긴자선)\n소요 4분 · ¥180'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'긴자 → 도쿄역 도보 15분 · 무료'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'긴자선',detail:'소요 4분 · ¥180'}}},
+        {name:'숙소 체크인',time:'20:00',desc:'도쿄역 인근 캡슐호텔',type:'hotel',cost:'1박 약 3만원',lat:35.6812,lng:139.7671,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'도쿄역 → 숙소 도보 5분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}}
+       ]},
+      {day:2, label:'야키토리·스시·이자카야',
+       stops:[
+        {name:'아사쿠사 카페 모닝',time:'08:00',desc:'아사쿠사 전통 카페 모닝 세트',type:'food',cost:'¥400~600',lat:35.7148,lng:139.7967,
+          transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 도쿄 → 아사쿠사',detail:'도쿄역 → 아사쿠사 (긴자선)\n소요 15분 · ¥199'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'긴자선',detail:'소요 15분 · ¥199\n✔ 최저가·최적 동일.'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'긴자선',detail:'소요 15분 · ¥199'}}},
+        {name:'아메요코 점심',time:'12:00',desc:'우에노 시장 길거리 먹거리',type:'food',cost:'¥500~800',lat:35.7090,lng:139.7745,
+          transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 아사쿠사 → 우에노',detail:'소요 6분 · ¥180'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'긴자선',detail:'¥180'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'긴자선',detail:'소요 6분'}}},
+        {name:'아키하바라 탐방',time:'14:00',desc:'전자상가·피규어 구경',type:'activity',cost:'무료',lat:35.7023,lng:139.7745,
+          transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선',detail:'우에노 → 아키하바라 (JR)\n소요 5분 · ¥150'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR',detail:'¥150'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR 야마노테선',detail:'소요 5분'}}},
+        {name:'유라쿠초 야키토리 골목',time:'18:00',desc:'고가 아래 야키토리 골목 저녁',type:'food',cost:'1인 ¥2,000',lat:35.6753,lng:139.7631,
+          transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 아키하바라 → 유라쿠초',detail:'아키하바라 → 유라쿠초 (JR)\n소요 8분 · ¥150'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR',detail:'¥150'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'소요 8분'}}},
+        {name:'긴자 야경 산책',time:'20:00',desc:'야경 감상',type:'sight',cost:'무료',lat:35.6717,lng:139.7651,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'유라쿠초 → 긴자 도보 5분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}}
+       ]},
+      {day:3, label:'스시로·귀국',
+       stops:[
+        {name:'스시로 회전초밥',time:'09:00',desc:'1접시 110엔~ 가성비 최고',type:'food',cost:'1인 ¥1,500',lat:35.6938,lng:139.7034,
+          transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 → 신주쿠',detail:'도쿄역 → 신주쿠 (JR)\n소요 15분 · ¥220'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR',detail:'¥220'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR 야마노테선',detail:'소요 15분'}}},
+        {name:'신주쿠 교엔',time:'11:00',desc:'도심 속 대형 정원 산책',type:'sight',cost:'¥500',lat:35.6851,lng:139.7100,
+          transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'신주쿠역 → 교엔 도보 10분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}},
+        {name:'공항 이동·귀국',time:'14:00',desc:'나리타/하네다 귀국',type:'transport',cost:'교통비',lat:35.5494,lng:139.7798,
+          transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 → 하마마츠초 → 모노레일',detail:'신주쿠 → 하마마츠초 (JR 15분)\n하마마츠초 → 하네다 (모노레일 25분)\n총 40분 · ¥820'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'공항 리무진버스',detail:'신주쿠 → 하네다 (버스)\n소요 40분 · ¥1,250 (수하물 편리)'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐선 급행',detail:'신주쿠 → 하네다 (게이큐 급행)\n소요 35분 · ¥760\n⚡ 최속.'}}}
+       ]}
+    ]
+  },
+  {
+    id:'b3', title:'🎌 역사·문화 무료 탐방', sub:'무료 박물관·신사·골목 위주',
+    tags:['역사','문화','무료 입장'],
+    cost:'1인 약 30만원', costCls:'c-budget', numCls:'budget',
+    tips:[{label:'항공',body:'LCC 이용'},{label:'박물관',body:'국립박물관 상설전 ¥1,000'},{label:'숙소',body:'야네센 게스트하우스'},{label:'교통',body:'대부분 도보+지하철'},{label:'음식',body:'로컬 정식 600~900엔'},{label:'주의',body:'신사 참배 예절 숙지'}],
+    days:[
+      {day:1,label:'아사쿠사·야네센',stops:[
+        {name:'인천 출발·도착',time:'07:00',desc:'LCC 탑승',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},
+        {name:'센소지 새벽 참배',time:'10:00',desc:'사람 적은 아침 센소지',type:'sight',cost:'무료',lat:35.7148,lng:139.7967,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'게이세이선 → 아사쿠사역',detail:'나리타 → 닛포리 (게이세이) → 아사쿠사 (히비야선)\n총 70분 · ¥1,500'},cheap:{icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',main:'게이세이 본선 (보통)',detail:'나리타 → 아사쿠사\n총 110분 · ¥1,100\n✔ 저렴하지만 시간 소요.'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'스카이라이너 + 히비야선',detail:'나리타 → 닛포리 (스카이라이너 40분) → 아사쿠사\n총 60분 · ¥2,820'}}},
+        {name:'야네센 골목 탐방',time:'13:00',desc:'오래된 도쿄 골목 감성',type:'activity',cost:'무료',lat:35.7214,lng:139.7636,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 → 닛포리역 방면',detail:'아사쿠사 → 닛포리 (지하철+도보)\n소요 15분 · ¥199'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보 이동',detail:'아사쿠사 → 야네센 도보 25분 · 무료\n✔ 스미다 강변 경치 감상.'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'버스',detail:'소요 15분 · ¥210'}}},
+        {name:'닛포리 숙소 체크인',time:'16:00',desc:'야네센 게스트하우스',type:'hotel',cost:'1박 2.5만원',lat:35.7280,lng:139.7710,transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'야네센 → 닛포리 숙소 도보 10분'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}}
+      ]},
+      {day:2,label:'우에노·료고쿠',stops:[
+        {name:'도쿄 국립박물관',time:'09:30',desc:'상설전 관람',type:'activity',cost:'¥1,000',lat:35.7189,lng:139.7756,transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'닛포리 → 우에노 도보 15분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'닛포리 → 우에노 (JR) 소요 4분 · ¥150'}}},
+        {name:'아메요코 점심',time:'13:30',desc:'길거리 먹거리',type:'food',cost:'¥500~700',lat:35.7090,lng:139.7745,transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'박물관 → 아메요코 도보 10분'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}},
+        {name:'에도도쿄박물관',time:'15:30',desc:'에도시대 도쿄 역사',type:'activity',cost:'¥600',lat:35.6966,lng:139.7954,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 소부선 → 료고쿠역',detail:'아키하바라 → 료고쿠 (JR 소부선)\n소요 5분 · ¥150'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR 소부선',detail:'¥150'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'소요 5분'}}}
+      ]},
+      {day:3,label:'메이지·귀국',stops:[
+        {name:'메이지 신궁',time:'08:30',desc:'아침 신궁 참배',type:'sight',cost:'무료',lat:35.6763,lng:139.6993,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 → 하라주쿠역',detail:'닛포리 → 하라주쿠 (JR 야마노테선)\n소요 32분 · ¥220'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR',detail:'¥220'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR 야마노테선',detail:'소요 32분'}}},
+        {name:'공항 이동·귀국',time:'13:00',desc:'귀국',type:'transport',cost:'교통비',lat:35.5494,lng:139.7798,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'JR → 모노레일',detail:'하라주쿠 → 하마마츠초 (JR 18분) → 하네다 (모노레일 25분)\n총 43분 · ¥770'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'공항버스',detail:'신주쿠 → 하네다 리무진버스\n소요 50분 · ¥1,250'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐 급행',detail:'신주쿠 → 하네다 (게이큐)\n소요 35분 · ¥760'}}}
+      ]}
+    ]
+  },
+  {
+    id:'b4', title:'🛍 쇼핑 알뜰 투어', sub:'드럭스토어·돈키호테·100엔샵 집중',
+    tags:['쇼핑','100엔샵','드럭스토어'], cost:'1인 약 40만원 (쇼핑비 별도)', costCls:'c-budget', numCls:'budget',
+    tips:[{label:'항공',body:'LCC 수하물 추가 구매 미리 결제'},{label:'쇼핑',body:'돈키호테 면세 쇼핑'},{label:'숙소',body:'신주쿠·우에노 저가 호텔'},{label:'캐리어',body:'추가 캐리어 100엔샵에서 구매'},{label:'면세',body:'5,000엔 이상 구매 시 면세, 여권 지참'},{label:'주의',body:'액체류 기내 반입 제한'}],
+    days:[
+      {day:1,label:'아키하바라·우에노',stops:[
+        {name:'인천 출발·도착',time:'07:00',desc:'LCC 탑승',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},
+        {name:'아키하바라 전자상가',time:'11:00',desc:'전자제품·피규어 쇼핑',type:'activity',cost:'자유',lat:35.7023,lng:139.7745,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 → 아키하바라',detail:'하네다 → 하마마츠초 (모노레일) → 아키하바라 (JR)\n총 40분 · ¥620'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'게이큐선 환승',detail:'하네다 → 신바시 (게이큐) → 아키하바라 (JR)\n총 35분 · ¥590'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'게이큐 직행',detail:'하네다 → 아키하바라 직행\n소요 30분 · ¥590 ⚡'}}},
+        {name:'아메요코 점심',time:'13:30',desc:'시장 먹거리',type:'food',cost:'¥600',lat:35.7090,lng:139.7745,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선',detail:'아키하바라 → 우에노 (JR)\n소요 5분 · ¥150'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR',detail:'¥150'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'소요 5분'}}},
+        {name:'신주쿠 돈키호테',time:'19:00',desc:'심야까지 면세 쇼핑',type:'activity',cost:'자유',lat:35.6938,lng:139.7034,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 우에노 → 신주쿠',detail:'소요 30분 · ¥220'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR',detail:'¥220'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR 야마노테선',detail:'소요 30분'}}}
+      ]},
+      {day:2,label:'하라주쿠·시부야·신주쿠',stops:[
+        {name:'다이소 오픈런',time:'09:00',desc:'대형 다이소',type:'activity',cost:'¥100~',lat:35.6938,lng:139.7034},
+        {name:'시부야 쇼핑',time:'14:00',desc:'히카리에·마루이',type:'activity',cost:'자유',lat:35.6580,lng:139.7016,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 신주쿠 → 시부야',detail:'소요 5분 · ¥150'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR',detail:'¥150'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'소요 5분'}}}
+      ]},
+      {day:3,label:'귀국',stops:[
+        {name:'공항 이동·귀국',time:'10:00',desc:'나리타/하네다',type:'transport',cost:'교통비',lat:35.5494,lng:139.7798,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'JR → 모노레일',detail:'신주쿠 → 하마마츠초 (JR) → 하네다 (모노레일)\n총 40분 · ¥770'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'리무진버스',detail:'신주쿠 → 하네다 버스\n소요 50분 · ¥1,250'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐 급행',detail:'소요 35분 · ¥760'}}}
+      ]}
+    ]
+  },
+  {
+    id:'b5', title:'🎢 테마파크 절약 코스', sub:'디즈니·유니버설 하나만 집중',
+    tags:['디즈니랜드','테마파크','알뜰'], cost:'1인 약 45만원', costCls:'c-budget', numCls:'budget',
+    tips:[{label:'항공',body:'LCC 이용'},{label:'입장권',body:'디즈니 공식앱으로 미리 구매'},{label:'음식',body:'편의점 도시락 지참 가능'},{label:'숙소',body:'디즈니 인근 저가 호텔'},{label:'팁',body:'앱으로 대기시간 확인'},{label:'주의',body:'짐은 코인로커에 맡기기'}],
+    days:[
+      {day:1,label:'인천 출발 · 디즈니랜드',stops:[
+        {name:'인천 출발',time:'06:00',desc:'아침 LCC',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},
+        {name:'도쿄 디즈니랜드',time:'10:30',desc:'신데렐라성 풀코스',type:'kids',cost:'¥9,400~',lat:35.6329,lng:139.8804,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'JR 게이요선 → 마이하마역',detail:'도쿄역 → 마이하마 (JR 게이요선)\n소요 16분 · ¥220\n✔ 디즈니랜드 정문 바로 앞.'},cheap:{icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',main:'JR 게이요선',detail:'¥220 (최적과 동일 루트)'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'JR 게이요선',detail:'소요 16분 · ¥220 ⚡'}}}
+      ]},
+      {day:2,label:'디즈니씨',stops:[
+        {name:'도쿄 디즈니씨',time:'09:00',desc:'성인 커플도 인기',type:'kids',cost:'¥9,400~',lat:35.6267,lng:139.8856,transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'디즈니 리조트라인',detail:'마이하마 → 도쿄디즈니씨 (모노레일)\n소요 5분 · ¥260'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보 이동',detail:'마이하마역 → 씨 도보 10분 · 무료'},fast:{icon:'🚝',badge:'최속',badgeCls:'tb-fast',main:'리조트라인',detail:'소요 5분 · ¥260'}}}
+      ]},
+      {day:3,label:'도쿄 시내 · 귀국',stops:[
+        {name:'아사쿠사 센소지',time:'09:00',desc:'귀국 전 마지막 관광',type:'sight',cost:'무료',lat:35.7148,lng:139.7967,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'JR → 긴자선',detail:'마이하마 → 도쿄역 (JR 게이요선 16분) → 아사쿠사 (긴자선 15분)\n총 31분 · ¥399'},cheap:{icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',main:'JR 게이요선 + 긴자선',detail:'¥399'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'JR 직행',detail:'소요 31분'}}},
+        {name:'공항 이동·귀국',time:'13:30',desc:'나리타 귀국',type:'transport',cost:'교통비',lat:35.7647,lng:140.3864,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'스카이라이너',detail:'우에노 → 나리타 (스카이라이너)\n소요 36분 · ¥2,570'},cheap:{icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',main:'게이세이 보통',detail:'우에노 → 나리타 (게이세이 보통)\n소요 80분 · ¥1,050'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'스카이라이너',detail:'소요 36분 · ¥2,570 ⚡'}}}
+      ]}
+    ]
+  }
+],
+
+value: [
+  {
+    id:'v1', title:'👍 도쿄 베스트 가성비 코스', sub:'주요 명소 + 검증된 맛집 밸런스',
+    tags:['가성비','인기 맛집','효율 동선'], cost:'1인 약 65만원', costCls:'c-value', numCls:'value',
+    tips:[{label:'항공',body:'대한항공·아시아나 얼리버드'},{label:'숙소',body:'3성 비즈니스호텔 5~8만원'},{label:'식비',body:'런치 1,000~1,500엔, 저녁 2,000~3,000엔'},{label:'교통',body:'IC카드 + 필요시 택시'},{label:'맛집',body:'타베로그 3.5+ 추천'},{label:'주의',body:'인기 식당 예약 필수'}],
+    days:[
+      {day:1,label:'도착 · 아사쿠사 · 우에노',stops:[
+        {name:'인천국제공항',time:'08:00',desc:'대한항공/아시아나',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},
+        {name:'하네다공항 도착',time:'10:30',desc:'모노레일 탑승',type:'transport',cost:'¥500',lat:35.5494,lng:139.7798,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'도쿄 모노레일 → 하마마츠초',detail:'하네다 → 하마마츠초\n소요 25분 · ¥500\n✔ 환승 없이 편리.'},cheap:{icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',main:'게이큐 공항선',detail:'하네다 → 신바시 (게이큐)\n소요 22분 · ¥590'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐 에어포트 급행',detail:'소요 18분 · ¥590 ⚡'}}},
+        {name:'아사쿠사 센소지',time:'12:00',desc:'나카미세 상점가',type:'sight',cost:'무료',lat:35.7148,lng:139.7967,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 → 아사쿠사역',detail:'하마마츠초 → 신바시 (JR) → 아사쿠사 (긴자선)\n총 30분 · ¥450'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'도에이 버스',detail:'하마마츠초 → 아사쿠사\n소요 35분 · ¥210 ✔'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'긴자선 직행',detail:'소요 28분 · ¥450 ⚡'}}},
+        {name:'비즈니스 호텔 체크인',time:'17:00',desc:'우에노 3성',type:'hotel',cost:'1박 6~8만원',lat:35.7116,lng:139.7755,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 아사쿠사 → 우에노',detail:'소요 6분 · ¥180'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'긴자선',detail:'¥180'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'긴자선',detail:'소요 6분'}}},
+        {name:'이자카야 저녁',time:'19:00',desc:'타베로그 고평점',type:'food',cost:'1인 ¥3,000',lat:35.7090,lng:139.7745,transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'숙소 → 이자카야 도보 10분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚶',badge:'도보',badgeCls:'tb-fast',main:'도보',detail:'무료'}}}
+      ]},
+      {day:2,label:'시부야·하라주쿠',stops:[
+        {name:'메이지 신궁',time:'09:30',desc:'아침 참배',type:'sight',cost:'무료',lat:35.6763,lng:139.6993,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 우에노 → 하라주쿠',detail:'소요 33분 · ¥220\n✔ 직행.'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'도쿄 메트로 환승',detail:'우에노 → 오모테산도 → 하라주쿠\n소요 40분 · ¥199'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR 야마노테선',detail:'소요 33분 · ¥220 ⚡'}}},
+        {name:'시부야 스카이',time:'16:00',desc:'황혼 전망',type:'activity',cost:'¥2,000',lat:35.6580,lng:139.7016,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 야마노테선 → 시부야',detail:'하라주쿠 → 시부야 (JR)\n소요 3분 · ¥150'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'하라주쿠 → 시부야 도보 20분 · 무료'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'소요 3분 · ¥150'}}}
+      ]},
+      {day:3,label:'신주쿠 · 귀국',stops:[
+        {name:'신주쿠 교엔',time:'09:00',desc:'정원 산책',type:'sight',cost:'¥500',lat:35.6851,lng:139.7100,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'오에도선 시부야 → 신주쿠',detail:'소요 10분 · ¥220'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'오에도선',detail:'¥220'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'오에도선',detail:'소요 10분'}}},
+        {name:'공항 이동·귀국',time:'14:00',desc:'하네다/나리타',type:'transport',cost:'교통비',lat:35.5494,lng:139.7798,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'JR + 모노레일',detail:'신주쿠 → 하마마츠초 (JR 15분) → 하네다 (모노레일 25분)\n총 40분 · ¥820'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'리무진버스',detail:'신주쿠 → 하네다 버스\n소요 50분 · ¥1,250'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐 급행',detail:'소요 35분 · ¥760 ⚡'}}}
+      ]}
+    ]
+  },
+  {id:'v2',title:'🌸 자연·공원 힐링 코스',sub:'신주쿠교엔·요요기·오다이바 힐링',tags:['힐링','공원','자연'],cost:'1인 약 60만원',costCls:'c-value',numCls:'value',tips:[{label:'항공',body:'오전 출발 편'},{label:'숙소',body:'신주쿠 3성'},{label:'음식',body:'피크닉 도시락'},{label:'교통',body:'도보 비중 높음'},{label:'날씨',body:'봄·가을 최적'},{label:'주의',body:'신주쿠교엔 월요일 휴무'}],days:[{day:1,label:'하네다 도착 · 오다이바',stops:[{name:'인천 출발',time:'08:00',desc:'',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},{name:'오다이바 해변공원',time:'12:30',desc:'레인보우브리지 뷰',type:'sight',cost:'무료',lat:35.6267,lng:139.7750,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'유리카모메 → 오다이바카이힌코엔',detail:'신바시 → 오다이바카이힌코엔 (유리카모메)\n소요 25분 · ¥430\n✔ 레인보우브리지 뷰 감상 가능.'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'도에이 버스',detail:'하마마츠초 → 오다이바 (버스)\n소요 30분 · ¥220 ✔'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'린카이선',detail:'신기바 → 도쿄텔레포트 (린카이선)\n소요 20분 · ¥390 ⚡'}}},{name:'비즈니스 호텔 체크인',time:'19:30',desc:'신주쿠 3성',type:'hotel',cost:'1박 7~9만원',lat:35.6896,lng:139.6919,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'유리카모메 + JR',detail:'오다이바 → 신바시 (유리카모메) → 신주쿠 (JR)\n총 45분 · ¥620'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'버스',detail:'오다이바 → 신주쿠 버스\n소요 60분 · ¥430 ✔'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'린카이선 + JR',detail:'도쿄텔레포트 → 오사키 → 신주쿠\n총 35분 · ¥570 ⚡'}}}]},{day:2,label:'신주쿠교엔·요요기공원',stops:[{name:'신주쿠 교엔',time:'09:00',desc:'일본 3대 정원',type:'sight',cost:'¥500',lat:35.6851,lng:139.7100,transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보',detail:'호텔 → 교엔 도보 10분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'메트로 → 신주쿠교엔역',detail:'소요 5분 · ¥180'}}},{name:'메이지 신궁',time:'15:00',desc:'신궁 숲길',type:'sight',cost:'무료',lat:35.6763,lng:139.6993,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'지하철 → 하라주쿠역',detail:'신주쿠 → 하라주쿠 (JR)\n소요 4분 · ¥150'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'신주쿠 → 요요기 → 메이지신궁 도보 25분 · 무료'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'소요 4분 · ¥150'}}}]},{day:3,label:'하마리큐·귀국',stops:[{name:'하마리큐 정원',time:'09:00',desc:'도쿄만 바라보는 전통 정원',type:'sight',cost:'¥300',lat:35.6591,lng:139.7626,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'오에도선 → 시오도메역',detail:'신주쿠 → 시오도메 (오에도선)\n소요 18분 · ¥220'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'버스',detail:'신주쿠 → 하마리큐 버스\n소요 35분 · ¥220'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'오에도선',detail:'소요 18분 ⚡'}}},{name:'공항 이동·귀국',time:'14:00',desc:'하네다',type:'transport',cost:'교통비',lat:35.5494,lng:139.7798,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'JR + 모노레일',detail:'총 40분 · ¥820'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'버스',detail:'소요 50분 · ¥1,250'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐',detail:'소요 35분 ⚡'}}}]}]},
+  {id:'v3',title:'🏯 역사·전통 가성비 투어',sub:'야네센·에도도쿄·아사쿠사 역사 탐방',tags:['역사','전통','가성비'],cost:'1인 약 62만원',costCls:'c-value',numCls:'value',tips:[{label:'항공',body:'조조 출발 편'},{label:'숙소',body:'우에노 3성'},{label:'음식',body:'전통 정식 1,500엔'},{label:'교통',body:'지하철 IC카드'},{label:'관람',body:'박물관 1주 전 온라인 예약'},{label:'주의',body:'휴관일 확인'}],days:[{day:1,label:'야네센·우에노',stops:[{name:'인천 출발',time:'07:00',desc:'',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},{name:'야네센 골목',time:'11:30',desc:'옛 도쿄 분위기',type:'activity',cost:'무료',lat:35.7214,lng:139.7636,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'스카이라이너 → 닛포리역',detail:'나리타 → 닛포리 (스카이라이너)\n소요 40분 · ¥2,570\n✔ 야네센 바로 앞.'},cheap:{icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',main:'게이세이 보통',detail:'나리타 → 닛포리 (게이세이 보통)\n소요 80분 · ¥1,050'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'스카이라이너',detail:'소요 40분 ⚡'}}},{name:'우에노 국립박물관',time:'14:00',desc:'일본 최대 박물관',type:'activity',cost:'¥1,000',lat:35.7189,lng:139.7756,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'도보 이동',detail:'야네센 → 우에노 도보 15분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'닛포리 → 우에노 (JR) 4분 · ¥150'}}}]},{day:2,label:'료고쿠·긴자',stops:[{name:'에도도쿄박물관',time:'09:30',desc:'에도시대 재현',type:'activity',cost:'¥600',lat:35.6966,lng:139.7954,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR 소부선 → 료고쿠역',detail:'아키하바라 → 료고쿠 (JR 소부선)\n소요 5분 · ¥150'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'JR 소부선',detail:'¥150'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR 소부선',detail:'소요 5분'}}},{name:'긴자 갤러리',time:'14:00',desc:'무료 갤러리',type:'activity',cost:'무료',lat:35.6717,lng:139.7651,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'도에이 오에도선 → 긴자',detail:'료고쿠 → 츠키지시죠 → 긴자\n소요 15분 · ¥264'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'오에도선',detail:'¥264'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'오에도선',detail:'소요 15분'}}}]},{day:3,label:'메이지·귀국',stops:[{name:'메이지 신궁',time:'09:00',desc:'메이지 시대',type:'sight',cost:'무료',lat:35.6763,lng:139.6993,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'JR → 하라주쿠',detail:'우에노 → 하라주쿠 (JR 야마노테선)\n소요 33분 · ¥220'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'메트로 환승',detail:'우에노 → 오모테산도 환승\n소요 40분 · ¥199'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'JR',detail:'소요 33분 ⚡'}}},{name:'공항 이동·귀국',time:'13:00',desc:'하네다',type:'transport',cost:'교통비',lat:35.5494,lng:139.7798,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'JR + 모노레일',detail:'총 43분 · ¥770'},cheap:{icon:'🚌',badge:'최저가',badgeCls:'tb-cheap',main:'리무진버스',detail:'소요 50분 · ¥1,250'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐',detail:'소요 35분 ⚡'}}}]}]}
+],
+
+normal: [
+  {
+    id:'n1', title:'🏨 도쿄 프리미엄 관광 코스', sub:'4성 호텔 + 예약 레스토랑 + 주요 명소',
+    tags:['프리미엄','4성 호텔','예약 맛집'], cost:'1인 약 110만원', costCls:'c-normal', numCls:'normal',
+    tips:[{label:'항공',body:'대한항공 직항'},{label:'숙소',body:'시부야 4성 13~18만원'},{label:'식사',body:'미슐랭 빕구르망 예약'},{label:'교통',body:'택시+지하철'},{label:'투어',body:'한국어 가이드 반나절'},{label:'주의',body:'레스토랑 1주 전 예약'}],
+    days:[
+      {day:1,label:'도착 · 시부야',stops:[
+        {name:'인천국제공항',time:'09:00',desc:'대한항공 직항',type:'transport',cost:'항공권 별도',lat:37.4602,lng:126.4407},
+        {name:'4성 호텔 체크인',time:'14:00',desc:'시부야 4성',type:'hotel',cost:'1박 15~18만원',lat:35.6580,lng:139.7016,transit:{optimal:{icon:'🚆',badge:'최적',badgeCls:'tb-optimal',main:'모노레일 → 하마마츠초 → JR 시부야',detail:'하네다 → 하마마츠초 (모노레일 25분)\n하마마츠초 → 시부야 (JR 야마노테선 15분)\n총 40분 · ¥670'},cheap:{icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',main:'게이큐 + JR 환승',detail:'하네다 → 시나가와 (게이큐 11분) → 시부야 (JR 11분)\n총 22분 · ¥590 ✔'},fast:{icon:'🚕',badge:'최속',badgeCls:'tb-fast',main:'택시 이용',detail:'하네다 → 시부야 (택시)\n소요 30분 · 약 ¥5,000\n⚡ 짐 많을 때 추천.'}}},
+        {name:'오모테산도 디너',time:'19:00',desc:'예약 이탈리안',type:'food',cost:'1인 ¥7,000',lat:35.6658,lng:139.7133,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'도쿄 메트로 한조몬선',detail:'시부야 → 오모테산도 (한조몬선)\n소요 3분 · ¥180'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'시부야 → 오모테산도 도보 15분 · 무료'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'한조몬선',detail:'소요 3분 ⚡'}}}
+      ]},
+      {day:2,label:'아사쿠사·스카이트리·롯폰기',stops:[
+        {name:'아사쿠사 센소지',time:'10:00',desc:'전통 거리',type:'sight',cost:'무료',lat:35.7148,lng:139.7967,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 시부야 → 아사쿠사',detail:'소요 25분 · ¥264\n✔ 환승 없이 직행.'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'긴자선',detail:'¥264'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'긴자선',detail:'소요 25분 ⚡'}}},
+        {name:'스카이트리 전망대',time:'12:00',desc:'도쿄 파노라마 뷰',type:'activity',cost:'¥3,100',lat:35.7101,lng:139.8107,transit:{optimal:{icon:'🚶',badge:'도보',badgeCls:'tb-optimal',main:'도보 이동',detail:'아사쿠사 → 스카이트리 도보 10분 · 무료'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'무료'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'토부 스카이트리 라인',detail:'아사쿠사 → 도쿄스카이트리역 2분 · ¥150'}}},
+        {name:'롯폰기 파인다이닝',time:'19:00',desc:'뷰 레스토랑',type:'food',cost:'1인 ¥10,000',lat:35.6627,lng:139.7310,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'긴자선 → 히비야선 환승',detail:'우에노 → 히비야 (긴자선) → 롯폰기 (히비야선)\n소요 20분 · ¥264'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'긴자선+히비야선',detail:'¥264'},fast:{icon:'🚕',badge:'최속',badgeCls:'tb-fast',main:'택시',detail:'스카이트리 → 롯폰기 택시\n소요 25분 · 약 ¥3,500 ⚡'}}}
+      ]},
+      {day:3,label:'신주쿠 · 귀국',stops:[
+        {name:'신주쿠 교엔',time:'09:30',desc:'정원 산책',type:'sight',cost:'¥500',lat:35.6851,lng:139.7100,transit:{optimal:{icon:'🚇',badge:'최적',badgeCls:'tb-optimal',main:'오에도선 롯폰기 → 신주쿠',detail:'소요 12분 · ¥220'},cheap:{icon:'🚇',badge:'최저가',badgeCls:'tb-cheap',main:'오에도선',detail:'¥220'},fast:{icon:'🚇',badge:'최속',badgeCls:'tb-fast',main:'오에도선',detail:'소요 12분'}}},
+        {name:'공항 이동·귀국',time:'14:30',desc:'하네다 리무진버스',type:'transport',cost:'¥1,500',lat:35.5494,lng:139.7798,transit:{optimal:{icon:'🚌',badge:'최적',badgeCls:'tb-optimal',main:'리무진버스 신주쿠 → 하네다',detail:'소요 40분 · ¥1,250\n✔ 짐 많아도 편리.'},cheap:{icon:'🚆',badge:'최저가',badgeCls:'tb-cheap',main:'JR + 모노레일',detail:'신주쿠 → 하마마츠초 (JR) → 하네다 (모노레일)\n총 40분 · ¥820'},fast:{icon:'🚆',badge:'최속',badgeCls:'tb-fast',main:'게이큐 급행',detail:'소요 35분 · ¥760 ⚡'}}}
+      ]}
+    ]
+  }
+],
+
+luxury: [
+  {
+    id:'l1', title:'✨ 도쿄 럭셔리 완전 정복', sub:'5성 호텔 · 미슐랭 · 프라이빗 투어',
+    tags:['5성 호텔','미슐랭','프라이빗'], cost:'1인 약 250만원+', costCls:'c-luxury', numCls:'luxury',
+    tips:[{label:'항공',body:'대한항공·아시아나 비즈니스, 하네다 직항'},{label:'숙소',body:'아만도쿄 1박 50~100만원'},{label:'식사',body:'미슐랭 1~3성 1개월 전 예약'},{label:'교통',body:'전용 차량'},{label:'투어',body:'전용 한국어 가이드'},{label:'주의',body:'드레스 코드 확인'}],
+    days:[
+      {day:1,label:'비즈니스 클래스 · 체크인',stops:[
+        {name:'인천공항 비즈니스 라운지',time:'09:00',desc:'퍼스트/비즈니스 라운지',type:'transport',cost:'클래스 포함',lat:37.4602,lng:126.4407},
+        {name:'아만도쿄 체크인',time:'13:00',desc:'도쿄 최상급 호텔',type:'hotel',cost:'1박 80~120만원',lat:35.6852,lng:139.7648,transit:{optimal:{icon:'🚕',badge:'전용차',badgeCls:'tb-fast',main:'전용 차량 픽업 서비스',detail:'하네다 공항 → 아만도쿄\n소요 30분 · 호텔 포함\n⚡ 전용 차량 픽업. 체크인 전 웰컴 콜 확인.'},cheap:{icon:'🚆',badge:'직행',badgeCls:'tb-cheap',main:'게이큐 + 환승',detail:'하네다 → 도쿄역 (게이큐+JR)\n소요 40분 · ¥760'},fast:{icon:'🚕',badge:'최속',badgeCls:'tb-fast',main:'전용 차량',detail:'전용 차량 30분 ⚡'}}},
+        {name:'미슐랭 스시 오마카세',time:'19:00',desc:'긴자 스키야바시',type:'food',cost:'1인 ¥30,000~',lat:35.6717,lng:139.7651,transit:{optimal:{icon:'🚕',badge:'전용차',badgeCls:'tb-fast',main:'전용 차량 이동',detail:'아만도쿄 → 긴자 (전용 차량)\n소요 10분 · 호텔 포함'},cheap:{icon:'🚇',badge:'지하철',badgeCls:'tb-cheap',main:'긴자선 직행',detail:'오테마치 → 긴자 (긴자선)\n소요 4분 · ¥180'},fast:{icon:'🚕',badge:'최속',badgeCls:'tb-fast',main:'전용 차량',detail:'소요 10분 ⚡'}}}
+      ]},
+      {day:2,label:'프라이빗 투어 · 황실',stops:[
+        {name:'황궁 프라이빗 투어',time:'09:30',desc:'한국어 전용 가이드',type:'activity',cost:'가이드 포함',lat:35.6852,lng:139.7527,transit:{optimal:{icon:'🚕',badge:'전용차',badgeCls:'tb-fast',main:'전용 차량',detail:'아만도쿄 → 황궁 (전용 차량)\n소요 5분'},cheap:{icon:'🚶',badge:'도보',badgeCls:'tb-cheap',main:'도보',detail:'아만도쿄 → 황궁 도보 10분 · 무료'},fast:{icon:'🚕',badge:'전용차',badgeCls:'tb-fast',main:'전용 차량',detail:'소요 5분'}}},
+        {name:'스카이트리 VIP',time:'17:00',desc:'최상층 VIP 체험',type:'activity',cost:'¥3,100',lat:35.7101,lng:139.8107,transit:{optimal:{icon:'🚕',badge:'전용차',badgeCls:'tb-fast',main:'전용 차량',detail:'롯폰기 → 스카이트리 (전용 차량)\n소요 25분'},cheap:{icon:'🚇',badge:'지하철',badgeCls:'tb-cheap',main:'히비야선 + 토부선',detail:'롯폰기 → 아사쿠사 (히비야선) → 스카이트리역\n소요 30분 · ¥330'},fast:{icon:'🚕',badge:'전용차',badgeCls:'tb-fast',main:'전용 차량',detail:'소요 25분'}}}
+      ]},
+      {day:3,label:'스파 · 귀국',stops:[
+        {name:'호텔 스파',time:'09:00',desc:'아만스파',type:'activity',cost:'호텔 포함',lat:35.6852,lng:139.7648},
+        {name:'하네다 비즈니스 라운지',time:'16:00',desc:'출국',type:'transport',cost:'클래스 포함',lat:35.5494,lng:139.7798,transit:{optimal:{icon:'🚕',badge:'전용차',badgeCls:'tb-fast',main:'전용 차량 하네다',detail:'아만도쿄 → 하네다 (전용 차량)\n소요 35분 · 호텔 포함'},cheap:{icon:'🚆',badge:'지하철',badgeCls:'tb-cheap',main:'JR + 모노레일',detail:'도쿄역 → 하마마츠초 → 하네다\n총 40분 · ¥820'},fast:{icon:'🚕',badge:'최속',badgeCls:'tb-fast',main:'전용 차량',detail:'소요 35분 ⚡'}}}
+      ]}
+    ]
+  }
+]
+
+}; // END ROUTES
     tags:['무료 명소','대중교통','편의점 식사'],
     cost:'1인 약 32만원', costCls:'c-budget', numCls:'budget',
     tips:[
@@ -737,21 +1134,271 @@ luxury: [
 /* ══════════════════════════════════════
    앱 로직
 ══════════════════════════════════════ */
-var map, routeLayer = null, markerLayer = null;
 var currentGrade = 'budget';
 var currentRoute = null;
 var currentDay = 1;
 
+function $(id){ return document.getElementById(id); }
+
+/* 동선 모드 탭 */
+document.querySelectorAll('.mode-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.mode-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    if(currentRoute) renderStops(currentRoute, currentDay);
+  });
+});
+
+/* 마커 색상 */
+function dotColor(type){
+  var m={sight:'#E8380D',food:'#FF8C00',hotel:'#7F77DD',transport:'#888780',activity:'#1D9E75',kids:'#E91E8C'};
+  return m[type]||'#E8380D';
+}
+
+/* 카카오맵에 루트 그리기 */
+function drawRoute(route, day){
+  if(!kakaoMap) return;
+  // 기존 마커·선 제거
+  kakaoMarkers.forEach(function(m){ m.setMap(null); });
+  kakaoPolylines.forEach(function(p){ p.setMap(null); });
+  kakaoMarkers = []; kakaoPolylines = [];
+
+  var stops = route.days.find(function(d){ return d.day===day; });
+  if(!stops) return;
+  var pts = [];
+  var validStops = stops.stops.filter(function(s){ return s.lat && s.lng && !(s.lat===37.4602 && s.lng===126.4407); });
+
+  validStops.forEach(function(st, i){
+    var c = dotColor(st.type);
+    var content = '<div style="width:28px;height:28px;background:'+c+';border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3);cursor:pointer">'+(i+1)+'</div>';
+    var pos = new kakao.maps.LatLng(st.lat, st.lng);
+    var marker = new kakao.maps.CustomOverlay({ position:pos, content:content, yAnchor:0.5 });
+    marker.setMap(kakaoMap);
+    kakaoMarkers.push(marker);
+
+    // 정보창
+    var infoContent = '<div style="padding:10px 12px;min-width:160px;font-family:-apple-system,sans-serif;">'
+      +'<div style="font-weight:700;font-size:13px;color:#1a1a18;margin-bottom:3px;">'+(i+1)+'. '+st.name+'</div>'
+      +(st.time ? '<div style="font-size:11px;color:#999;">'+st.time+'</div>' : '')
+      +'<div style="font-size:12px;color:#555;margin-top:4px;line-height:1.4;">'+st.desc+'</div>'
+      +(st.cost ? '<div style="font-size:11px;font-weight:700;color:#0F6E56;margin-top:3px;">'+st.cost+'</div>' : '')
+      +'</div>';
+    var overlay = new kakao.maps.CustomOverlay({ content:infoContent, position:pos, yAnchor:1.2, zIndex:3 });
+
+    (function(mk, ov){
+      mk.getNode && mk.getNode().addEventListener && mk.getNode().addEventListener('click', function(){
+        kakaoMarkers.forEach(function(m){ if(m._infoOverlay){ m._infoOverlay.setMap(null); } });
+        ov.setMap(kakaoMap);
+        mk._infoOverlay = ov;
+      });
+    })(marker, overlay);
+
+    pts.push(pos);
+  });
+
+  if(pts.length > 1){
+    var modeColors = {optimal:'#185FA5', cheap:'#2E7D32', fast:'#E65100'};
+    var poly = new kakao.maps.Polyline({
+      path: pts,
+      strokeWeight: 3,
+      strokeColor: modeColors[currentMode] || '#E8380D',
+      strokeOpacity: 0.8,
+      strokeStyle: 'shortdash'
+    });
+    poly.setMap(kakaoMap);
+    kakaoPolylines.push(poly);
+  }
+  if(pts.length > 0){
+    var bounds = new kakao.maps.LatLngBounds();
+    pts.forEach(function(p){ bounds.extend(p); });
+    kakaoMap.setBounds(bounds);
+  }
+}
+
+/* 등급 탭 */
+document.querySelectorAll('.grade-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    document.querySelectorAll('.grade-tab').forEach(function(t){ t.classList.remove('active'); });
+    tab.classList.add('active');
+    currentGrade = tab.dataset.grade;
+    currentRoute = null;
+    showRouteList();
+  });
+});
+
+/* 루트 목록 렌더링 */
+function showRouteList(){
+  var list = $('routes-list');
+  var dp = $('detail-panel');
+  list.style.display='block'; dp.classList.remove('visible');
+  var gradeNames={budget:'최저가',value:'가성비',normal:'보통',luxury:'럭셔리'};
+  $('routes-title').textContent = gradeNames[currentGrade]+' · '+ROUTES[currentGrade].length+'가지 루트';
+  var html='';
+  ROUTES[currentGrade].forEach(function(r,i){
+    var tags=r.tags.map(function(t){ return '<span class="rc-tag">'+t+'</span>'; }).join('');
+    html+='<div class="route-card" data-id="'+r.id+'">'
+      +'<div class="rc-header">'
+        +'<div class="rc-num '+r.numCls+'">'+(i+1)+'</div>'
+        +'<div><div class="rc-title">'+r.title+'</div><div class="rc-sub">'+r.sub+'</div></div>'
+      +'</div>'
+      +'<div class="rc-tags">'+tags+'</div>'
+      +'<div class="rc-spots">'
+        +'<span>📅 '+r.days.length+'일 일정</span><span>·</span>'
+        +'<span>📍 '+r.days.reduce(function(a,d){ return a+d.stops.length; },0)+'개 장소</span>'
+        +'<span class="rc-cost '+r.costCls+'">'+r.cost+'</span>'
+      +'</div>'
+    +'</div>';
+  });
+  $('route-cards').innerHTML = html;
+  document.querySelectorAll('.route-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      var route = ROUTES[currentGrade].find(function(r){ return r.id===card.dataset.id; });
+      if(route) showDetail(route);
+    });
+  });
+  var first = ROUTES[currentGrade][0];
+  if(first) drawRoute(first, 1);
+}
+
+/* 상세 패널 */
+function showDetail(route){
+  currentRoute=route; currentDay=1;
+  $('routes-list').style.display='none';
+  var dp=$('detail-panel');
+  dp.classList.add('visible');
+  $('detail-title').textContent=route.title;
+  $('detail-sub').textContent=route.sub;
+  $('detail-chips').innerHTML=[
+    '<div class="chip">📅 <span>'+route.days.length+'일 일정</span></div>',
+    '<div class="chip">💴 <span>'+route.cost+'</span></div>',
+    route.tags.map(function(t){ return '<div class="chip">'+t+'</div>'; }).join('')
+  ].join('');
+  var dayHtml=route.days.map(function(d){
+    return '<button class="day-tab'+(d.day===1?' active':'')+'" data-day="'+d.day+'">Day '+d.day+'<br><span style="font-size:10px;font-weight:400;">'+d.label.slice(0,8)+'</span></button>';
+  }).join('');
+  $('day-tabs').innerHTML=dayHtml;
+  document.querySelectorAll('.day-tab').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.day-tab').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentDay=Number(btn.dataset.day);
+      renderStops(route, currentDay);
+      drawRoute(route, currentDay);
+    });
+  });
+  renderStops(route, 1);
+  renderBooking(currentGrade);
+  renderTips(route);
+  drawRoute(route, 1);
+}
+
+/* 스톱 렌더링 — 동선 모드 반영 */
+function renderStops(route, day){
+  var d=route.days.find(function(x){ return x.day===day; });
+  if(!d) return;
+  var typeBadge={sight:'b-sight',food:'b-food',hotel:'b-hotel',transport:'b-transport',activity:'b-activity',kids:'b-kids'};
+  var typeLabel={sight:'관광',food:'맛집',hotel:'숙소',transport:'이동',activity:'액티비티',kids:'아이 OK'};
+  var dotCls={sight:'dot-sight',food:'dot-food',hotel:'dot-hotel',transport:'dot-transport',activity:'dot-activity',kids:'dot-kids'};
+  var modeLabel={optimal:'최적 동선',cheap:'최저가 동선',fast:'최속 동선'};
+  var html='';
+  d.stops.forEach(function(st, i){
+    // 이동 수단 버블
+    var transitHtml = '';
+    if(i > 0 && st.transit){
+      var tr = st.transit[currentMode];
+      if(tr){
+        transitHtml = '<div class="transit-bubble mode-'+currentMode+'">'
+          +'<span class="transit-icon">'+tr.icon+'</span>'
+          +'<div class="transit-body">'
+            +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">'
+              +'<span class="transit-badge '+tr.badgeCls+'">'+tr.badge+'</span>'
+              +'<span class="transit-main">'+tr.main+'</span>'
+            +'</div>'
+            +'<div class="transit-detail">'+tr.detail.replace(/\n/g,'<br>')+'</div>'
+          +'</div>'
+        +'</div>';
+      }
+    }
+    html += transitHtml
+      +'<div class="stop-item">'
+        +'<div class="stop-dot '+(dotCls[st.type]||'dot-sight')+'">'+(i+1)+'</div>'
+        +'<div class="stop-info">'
+          +'<div class="stop-name">'+st.name+(st.time?'<span class="stop-time">'+st.time+'</span>':'')+'</div>'
+          +'<div class="stop-desc">'+st.desc+'</div>'
+          +'<div class="stop-meta">'
+            +'<span class="stop-badge '+(typeBadge[st.type]||'b-sight')+'">'+(typeLabel[st.type]||'관광')+'</span>'
+            +(st.cost?'<span class="stop-cost">'+st.cost+'</span>':'')
+          +'</div>'
+        +'</div>'
+      +'</div>';
+  });
+  $('stop-list').innerHTML=html;
+}
+
+/* 예약 링크 */
+function renderBooking(grade){
+  var p={start:$('start-date').value,end:$('end-date').value,adults:Number($('adult-count').value||2)};
+  var s=p.start||new Date().toISOString().slice(0,10);
+  var e=p.end||new Date(Date.now()+4*86400000).toISOString().slice(0,10);
+  var adults=p.adults;
+  var airLinks={budget:{name:'스카이스캐너',icon:'✈️',badge:'최저가',url:'https://www.skyscanner.co.kr/transport/flights/ICN/TYO/'+s.replace(/-/g,'')+'/',desc:'인천→도쿄 최저가 비교'},value:{name:'네이버항공',icon:'🔍',badge:'가성비',url:'https://flight.naver.com/flights/international/ICN-HND-'+s+'?adult='+adults,desc:'날짜·인원 반영 검색'},normal:{name:'대한항공',icon:'🛫',badge:'직항',url:'https://www.koreanair.com/kr/ko/booking/booking-gate?trip=OW&from=ICN&to=HND&departDate='+s+'&adult='+adults,desc:'직항·수하물 포함'},luxury:{name:'대한항공 비즈니스',icon:'💺',badge:'비즈니스',url:'https://www.koreanair.com/kr/ko/booking/booking-gate?trip=OW&from=ICN&to=HND&departDate='+s+'&adult='+adults+'&cabin=C',desc:'비즈니스 클래스'}};
+  var hotelLinks={budget:{name:'호스텔월드',icon:'🏠',badge:'호스텔',url:'https://www.hostelworld.com/st/hostels/p/Japan/Tokyo/?dateFrom='+s+'&dateTo='+e+'&number_of_guests='+adults,desc:'도쿄 최저가 숙소'},value:{name:'부킹닷컴',icon:'⭐',badge:'평점순',url:'https://www.booking.com/searchresults/kr/jp/tokyo.html?checkin='+s+'&checkout='+e+'&group_adults='+adults+'&nflt=review_score%3D80',desc:'평점 8.0+ 가성비'},normal:{name:'부킹닷컴',icon:'🏨',badge:'4성급',url:'https://www.booking.com/searchresults/kr/jp/tokyo.html?checkin='+s+'&checkout='+e+'&group_adults='+adults+'&nflt=class%3D4',desc:'4성급 필터'},luxury:{name:'부킹닷컴',icon:'👑',badge:'5성급',url:'https://www.booking.com/searchresults/kr/jp/tokyo.html?checkin='+s+'&checkout='+e+'&group_adults='+adults+'&nflt=class%3D5',desc:'5성급 프리미엄'}};
+  var links=[airLinks[grade],hotelLinks[grade],{name:'클룩',icon:'🎟',badge:'액티비티',url:'https://www.klook.com/ko/city/5-tokyo-things-to-do/',desc:'도쿄 투어·패스·체험'},{name:'마이리얼트립',icon:'🗺',badge:'한국어 가이드',url:'https://www.myrealtrip.com/offers?keyword=도쿄',desc:'한국어 현지 가이드'}];
+  $('booking-grid').innerHTML=links.map(function(l){
+    return '<a class="booking-link" href="'+l.url+'" target="_blank" rel="noopener">'
+      +'<div class="bl-top"><span class="bl-icon">'+l.icon+'</span><span class="bl-name">'+l.name+'</span><span class="bl-badge">'+l.badge+'</span></div>'
+      +'<div class="bl-desc">'+l.desc+'</div>'+'</a>';
+  }).join('');
+}
+
+/* 꿀팁 */
+function renderTips(route){
+  $('tips-grid').innerHTML=route.tips.map(function(t){
+    return '<div class="tip-item"><div class="tip-label">'+t.label+'</div><div class="tip-body">'+t.body+'</div></div>';
+  }).join('');
+}
+
+/* 날짜 미리보기 */
+function updateDateResult(){
+  var s=$('start-date').value, e=$('end-date').value, el=$('date-result');
+  if(!s||!e){el.textContent='날짜를 선택하면 여행 기간이 계산됩니다.';return;}
+  var sd=new Date(s),ed=new Date(e);
+  var diff=Math.round((ed-sd)/86400000);
+  if(diff<0){el.textContent='귀국 날짜를 확인해 주세요.';return;}
+  var days=['일','월','화','수','목','금','토'];
+  el.textContent=s+' ('+days[sd.getDay()]+') ~ '+e+' ('+days[ed.getDay()]+') · '+diff+'박 '+(diff+1)+'일';
+}
+$('start-date').addEventListener('change',updateDateResult);
+$('end-date').addEventListener('change',updateDateResult);
+$('detail-back').addEventListener('click',function(){
+  $('detail-panel').classList.remove('visible');
+  $('routes-list').style.display='block';
+  var first=ROUTES[currentGrade][0]; if(first) drawRoute(first,1);
+});
+
+/* 기본 날짜 */
+(function(){
+  var today=new Date();
+  var fmt=function(d){ return d.getFullYear()+'-'+(''+(d.getMonth()+1)).padStart(2,'0')+'-'+(''+d.getDate()).padStart(2,'0'); };
+  $('start-date').value=fmt(today);
+  var end=new Date(today); end.setDate(end.getDate()+4);
+  $('end-date').value=fmt(end);
+  updateDateResult();
+})();
+
+/* 시작 */
+showRouteList();
+</script>
+</body>
+</html>
+
 /* 지도 초기화 */
 function initMap(){
   map = L.map('map', {zoomControl:true}).setView([35.6762, 139.6503], 12);
-
-  /* 한국어 지도 타일 — Carto (한글 표기 지원) */
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains:'abcd', maxZoom:19
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap contributors', maxZoom:19
   }).addTo(map);
-
   routeLayer = L.layerGroup().addTo(map);
   markerLayer = L.layerGroup().addTo(map);
 }
