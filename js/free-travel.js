@@ -1,7 +1,11 @@
-
 (function(){
   const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-  const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+  const OVERPASS_ENDPOINTS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://lz4.overpass-api.de/api/interpreter',
+    'https://z.overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter'
+  ];
   const ORS_DIRECTIONS_URL = 'https://api.openrouteservice.org/v2/directions/foot-walking';
 
   const state = {
@@ -10,7 +14,8 @@
     routeLine: null,
     destination: null,
     hotels: [],
-    detours: []
+    detours: [],
+    lastOverpassEndpoint: ''
   };
 
   function $(id){ return document.getElementById(id); }
@@ -61,34 +66,104 @@
     if (!list.length) return 0;
     return list.reduce((a,b) => a+b, 0) / list.length;
   }
-
-  async function geocodePlace(query){
-    const cacheKey = `free:geo:${query.toLowerCase()}`;
-    const cached = safeJsonGet(cacheKey);
-    if (cached) return cached;
-    const url = `${NOMINATIM_URL}?format=jsonv2&q=${encodeURIComponent(query)}&limit=1`;
-    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    if (!res.ok) throw new Error('장소 검색에 실패했습니다. 잠시 후 다시 시도해 주세요.');
-    const data = await res.json();
-    if (!data || !data.length) return null;
-    const hit = data[0];
-    const result = {
-      name: hit.display_name,
-      lat: parseFloat(hit.lat),
-      lng: parseFloat(hit.lon)
-    };
-    safeJsonSet(cacheKey, result);
-    return result;
+  function isFileProtocol(){
+    try { return window.location.protocol === 'file:'; }
+    catch(e){ return false; }
+  }
+  function endpointLabel(url){
+    return String(url).replace(/^https?:\/\//, '').replace(/\/api\/interpreter$/, '');
+  }
+  function explainFreeError(err){
+    const message = String(err && err.message ? err.message : err || '알 수 없는 오류');
+    let out = message;
+    if (/overpass/i.test(message)) {
+      out = '주변 숙소/역 공개 서버가 잠시 바쁜 상태입니다. ORS 키 문제는 아닙니다. 10~30초 뒤 다시 시도하거나, Tokyo Station / Shibuya처럼 더 구체적인 장소로 검색해 주세요.';
+    }
+    if (isFileProtocol()) {
+      out += '\n\n추가 팁: index.html을 더블클릭으로 열었다면, 가능하면 로컬 서버로 여는 편이 더 안정적입니다. 예: python -m http.server 8000 후 http://localhost:8000';
+    }
+    return out;
   }
 
-  async function overpassQuery(query){
-    const res = await fetch(OVERPASS_URL, { method: 'POST', body: query });
-    if (!res.ok) throw new Error('주변 장소 데이터를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.');
-    const data = await res.json();
-    return data.elements || [];
+  async function fetchWithTimeout(url, options, timeoutMs){
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs || 12000);
+    try {
+      const res = await fetch(url, { ...(options || {}), signal: controller.signal });
+      return res;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function geocodePlace(query){
+    const normalized = query.toLowerCase();
+    const cacheKey = `free:geo:${normalized}`;
+    const cached = safeJsonGet(cacheKey);
+    if (cached) return cached;
+
+    const candidates = [query];
+    if (!/(japan|일본)/i.test(query)) {
+      candidates.push(`${query}, Japan`);
+    }
+
+    for (const candidate of candidates) {
+      const url = `${NOMINATIM_URL}?format=jsonv2&q=${encodeURIComponent(candidate)}&limit=1`;
+      const res = await fetchWithTimeout(url, { headers: { 'Accept': 'application/json' } }, 12000);
+      if (!res.ok) throw new Error('장소 검색에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      const data = await res.json();
+      if (data && data.length) {
+        const hit = data[0];
+        const result = {
+          name: hit.display_name,
+          lat: parseFloat(hit.lat),
+          lng: parseFloat(hit.lon)
+        };
+        safeJsonSet(cacheKey, result);
+        return result;
+      }
+      await sleep(200);
+    }
+    return null;
+  }
+
+  async function overpassQuery(query, cacheKey){
+    const cached = cacheKey ? safeJsonGet(cacheKey) : null;
+    if (cached && Array.isArray(cached.elements)) {
+      return cached.elements;
+    }
+
+    const failures = [];
+    for (const endpoint of OVERPASS_ENDPOINTS) {
+      try {
+        const res = await fetchWithTimeout(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: query
+        }, 14000);
+
+        if (!res.ok) {
+          failures.push(`${endpointLabel(endpoint)} HTTP ${res.status}`);
+          continue;
+        }
+
+        const data = await res.json();
+        state.lastOverpassEndpoint = endpointLabel(endpoint);
+        if (cacheKey) {
+          safeJsonSet(cacheKey, { endpoint: endpointLabel(endpoint), elements: data.elements || [] });
+        }
+        return data.elements || [];
+      } catch (err) {
+        failures.push(`${endpointLabel(endpoint)} ${err && err.name === 'AbortError' ? 'timeout' : 'fail'}`);
+      }
+      await sleep(300);
+    }
+
+    throw new Error(`overpass: 주변 장소 데이터를 가져오지 못했습니다. (${failures.join(', ')})`);
   }
 
   async function findNearbyHotels(lat, lng, radius){
+    const cacheKey = `free:hotels:${lat.toFixed(4)}:${lng.toFixed(4)}:${radius}`;
     const query = `
       [out:json][timeout:25];
       (
@@ -100,7 +175,7 @@
       );
       out center tags;
     `;
-    const list = await overpassQuery(query);
+    const list = await overpassQuery(query, cacheKey);
     return list.map(x => ({
       id: String(x.id),
       name: x.tags && x.tags.name ? x.tags.name : 'Unnamed stay',
@@ -114,6 +189,7 @@
   }
 
   async function findNearbyStations(lat, lng, radius){
+    const cacheKey = `free:stations:${lat.toFixed(4)}:${lng.toFixed(4)}:${radius}`;
     const query = `
       [out:json][timeout:25];
       (
@@ -123,17 +199,19 @@
       );
       out center tags;
     `;
-    const list = await overpassQuery(query);
+    const list = await overpassQuery(query, cacheKey);
     return list.map(x => ({
       id: String(x.id),
       name: x.tags && x.tags.name ? x.tags.name : 'Unnamed station',
       lat: x.lat || (x.center && x.center.lat),
       lng: x.lon || (x.center && x.center.lon),
       type: x.tags && x.tags.railway || ''
-    })).filter(x => x.lat && x.lng);
+    })).filter(x => x.lat && x.lng)
+      .sort((a,b) => haversineMeters({lat, lng}, a) - haversineMeters({lat, lng}, b));
   }
 
   async function findDetourSpots(lat, lng, radius){
+    const cacheKey = `free:detours:${lat.toFixed(4)}:${lng.toFixed(4)}:${radius}`;
     const query = `
       [out:json][timeout:25];
       (
@@ -144,7 +222,7 @@
       );
       out center tags;
     `;
-    const list = await overpassQuery(query);
+    const list = await overpassQuery(query, cacheKey);
     return list.map(x => ({
       id: String(x.id),
       name: x.tags && x.tags.name ? x.tags.name : 'Unnamed spot',
@@ -229,7 +307,8 @@
       `<div class="map-chip">목적지 1개</div>`,
       `<div class="map-chip">숙소 ${state.hotels.length}개 비교</div>`,
       `<div class="map-chip">들름 후보 ${state.detours.length}개</div>`,
-      `<div class="map-chip">도보 ${getORSKey() ? '실측 우선' : '예상값'}</div>`
+      `<div class="map-chip">도보 ${getORSKey() ? '실측 우선' : '예상값'}</div>`,
+      state.lastOverpassEndpoint ? `<div class="map-chip">주변 데이터 ${escapeHtml(state.lastOverpassEndpoint)}</div>` : ''
     ].join('');
   }
 
@@ -251,12 +330,12 @@
             <div><b>목적지까지 거리</b>: ${formatMeters(hotel.destinationMeters)}</div>
             <div><b>가까운 역</b>: ${walkText}</div>
             <div><b>도보 거리</b>: ${distanceText}</div>
+            <div><b>유형</b>: ${escapeHtml(hotel.kind || 'stay')}</div>
           </div>
           <div class="free-meta">
-            ${hotel.kind ? `<span class="free-pill">${escapeHtml(hotel.kind)}</span>` : ''}
-            ${hotel.brand ? `<span class="free-pill">${escapeHtml(hotel.brand)}</span>` : ''}
-            ${hotel.stars ? `<span class="free-pill">별 ${escapeHtml(hotel.stars)}</span>` : ''}
-            ${hotel.station && hotel.station.type ? `<span class="free-pill">역 타입 ${escapeHtml(hotel.station.type)}</span>` : ''}
+            ${hotel.stars ? `<div class="free-pill">등급 ${escapeHtml(hotel.stars)}</div>` : ''}
+            ${hotel.brand ? `<div class="free-pill">${escapeHtml(hotel.brand)}</div>` : ''}
+            ${hotel.station && hotel.station.type ? `<div class="free-pill">역 ${escapeHtml(hotel.station.type)}</div>` : ''}
           </div>
           <div class="free-links">
             ${hotel.website ? `<a href="${escapeHtml(hotel.website)}" target="_blank" rel="noopener noreferrer">공식 사이트</a>` : ''}
@@ -342,6 +421,7 @@
     state.destination = null;
     state.hotels = [];
     state.detours = [];
+    state.lastOverpassEndpoint = '';
     $('freeSummary').textContent = '여행지를 입력하고 버튼을 누르면 근처 숙소와 가장 가까운 역을 찾아줍니다.';
     $('freeHotelResults').innerHTML = '<div class="free-empty">아직 검색 전입니다.</div>';
     $('freeDetourResults').innerHTML = '<div class="free-empty">아직 검색 전입니다.</div>';
@@ -371,22 +451,36 @@
       destination.shortLabel = query;
       state.destination = destination;
 
-      const [hotels, stations, detours] = await Promise.all([
+      const settled = await Promise.allSettled([
         findNearbyHotels(destination.lat, destination.lng, radius),
         findNearbyStations(destination.lat, destination.lng, Math.max(900, Math.round(radius * 0.9))),
         findDetourSpots(destination.lat, destination.lng, 700)
       ]);
 
-      const rankedHotels = await buildHotelRanking(destination, hotels, stations, hotelLimit);
+      const hotels = settled[0].status === 'fulfilled' ? settled[0].value : [];
+      const stations = settled[1].status === 'fulfilled' ? settled[1].value : [];
+      const detours = settled[2].status === 'fulfilled' ? settled[2].value : [];
+
+      if (!hotels.length && !stations.length && !detours.length) {
+        const reason = settled.find(x => x.status === 'rejected');
+        throw reason ? reason.reason : new Error('overpass: 주변 장소 데이터를 가져오지 못했습니다.');
+      }
+
+      const rankedHotels = hotels.length ? await buildHotelRanking(destination, hotels, stations, hotelLimit) : [];
       state.hotels = rankedHotels;
       state.detours = detours.slice(0, 5);
 
-      $('freeSummary').innerHTML = `${escapeHtml(destination.name)} 기준으로 숙소 ${rankedHotels.length}개와 들름 후보 ${state.detours.length}개를 정리했습니다.${getORSKey() ? ' 도보 시간은 openrouteservice 우선 계산입니다.' : ' 도보 시간은 무료 근사치 또는 공개 경로 계산 fallback입니다.'}`;
+      const partial = [];
+      if (settled[0].status === 'rejected') partial.push('숙소');
+      if (settled[1].status === 'rejected') partial.push('역');
+      if (settled[2].status === 'rejected') partial.push('들를 곳');
+
+      $('freeSummary').innerHTML = `${escapeHtml(destination.name)} 기준으로 숙소 ${rankedHotels.length}개와 들름 후보 ${state.detours.length}개를 정리했습니다.${getORSKey() ? ' 도보 시간은 openrouteservice 우선 계산입니다.' : ' 도보 시간은 무료 근사치 또는 공개 경로 계산 fallback입니다.'}${partial.length ? ` 일부 공개 데이터(${escapeHtml(partial.join(', '))})는 이번 시도에서 불러오지 못했습니다.` : ''}`;
       renderHotels(rankedHotels);
       renderDetours(state.detours);
       drawFreeMap();
     } catch (err) {
-      $('freeSummary').textContent = `불러오기에 실패했습니다: ${err.message || err}`;
+      $('freeSummary').textContent = `불러오기에 실패했습니다: ${explainFreeError(err)}`;
     } finally {
       $('freeSearchBtn').disabled = false;
     }
