@@ -81,8 +81,8 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
 <div class="app">
   <div class="header">
     <h1>🗼 도쿄 여행 가이드</h1>
-    <p>Groq를 브라우저에서 직접 호출하는 버전입니다. 화면에 API 입력칸은 없고,<br>코드 상단의 <span class="code">GROQ_API_KEY</span>에 키를 넣으면 바로 사용됩니다.</p>
-    <div class="badge">Groq 직접 연결 · Leaflet 지도 · Disney 포함</div>
+    <p>날짜, 인원, 스타일을 고르면 도쿄 여행 플랜과 동선을 바로 생성합니다.</p>
+    <div class="badge">Leaflet 지도 · Disney 포함</div>
   </div>
 
   <div class="card">
@@ -122,10 +122,7 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
       <button class="small-btn" onclick="preset('full')">이것저것 다</button>
     </div>
 
-    <div class="warn">
-      먼저 <span class="code">index.html</span> 상단의 <span class="code">GROQ_API_KEY</span> 값에
-      <span class="code">gsk_...</span> 키를 넣어주세요.
-    </div>
+
     <div class="err" id="errBox"></div>
     <button class="btn" id="makeBtn">플랜 만들기</button>
   </div>
@@ -174,9 +171,9 @@ input, select{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radiu
 <script>
 /*
   여기 한 줄에 Groq 키를 넣으세요.
-  예: const GROQ_API_KEY = "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";
+  예: const GROQ_API_KEY = "gsk_xxx";
 */
-const GROQ_API_KEY = "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";
+const GROQ_API_KEY = "";
 
 const TOKYO_COORDS = {
   "아사쿠사":[35.7148,139.7967],"센소지":[35.7148,139.7967],"스카이트리":[35.7101,139.8107],"우에노":[35.7138,139.7773],
@@ -491,7 +488,7 @@ function renderDetail(detail){
     right.push(listCard('이동 디테일', detail.transit || []));
     right.push(`<div class="warn"><b>중요</b><br>승강장 번호, 몇 번째 칸, 정확한 출구 번호는 바뀔 수 있어 현장 안내판을 최우선으로 보세요. 이 버전은 일반적으로 빠른 편인 환승 팁 위주로 안내합니다.</div>`);
   }
-  right.push(`<div class="note">이 버전은 Groq 키가 코드 안에 직접 들어가는 구조입니다. 화면 입력칸은 없지만, 공개 배포 시 키가 노출될 수 있습니다.</div>`);
+  right.push(`<div class="note">추천 결과는 일정 스타일과 동선 타입에 맞춰 생성됩니다.</div>`);
 
   document.getElementById('leftCol').innerHTML = left.join('');
   document.getElementById('rightCol').innerHTML = right.join('');
@@ -537,7 +534,7 @@ async function loadDetail(){
 document.getElementById('makeBtn').addEventListener('click', async () => {
   setError('');
   if (!GROQ_API_KEY) {
-    setError('index.html 상단의 GROQ_API_KEY 값에 gsk_... 키를 넣어주세요.');
+    setError('설정값을 다시 확인해 주세요.');
     return;
   }
   document.getElementById('loading').classList.add('active');
