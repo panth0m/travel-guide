@@ -132,6 +132,10 @@ input:focus,select:focus{outline:none;border-color:#185FA5}
 .tb-optimal{background:#185FA5;color:#fff}
 .tb-cheap{background:#059669;color:#fff}
 .tb-fast{background:#d97706;color:#fff}
+.transit-body{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:4px}
+.transit-text{flex:1;min-width:0}
+.gmap-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:#fff;border:1.5px solid #d1d5db;font-size:11px;font-weight:700;color:#374151;text-decoration:none;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.gmap-btn:hover{border-color:#185FA5;color:#185FA5;background:#eff6ff}
 
 /* 리스트 카드 */
 .list-card{border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin-bottom:10px;background:#fff}
@@ -480,7 +484,77 @@ async function makeOverview(body){
 }
 
 async function makeDetail(body, routeType, grade){
-  return await callGroq(`${commonInfo(body)}\n선택 동선: ${routeLabelMap(routeType)}\n선택 예산: ${gradeLabelMap(grade)}\n\n요구:\n- ${body.city}의 실제 장소명(한국어 우선)\n- 각 stop에 name, description, tags, transitModes 포함\n- transitModes는 optimal(최적·노선·시간·요금), cheap(최저가·이동수단·시간·요금), fast(최속·이동수단·시간) 세 가지 모두\n- flight, hotels, food, activities, transit 포함\n\n{"days":[{"day":1,"title":"제목","dateLabel":"날짜","stops":[{"name":"장소명","description":"설명","tags":["관광"],"transitModes":{"optimal":"지하철 긴자선 → 우에노 · 6분 · ¥180","cheap":"도보 · 25분 · 무료","fast":"택시 · 8분 · ¥900"}}]}],"flight":["항공 팁"],"hotels":["숙소 팁"],"food":["맛집 팁"],"activities":["액티비티 팁"],"transit":["이동 팁"]}`);
+  const gradeDesc = {
+    budget:  "최저가: 호스텔·게스트하우스, 편의점·로컬식당, 대중교통만",
+    value:   "가성비: 비즈니스호텔 2~3성, 현지맛집+가끔택시, 주요유료명소",
+    normal:  "보통: 3~4성 호텔, 검증된 레스토랑, 편의위주 교통",
+    luxury:  "럭셔리: 5성 호텔, 파인다이닝·오마카세, 택시·전용차 위주"
+  }[grade] || grade;
+
+  const prompt = `${commonInfo(body)}
+동선타입: ${routeLabelMap(routeType)} / 예산: ${gradeDesc}
+
+${body.city} 완전 여행 플랜을 아래 JSON으로 작성하세요. 실제 존재하는 장소명만 사용.
+
+규칙:
+- hotels: 등급별 실제 숙소 3곳. name·location(역 도보분)·pricePerNight·features·bookingTip
+- days: 숙소 출발→관광→맛집→숙소 귀환 완전 동선. 첫stop=숙소출발, 마지막stop=숙소귀환
+- 각 stop: name·type(hotel/sight/food/transport/activity)·time·duration·description·cost·tags·lat·lon
+- stop 사이 transit 반드시 3가지: optimal(노선명·승차역→하차역·분·요금), cheap(최저가수단·분·요금), fast(최속수단·분·요금)
+- dayCost: 하루 교통비합계·식비합계·입장료합계·총합계(원화환산포함)
+- food: 맛집5곳. name·menu·priceRange·nearStation·tip
+- transit: 교통 전체팁 (IC카드, 환승요령 등)
+- lat/lon: 실제 위도경도 소수점4자리
+
+{"hotels":[{"name":"숙소명","location":"역 도보3분","pricePerNight":"1박 7~9만원","features":"특징","bookingTip":"팁"}],
+"days":[{"day":1,"title":"도착·신주쿠","dateLabel":"Day1","dayCost":{"transport":"¥828(7,500원)","food":"¥3,500(32,000원)","entrance":"¥1,000(9,000원)","total":"약55,000원"},"stops":[{"name":"신주쿠 비즈니스호텔","type":"hotel","time":"10:00","duration":"출발","description":"숙소 출발. 짐은 코인로커 보관 권장.","cost":"","tags":["숙소"],"lat":35.6896,"lon":139.6917,"transit":{"optimal":"JR야마노테선 신주쿠→하라주쿠·3분·¥150","cheap":"도보25분·무료","fast":"택시5분·¥800"}}]}],
+"food":[{"name":"이치란라멘","menu":"돈코츠라멘","priceRange":"1인¥980","nearStation":"신주쿠역 도보5분","tip":"혼밥칸막이석"}],
+"flight":["항공팁"],"activities":["액티비티팁"],"transit":["IC카드(Suica)필수","환승팁"]}`;
+
+  return await callGroq(prompt);
+}
+
+/* ═══════════════════════════
+   숙소 카드 렌더
+═══════════════════════════ */
+function renderHotels(hotels){
+  if(!hotels||!hotels.length) return '';
+  return `<div class="list-card">
+    <div class="list-title">🏨 추천 숙소 (등급별)</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      ${hotels.map((h,i)=>`
+        <div style="border:1.5px solid #e5e7eb;border-radius:12px;padding:12px 14px;background:#fafafa">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="font-weight:800;font-size:14px;color:#111827">${i+1}. ${h.name||''}</div>
+            <div style="font-size:12px;font-weight:700;color:#059669;white-space:nowrap">${h.pricePerNight||''}</div>
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px">📍 ${h.location||''}</div>
+          <div style="font-size:13px;color:#374151;margin-top:5px;line-height:1.5">${h.features||''}</div>
+          ${h.bookingTip?`<div style="font-size:12px;color:#185FA5;margin-top:5px;background:#eff6ff;border-radius:8px;padding:6px 10px">💡 ${h.bookingTip}</div>`:''}
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════
+   맛집 카드 렌더
+═══════════════════════════ */
+function renderFood(foods){
+  if(!foods||!foods.length) return '';
+  return `<div class="list-card">
+    <div class="list-title">🍜 추천 맛집</div>
+    <div style="display:flex;flex-direction:column;gap:0">
+      ${foods.map((f,i)=>`
+        <div class="item">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span style="font-weight:700;font-size:13px">${i+1}. ${f.name||''}</span>
+            <span style="font-size:12px;color:#059669;font-weight:700;white-space:nowrap">${f.priceRange||''}</span>
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px">🍽 ${f.menu||''} &nbsp;·&nbsp; 📍 ${f.nearStation||''}</div>
+          ${f.tip?`<div style="font-size:12px;color:#374151;margin-top:3px">💡 ${f.tip}</div>`:''}
+        </div>`).join('')}
+    </div>
+  </div>`;
 }
 
 /* ═══════════════════════════
@@ -548,7 +622,13 @@ async function drawMap(detail, cityName){
     for(const stop of (day.stops||[])){
       if(seen.has(stop.name)) continue;
       seen.add(stop.name); num++;
-      const coord = await resolveCoord(stop.name, cityCoord, cityName);
+      // AI가 준 lat/lon 우선, 없으면 Nominatim으로 검색
+      let coord;
+      if(stop.lat && stop.lon && Math.abs(stop.lat) > 0.1){
+        coord = [parseFloat(stop.lat), parseFloat(stop.lon)];
+      } else {
+        coord = await resolveCoord(stop.name, cityCoord, cityName);
+      }
       const color = spotColor(stop.tags);
       L.marker(coord,{icon:makeMarkerIcon(color,num)}).addTo(state.markerLayer)
         .bindPopup(`<div style="font-family:-apple-system,sans-serif;min-width:140px"><b style="font-size:13px">${num}. ${stop.name}</b><br><span style="font-size:12px;color:#6b7280">${stop.description||''}</span><br>${(stop.tags||[]).map(t=>`<span style="font-size:11px;background:#f3f4f6;border-radius:999px;padding:2px 6px;margin:2px 1px;display:inline-block">${t}</span>`).join('')}</div>`);
@@ -594,42 +674,88 @@ function renderDetail(detail){
   const city=(document.getElementById('cityInput').value||'도쿄').trim();
   drawMap(detail, city);
   const left=[], right=[];
-  if(state.activeFilter==='통합'||state.activeFilter==='관광'||state.activeFilter==='이동'){
-    left.push(`<div class="list-card"><div class="list-title">📅 Day별 상세 동선</div>${
-      (detail.days||[]).map(d=>`
-        <div class="day">
-          <div class="day-h"><span>Day ${d.day} · ${d.title||''}</span><span class="muted">${d.dateLabel||''}</span></div>
-          <div class="day-b">
-            ${(d.stops||[]).map((s,i)=>`
-              <div class="stop">
-                <div class="snum">${i+1}</div>
-                <div>
-                  <div class="s-title">${s.name||''}</div>
-                  <div class="s-sub">${s.description||''}</div>
-                  <div class="tags">${(s.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-                </div>
-              </div>
-              ${i<d.stops.length-1&&s.transitModes?`<div class="transit m-${currentMode}">${modeBadgeHtml[currentMode]}${s.transitModes[currentMode]||s.transitModes.optimal||'현장 안내판 우선'}</div>`:''}
-            `).join('')}
+  const f=state.activeFilter;
+
+  // ── 왼쪽: Day별 동선 ──
+  if(f==='통합'||f==='관광'||f==='이동'){
+    const typeIcon={hotel:'🏨',sight:'🏛',food:'🍜',transport:'🚌',activity:'🎢'};
+    const typeColor={hotel:'#7c3aed',sight:'#e8380d',food:'#f97316',transport:'#6b7280',activity:'#059669'};
+
+    left.push(`<div class="list-card">
+      <div class="list-title">📅 Day별 완전 동선</div>
+      ${(detail.days||[]).map(d=>`
+        <div class="day" style="margin-bottom:14px">
+          <div class="day-h">
+            <span>Day ${d.day} &nbsp;·&nbsp; ${d.title||''}</span>
+            ${d.dayCost?`<span style="font-size:11px;color:#6b7280">${d.dateLabel||''}</span>`:''}
           </div>
-        </div>`).join('')
-    }</div>`);
+          ${d.dayCost?`
+          <div style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e5e7eb">
+            <span style="font-size:11px;background:#dbeafe;color:#1d4ed8;border-radius:999px;padding:3px 9px;font-weight:700">🚇 교통 ${d.dayCost.transport||'-'}</span>
+            <span style="font-size:11px;background:#fef9c3;color:#854d0e;border-radius:999px;padding:3px 9px;font-weight:700">🍜 식비 ${d.dayCost.food||'-'}</span>
+            <span style="font-size:11px;background:#f0fdf4;color:#166534;border-radius:999px;padding:3px 9px;font-weight:700">🎟 입장 ${d.dayCost.entrance||'-'}</span>
+            <span style="font-size:11px;background:#eff6ff;color:#185FA5;border-radius:999px;padding:3px 9px;font-weight:800">💰 합계 ${d.dayCost.total||'-'}</span>
+          </div>`:''}
+          <div class="day-b">
+            ${(d.stops||[]).map((s,i)=>{
+              const ic=typeIcon[s.type]||'📍';
+              const col=typeColor[s.type]||'#e8380d';
+              const gmLink=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+' '+city)}`;
+              const tr=s.transit;
+              return `
+              <div style="display:flex;gap:12px;margin-bottom:4px">
+                <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+                  <div style="width:32px;height:32px;border-radius:50%;background:${col};border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff">${i+1}</div>
+                  ${i<(d.stops||[]).length-1?`<div style="width:2px;flex:1;min-height:40px;background:#e5e7eb;margin:4px 0"></div>`:''}
+                </div>
+                <div style="flex:1;padding-bottom:${i<(d.stops||[]).length-1?'0':'0'}px">
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span style="font-weight:800;font-size:14px;color:#111827">${ic} ${s.name||''}</span>
+                    ${s.time?`<span style="font-size:12px;color:#9ca3af;font-weight:500">${s.time}</span>`:''}
+                    ${s.duration?`<span style="font-size:11px;background:#f3f4f6;border-radius:999px;padding:2px 8px;color:#374151">${s.duration}</span>`:''}
+                  </div>
+                  <div style="font-size:13px;color:#4b5563;margin-top:4px;line-height:1.55">${s.description||''}</div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;align-items:center">
+                    ${(s.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}
+                    ${s.cost?`<span style="font-size:12px;font-weight:700;color:#059669">${s.cost}</span>`:''}
+                    <a href="${gmLink}" target="_blank" rel="noopener" style="font-size:11px;text-decoration:none;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:2px 9px;color:#374151;font-weight:600">🗺 지도</a>
+                  </div>
+                  ${tr&&i<(d.stops||[]).length-1?`
+                  <div class="transit m-${currentMode}" style="margin-left:0;margin-top:8px">
+                    ${modeBadgeHtml[currentMode]}
+                    <span style="font-weight:700">${tr[currentMode]||tr.optimal||'이동'}</span>
+                    <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">
+                      ${tr.optimal&&currentMode!=='optimal'?`<span style="font-size:11px;background:#eff6ff;border-radius:999px;padding:2px 8px;color:#185FA5">⚖️ ${tr.optimal}</span>`:''}
+                      ${tr.cheap&&currentMode!=='cheap'?`<span style="font-size:11px;background:#ecfdf5;border-radius:999px;padding:2px 8px;color:#059669">💴 ${tr.cheap}</span>`:''}
+                      ${tr.fast&&currentMode!=='fast'?`<span style="font-size:11px;background:#fffbeb;border-radius:999px;padding:2px 8px;color:#d97706">⚡ ${tr.fast}</span>`:''}
+                    </div>
+                  </div>`:''}
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`).join('')}
+    </div>`);
   }
-  if(state.activeFilter==='통합'||state.activeFilter==='항공')    right.push(listCard('✈️ 항공', detail.flight||[]));
-  if(state.activeFilter==='통합'||state.activeFilter==='숙소')    right.push(listCard('🏨 숙소', detail.hotels||[]));
-  if(state.activeFilter==='통합'||state.activeFilter==='맛집')    right.push(listCard('🍜 맛집', detail.food||[]));
-  if(state.activeFilter==='통합'||state.activeFilter==='액티비티') right.push(listCard('🎢 액티비티', detail.activities||[]));
-  if(state.activeFilter==='통합'||state.activeFilter==='이동'){
-    right.push(listCard('🚇 이동 상세', detail.transit||[]));
-    right.push(`<div class="warn">⚠️ 승강장·출구 번호는 현장 안내판 우선으로 확인하세요.</div>`);
+
+  // ── 오른쪽 패널 ──
+  if(f==='통합'||f==='숙소') right.push(renderHotels(detail.hotels));
+  if(f==='통합'||f==='맛집') right.push(renderFood(detail.food));
+  if(f==='통합'||f==='항공') right.push(listCard('✈️ 항공', detail.flight||[]));
+  if(f==='통합'||f==='액티비티') right.push(listCard('🎢 액티비티', detail.activities||[]));
+  if(f==='통합'||f==='이동'){
+    right.push(listCard('🚇 교통 전체 팁', detail.transit||[]));
+    right.push(`<div class="warn">⚠️ 노선·요금은 AI 추정값입니다. 현장 안내판과 실제 앱(Google Maps 등)을 반드시 병행 확인하세요.</div>`);
   }
-  right.push(`<div class="note">* AI 생성 결과이며 실제와 다를 수 있습니다.</div>`);
+  right.push(`<div class="note">* Groq AI 생성 결과. 실제 운임·시간과 차이가 있을 수 있습니다.</div>`);
+
   document.getElementById('leftCol').innerHTML=left.join('');
-  document.getElementById('rightCol').innerHTML=right.join('');
+  document.getElementById('rightCol').innerHTML=right.filter(Boolean).join('');
 }
 
 function listCard(title, items){
-  return `<div class="list-card"><div class="list-title">${title}</div>${(items||[]).map(x=>`<div class="item">${x}</div>`).join('')}</div>`;
+  if(!items||!items.length) return '';
+  return `<div class="list-card"><div class="list-title">${title}</div>${items.map(x=>`<div class="item">${x}</div>`).join('')}</div>`;
 }
 
 async function selectRoute(key){state.activeRoute=key;renderOverview();await loadDetail();}
