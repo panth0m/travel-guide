@@ -1,0 +1,9 @@
+{
+  "name": "travel-guide",
+  "main": "worker.js",
+  "compatibility_date": "2024-09-23",
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "single-page-application"
+  }
+}
