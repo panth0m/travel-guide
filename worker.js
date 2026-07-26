@@ -13,8 +13,8 @@ export default {
       return json({ error: "POST only" }, 405, cors);
     }
 
-    if (!env.GROQ_API_KEY) {
-      return json({ error: "GROQ_API_KEY 가 설정되지 않았습니다." }, 500, cors);
+    if (!env.CEREBRAS_API_KEY) {
+      return json({ error: "CEREBRAS_API_KEY 가 설정되지 않았습니다." }, 500, cors);
     }
 
     try {
@@ -22,11 +22,11 @@ export default {
       const action = body.action;
 
       if (action === "overview") {
-        const overview = await makeOverview(body, env.GROQ_API_KEY);
+        const overview = await makeOverview(body, env.CEREBRAS_API_KEY);
         return json({ overview }, 200, cors);
       }
       if (action === "detail") {
-        const detail = await makeDetail(body, env.GROQ_API_KEY);
+        const detail = await makeDetail(body, env.CEREBRAS_API_KEY);
         return json({ detail }, 200, cors);
       }
       return json({ error: "Unknown action" }, 400, cors);
@@ -43,15 +43,15 @@ function json(data, status = 200, extraHeaders = {}) {
   });
 }
 
-async function groqCall(apiKey, prompt) {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+async function aiCall(apiKey, prompt) {
+  const res = await fetch("https://api.cerebras.ai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "llama-3.3-70b",
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
@@ -67,19 +67,19 @@ async function groqCall(apiKey, prompt) {
   const text = await res.text();
   let data = {};
   try { data = JSON.parse(text); } catch (e) {
-    throw new Error(text || "Groq 응답 파싱 실패");
+    throw new Error(text || "AI 응답 파싱 실패");
   }
   if (!res.ok) {
-    throw new Error(data?.error?.message || `Groq 오류 ${res.status}`);
+    throw new Error(data?.error?.message || `AI 오류 ${res.status}`);
   }
   const content = data?.choices?.[0]?.message?.content;
-  if (!content) throw new Error("Groq 응답이 비어 있습니다.");
+  if (!content) throw new Error("AI 응답이 비어 있습니다.");
 
   try { return JSON.parse(content); }
   catch (e) {
     const m = content.match(/\{[\s\S]*\}/);
     if (m) return JSON.parse(m[0]);
-    throw new Error("Groq JSON 파싱 실패");
+    throw new Error("AI JSON 파싱 실패");
   }
 }
 
@@ -117,7 +117,7 @@ JSON 형식:
   ]
 }
 `;
-  return await groqCall(apiKey, prompt);
+  return await aiCall(apiKey, prompt);
 }
 
 async function makeDetail(body, apiKey) {
@@ -180,5 +180,5 @@ JSON 형식:
   "transit":["문장1","문장2","문장3"]
 }
 `;
-  return await groqCall(apiKey, prompt);
+  return await aiCall(apiKey, prompt);
 }
