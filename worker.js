@@ -10,6 +10,7 @@ export default {
       return new Response(null, { headers: cors });
     }
     if (request.method !== "POST") {
+      if (env.ASSETS) return env.ASSETS.fetch(request);
       return json({ error: "POST only" }, 405, cors);
     }
 
